@@ -1,7 +1,28 @@
 import { escapeHtml, formatEvidenceHtml, formatParagraph, formatRegion } from "../utils/html.js";
 import { getStoryHash } from "./shelf.js";
 
-export function renderStoryReader(elements, story) {
+function getReadButtonLabel(isRead, isCompletionBtn) {
+  if (isCompletionBtn) {
+    return isRead ? "✦ 読了済み（クリックで未読に戻す）" : "✧ この作品を読了にする";
+  }
+  return isRead ? "✦ 読了済み" : "✧ 読了にする";
+}
+
+export function updateReaderStateButtons(readerViewEl, { isRead, isBookmarked }) {
+  if (!readerViewEl) return;
+  readerViewEl.querySelectorAll('[data-action="toggle-bookmark"]').forEach((btn) => {
+    btn.setAttribute("aria-pressed", String(isBookmarked));
+  });
+  readerViewEl.querySelectorAll('[data-action="toggle-read"]').forEach((btn) => {
+    btn.setAttribute("aria-pressed", String(isRead));
+    const labelEl = btn.querySelector(".reader-read-btn-label");
+    if (labelEl) {
+      labelEl.textContent = getReadButtonLabel(isRead, btn.classList.contains("reader-completion-btn"));
+    }
+  });
+}
+
+export function renderStoryReader(elements, story, readingState = null) {
   const {
     readerHeader,
     chapterToc,
@@ -11,6 +32,8 @@ export function renderStoryReader(elements, story) {
   } = elements;
 
   const regionLabel = formatRegion(story.region);
+  const isRead = Boolean(readingState?.isRead(story.id));
+  const isBookmarked = Boolean(readingState?.isBookmarked(story.id));
 
   readerHeader.innerHTML = `
     <div class="reader-kicker">
@@ -21,6 +44,27 @@ export function renderStoryReader(elements, story) {
     </div>
     <h1 class="reader-title">${escapeHtml(story.title)}</h1>
     <p class="reader-hook">${escapeHtml(story.hook)}</p>
+    <div class="reader-state-bar">
+      <button
+        type="button"
+        class="control-pill reader-bookmark-btn"
+        data-action="toggle-bookmark"
+        data-story-id="${escapeHtml(story.id)}"
+        aria-pressed="${isBookmarked}"
+      >
+        <span aria-hidden="true">🔖</span>
+        <span>あとで読む</span>
+      </button>
+      <button
+        type="button"
+        class="control-pill reader-read-btn"
+        data-action="toggle-read"
+        data-story-id="${escapeHtml(story.id)}"
+        aria-pressed="${isRead}"
+      >
+        <span class="reader-read-btn-label">${escapeHtml(getReadButtonLabel(isRead, false))}</span>
+      </button>
+    </div>
     <div class="pre-guide">
       <p class="pre-guide-title">✦ 読む前の前提ガイド（ネタバレなし）</p>
       <ul class="pre-guide-list">
@@ -57,6 +101,17 @@ export function renderStoryReader(elements, story) {
         <p class="lore-game-effect">【ゲーム内データ】${escapeHtml(story.gameEffect)}</p>
       </div>
     </details>
+    <div class="reader-completion-box">
+      <button
+        type="button"
+        class="control-pill reader-read-btn reader-completion-btn"
+        data-action="toggle-read"
+        data-story-id="${escapeHtml(story.id)}"
+        aria-pressed="${isRead}"
+      >
+        <span class="reader-read-btn-label">${escapeHtml(getReadButtonLabel(isRead, true))}</span>
+      </button>
+    </div>
   `;
 
   popoversContainer.innerHTML = Object.entries(story.glossary || {}).map(([termId, info]) => {

@@ -44,10 +44,20 @@ export function populateFilterOptions(entitySelect, regionSelect, indexData) {
     ).join("");
 }
 
-export function filterStories(stories, filters) {
+export function filterStories(stories, filters, readingState = null) {
   const query = (filters.query || "").trim().toLowerCase();
+  const status = filters.status || "all";
   return (stories || []).filter((story) => {
     if (filters.category !== "all" && story.shelfCategory !== filters.category) {
+      return false;
+    }
+    if (status === "unread" && readingState?.isRead(story.id)) {
+      return false;
+    }
+    if (status === "read" && !readingState?.isRead(story.id)) {
+      return false;
+    }
+    if (status === "bookmarked" && !readingState?.isBookmarked(story.id)) {
       return false;
     }
     if (filters.entityId && !(story.entityIds || []).includes(filters.entityId)) {
@@ -71,20 +81,79 @@ export function filterStories(stories, filters) {
   });
 }
 
-export function renderShelf({ storyGrid, resultSummaryEl, indexData, filters }) {
+export function renderResumeBanner(containerEl, indexData, readingState) {
+  if (!containerEl) return;
   const stories = indexData?.stories || [];
-  const filtered = filterStories(stories, filters);
+  const validIds = new Set(stories.map((s) => s.id));
+  const session = readingState?.getLastSession(validIds);
+  const story = session ? stories.find((s) => s.id === session.storyId) : null;
+
+  if (!session || !story) {
+    containerEl.hidden = true;
+    containerEl.innerHTML = "";
+    return;
+  }
+
+  const percent = Math.round(session.scrollRatio * 100);
+  const chapterCount = story.chapterCount || 1;
+  const chapterNum = Math.min(chapterCount, (session.chapterIndex ?? 0) + 1);
+  const progressLabel = chapterCount > 1
+    ? `第${chapterNum}章（${percent}%）`
+    : `（${percent}%）`;
+
+  containerEl.hidden = false;
+  containerEl.innerHTML = `
+    <div class="resume-banner" role="region" aria-label="前回の続き">
+      <a
+        class="resume-banner-link"
+        href="${getStoryHash(story.id)}"
+        data-action="resume-story"
+        data-story-id="${escapeHtml(story.id)}"
+      >
+        <span class="resume-banner-icon" aria-hidden="true">📖</span>
+        <span class="resume-banner-text">
+          <strong>前回の続き</strong>：『${escapeHtml(story.title)}』${escapeHtml(progressLabel)}から再開する
+        </span>
+        <span class="resume-banner-cta" aria-hidden="true">続きから読む →</span>
+      </a>
+      <button
+        type="button"
+        class="resume-banner-dismiss"
+        data-action="dismiss-resume"
+        aria-label="再開バナーを閉じる"
+      >✕</button>
+    </div>
+  `;
+}
+
+export function renderShelf({ storyGrid, resultSummaryEl, indexData, filters, readingState = null }) {
+  const stories = indexData?.stories || [];
+  const filtered = filterStories(stories, filters, readingState);
+  const validIds = new Set(stories.map((s) => s.id));
+  const readCount = readingState ? readingState.getReadCount(validIds) : 0;
 
   if (resultSummaryEl) {
-    const hasSubFilter = Boolean(filters.entityId || filters.region || (filters.query || "").trim());
-    resultSummaryEl.textContent = hasSubFilter
+    const hasSubFilter = Boolean(
+      (filters.status && filters.status !== "all") ||
+      filters.entityId ||
+      filters.region ||
+      (filters.query || "").trim()
+    );
+    const countText = hasSubFilter
       ? `${filtered.length} 件の作品が一致しました（全 ${stories.length} 作品）`
       : `全 ${filtered.length} 作品を表示中`;
+    const progressText = `✦ 星図記録：${readCount} / ${stories.length} 篇 読了`;
+    resultSummaryEl.innerHTML = `
+      <span>${escapeHtml(countText)}</span>
+      <span class="summary-sep" aria-hidden="true">・</span>
+      <span class="summary-progress">${escapeHtml(progressText)}</span>
+    `;
   }
 
   if (filtered.length === 0) {
     const isUnpopulatedAttire =
       filters.category === "attire" &&
+      (!filters.status || filters.status === "all") &&
       !filters.entityId &&
       !filters.region &&
       !(filters.query || "").trim();
@@ -95,7 +164,7 @@ export function renderShelf({ storyGrid, resultSummaryEl, indexData, filters }) 
         <p class="shelf-empty-desc">${
           isUnpopulatedAttire
             ? "「風の翼」の収録作品は今後のアップデートで追加予定です。"
-            : "カテゴリーや登場人物・地域・検索語句の条件を変更してお試しください。"
+            : "カテゴリーや読書状態・登場人物・地域・検索語句の条件を変更してお試しください。"
         }</p>
         <button type="button" class="control-pill" data-action="reset-filters">条件をリセットしてすべて表示</button>
       </div>
@@ -104,11 +173,19 @@ export function renderShelf({ storyGrid, resultSummaryEl, indexData, filters }) 
   }
 
   storyGrid.innerHTML = filtered.map((story, idx) => {
-    const isFeatured = idx === 0 && filters.category === "all" && !filters.entityId && !filters.region && !(filters.query || "").trim();
+    const isFeatured =
+      idx === 0 &&
+      filters.category === "all" &&
+      (!filters.status || filters.status === "all") &&
+      !filters.entityId &&
+      !filters.region &&
+      !(filters.query || "").trim();
     const emblem = getCategoryEmblem(story.shelfCategory);
     const regionLabel = formatRegion(story.region);
+    const isRead = Boolean(readingState?.isRead(story.id));
+    const isBookmarked = Boolean(readingState?.isBookmarked(story.id));
     return `
-      <a class="story-card${isFeatured ? " is-featured" : ""}" href="${getStoryHash(story.id)}" data-story-id="${escapeHtml(story.id)}">
+      <article class="story-card${isFeatured ? " is-featured" : ""}" data-story-id="${escapeHtml(story.id)}" data-read="${isRead}">
         <div>
           ${!isFeatured ? `<div class="card-emblem-center">${emblem}</div>` : ""}
           <div class="card-top-row">
@@ -117,14 +194,30 @@ export function renderShelf({ storyGrid, resultSummaryEl, indexData, filters }) 
               <span class="category-badge">${escapeHtml(story.categoryLabel)}</span>
               <span>⏱ ${escapeHtml(story.readingTime)} ・ ${escapeHtml(regionLabel)}</span>
             </div>
+            <div class="card-status-actions">
+              ${isRead ? `<span class="read-badge">✦ 読了</span>` : ""}
+              <button
+                type="button"
+                class="card-bookmark-btn"
+                data-action="toggle-bookmark"
+                data-story-id="${escapeHtml(story.id)}"
+                aria-pressed="${isBookmarked}"
+                aria-label="『${escapeHtml(story.title)}』をあとで読む"
+              >
+                <span aria-hidden="true">🔖</span>
+                <span>あとで読む</span>
+              </button>
+            </div>
           </div>
-          <h2 class="card-title">${escapeHtml(story.title)}</h2>
+          <h2 class="card-title">
+            <a class="card-primary-link" href="${getStoryHash(story.id)}">${escapeHtml(story.title)}</a>
+          </h2>
           <p class="card-hook">${escapeHtml(story.hook)}</p>
         </div>
         <div class="card-tags">
           ${(story.tags || []).map((t) => `<span class="tag-chip">#${escapeHtml(t)}</span>`).join("")}
         </div>
-      </a>
+      </article>
     `;
   }).join("");
 }
