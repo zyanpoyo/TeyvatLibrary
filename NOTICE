@@ -24,7 +24,7 @@ HoYoverse の公式サービスではありません。
 ================================================================================
 
 --------------------------------------------------------------------------------
-@oddbird/popover-polyfill (v0.4.4 / package.json: ^0.4.1)
+@oddbird/popover-polyfill (v0.7.3 / package.json: ^0.7.3)
 License: BSD-3-Clause
 Repository: https://github.com/oddbird/popover-polyfill
 --------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-vite (v6.4.6 / package.json: ^6.0.0)
+vite (v8.3.6 / package.json: ^8.3.6)
 License: MIT
 Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
 Repository: https://github.com/vitejs/vite
@@ -143,11 +143,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-※ vite の詳細およびバンドル済み依存パッケージ（Apache-2.0, BSD-2-Clause, CC0-1.0,
-ISC, MIT）については node_modules/vite/LICENSE.md を参照してください。
-その他の間接依存パッケージ（esbuild, rollup, postcss, picocolors, pako,
-source-map-js 等）は MIT / ISC / BSD-3-Clause / (MIT AND Zlib) ライセンスの下で
-提供されています。
+※ vite の詳細およびバンドル済み依存パッケージ（BSD-2-Clause, CC0-1.0, ISC, MIT）に
+ついては node_modules/vite/LICENSE.md を参照してください。
+その他の間接依存パッケージ（rolldown, lightningcss, postcss, detect-libc,
+picocolors, pako, source-map-js 等）は MIT / ISC / BSD-3-Clause / Apache-2.0 /
+MPL-2.0 / (MIT AND Zlib) ライセンスの下で提供されています。
 
 ================================================================================
 4. 外部サービス・データ取得元
