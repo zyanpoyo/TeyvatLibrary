@@ -91,6 +91,7 @@ npm run preview
 | :--- | :--- |
 | `npm run build:data` | `data/` の原典・編集データ・共通マスタを検証し、フロントエンド配信用 JSON を `public/data/` に生成します |
 | `npm run validate` | 配信用ファイルは出力せず、データ構造や原文一致などのバリデーションのみを実行します |
+| `npm test` | フロントエンドのコアロジック（読書状態・カタログ選出・ルーティング）の単体テストを実行します |
 | `npm run extract-raw -- --type <sourceType> --id <rawId>` | `genshin-db` / `genshin-data`（書籍本文は Yatta API）から指定アイテムの原典スナップショットを `data/raw/` へ抽出します |
 | `npm run sync-corpus` | インストール済みパッケージおよび `data/raw/` から公式カタカナ語コーパス（`data/shared/official-corpus.json`）を生成・同期します |
 

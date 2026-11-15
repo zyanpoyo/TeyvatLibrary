@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const VALID_SHELF_CATEGORIES = ["book", "artifact", "weapon", "attire", "chronicle"];
+export const VALID_ENTITY_KINDS = ["character", "god", "organization", "concept", "place"];
 export const VALID_IDENTITY_PREFIXES = ["正体：", "真名：", "鳴神名：", "解説：", "有力説："];
 export const VALID_SOURCE_TYPES = ["artifact", "weapon", "windglider", "book", "material"];
 export const VALID_PACKAGES = ["genshin-db", "genshin-data", "yatta"];
@@ -247,7 +248,7 @@ export function createCorpusChecker(officialEntities, officialCorpus) {
 }
 
 export function validateEntitiesMaster(entities, errors, checkText) {
-  const validKinds = new Set(["character", "god", "organization", "concept", "place"]);
+  const validKinds = new Set(VALID_ENTITY_KINDS);
   for (const [entityId, entity] of Object.entries(entities)) {
     const label = `entities.${entityId}`;
     if (!/^[a-z0-9_]+$/.test(entityId)) {

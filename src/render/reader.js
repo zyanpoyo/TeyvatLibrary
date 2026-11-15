@@ -1,5 +1,5 @@
 import { escapeHtml, formatEvidenceHtml, formatParagraph, formatRegion } from "../utils/html.js";
-import { getStoryHash } from "./shelf.js";
+import { getStoryHash } from "../router.js";
 
 function getReadButtonLabel(isRead, isCompletionBtn) {
   if (isCompletionBtn) {

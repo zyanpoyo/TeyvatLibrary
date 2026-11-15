@@ -12,7 +12,7 @@
 
 ### 4.2 名鑑ビューUIの実装（`index.html`, `src/render/entities.js`, `src/main.js`）
 - 書架上部のナビゲーションまたはタブから切り替えられる「人物・用語名鑑」ビュー（またはドロワー／モーダル）を追加する。
-- 種別（`character`: 人物 / `god`: 魔神・執政 / `faction`: 組織 / `term`: 歴史・重要用語）でグルーピングまたは絞り込み表示する。
+- 種別（`character`: 人物 / `god`: 魔神・執政 / `organization`: 組織 / `concept`: 歴史・重要用語 / `place`: 地域・地名）でグルーピングまたは絞り込み表示する。
 - 各人物カードには以下を表示する:
   - 名称（`name`）と正体（`defaultIdentity`）
   - 背景解説（`defaultDesc`）と出典リンク（`defaultEvidence`）

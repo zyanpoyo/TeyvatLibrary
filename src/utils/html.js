@@ -1,3 +1,5 @@
+import { getStoryHash } from "../router.js";
+
 export function escapeHtml(str) {
   return String(str ?? "")
     .replace(/&/g, "&amp;")
@@ -39,7 +41,7 @@ export function formatEvidenceHtml(evidence, evidenceLinks = []) {
   return escaped.replace(/『([^』]+)』/g, (full, title) => {
     const targetId = linkMap.get(title);
     if (!targetId) return full;
-    const href = `#story/${encodeURIComponent(targetId)}`;
+    const href = getStoryHash(targetId);
     return `<a class="evidence-link" href="${href}" data-target-id="${escapeHtml(targetId)}">『${title}』</a>`;
   });
 }

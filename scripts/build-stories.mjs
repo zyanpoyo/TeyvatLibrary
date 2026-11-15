@@ -80,7 +80,7 @@ function resolveGlossaryItem(termId, rawItem, entities, sid, errors) {
   return resolved;
 }
 
-function extractEvidenceLinks(evidence, titleLookup, selfId) {
+export function extractEvidenceLinks(evidence, titleLookup, selfId = null) {
   if (!evidence) return [];
   const links = [];
   const seenIds = new Set();
@@ -96,34 +96,7 @@ function extractEvidenceLinks(evidence, titleLookup, selfId) {
   return links;
 }
 
-function main() {
-  const entities = readJson(path.join(SHARED_DIR, "entities.json"));
-  const officialEntities = readJson(path.join(SHARED_DIR, "official-entities.json"));
-  const officialCorpus = readJson(path.join(SHARED_DIR, "official-corpus.json"));
-
-  const checkText = createCorpusChecker(officialEntities, officialCorpus);
-  const errors = [];
-
-  validateEntitiesMaster(entities, errors, checkText);
-
-  const storyEntries = collectStoryFiles();
-  if (storyEntries.length === 0) {
-    errors.push("data/stories/ 配下にストーリーJSONが1件も見つかりません。");
-  }
-
-  const rawStories = [];
-  const storyIds = new Set();
-  for (const entry of storyEntries) {
-    const story = readJson(entry.filePath);
-    if (storyIds.has(story.id)) {
-      errors.push(`[重複ID] story.id '${story.id}' が重複しています。`);
-    }
-    storyIds.add(story.id);
-    validateStoryStructure(story, entry.folderCategory, entry.fileSlug, errors);
-    rawStories.push(story);
-  }
-
-  // タイトル逆引きマップ（完全タイトル & 括弧補足なしの短縮タイトル）
+function buildTitleLookup(rawStories) {
   const titleLookup = new Map();
   const ambiguousTitles = new Set();
   const registerTitleAlias = (alias, id) => {
@@ -140,158 +113,155 @@ function main() {
     if (baseTitle !== st.title) registerTitleAlias(baseTitle, st.id);
   }
   for (const amb of ambiguousTitles) titleLookup.delete(amb);
+  return titleLookup;
+}
 
-  const storyById = new Map(rawStories.map((s) => [s.id, s]));
-  const compiledMap = new Map();
+function compileAndValidateStory(story, { entities, storyIds, storyById, titleLookup, checkText, errors }) {
+  const sid = story.id;
+  checkText(story.title, `${sid}.title`, errors);
+  checkText(story.hook, `${sid}.hook`, errors);
+  checkText(story.overallTruth, `${sid}.overallTruth`, errors);
+  checkText(story.gameEffect, `${sid}.gameEffect`, errors);
+  (story.tags || []).forEach((t, i) => checkText(t, `${sid}.tags[${i}]`, errors));
+  (story.preGuide || []).forEach((g, i) => checkText(g, `${sid}.preGuide[${i}]`, errors));
 
-  for (const story of rawStories) {
-    const sid = story.id;
-    checkText(story.title, `${sid}.title`, errors);
-    checkText(story.hook, `${sid}.hook`, errors);
-    checkText(story.overallTruth, `${sid}.overallTruth`, errors);
-    checkText(story.gameEffect, `${sid}.gameEffect`, errors);
-    (story.tags || []).forEach((t, i) => checkText(t, `${sid}.tags[${i}]`, errors));
-    (story.preGuide || []).forEach((g, i) => checkText(g, `${sid}.preGuide[${i}]`, errors));
-
-    // connected 検証
-    for (const conn of story.connected || []) {
-      if (conn.targetId === sid) {
-        errors.push(`[自己参照] ${sid}.connected: 自分自身 (${sid}) を参照しています。`);
-      } else if (!storyIds.has(conn.targetId)) {
-        errors.push(`[リンク切れ] ${sid}.connected: 対象ID '${conn.targetId}' が存在しません。`);
-      }
-      checkText(conn.relation, `${sid}.connected(${conn.targetId}).relation`, errors);
-      checkText(conn.desc, `${sid}.connected(${conn.targetId}).desc`, errors);
-      if (conn.reverseRelation) {
-        checkText(conn.reverseRelation, `${sid}.connected(${conn.targetId}).reverseRelation`, errors);
-      }
-      if (conn.reverseDesc) {
-        checkText(conn.reverseDesc, `${sid}.connected(${conn.targetId}).reverseDesc`, errors);
-      }
+  // connected 検証
+  for (const conn of story.connected || []) {
+    if (conn.targetId === sid) {
+      errors.push(`[自己参照] ${sid}.connected: 自分自身 (${sid}) を参照しています。`);
+    } else if (!storyIds.has(conn.targetId)) {
+      errors.push(`[リンク切れ] ${sid}.connected: 対象ID '${conn.targetId}' が存在しません。`);
     }
-
-    // glossary 解決＆検証
-    const resolvedGlossary = {};
-    const storyEntityIds = new Set();
-    for (const [termId, rawItem] of Object.entries(story.glossary || {})) {
-      const resolved = resolveGlossaryItem(termId, rawItem, entities, sid, errors);
-      if (resolved.entityId) storyEntityIds.add(resolved.entityId);
-
-      const gLabel = `${sid}.glossary.${termId}`;
-      checkText(resolved.term, `${gLabel}.term`, errors);
-      checkText(resolved.identity, `${gLabel}.identity`, errors);
-      checkText(resolved.desc, `${gLabel}.desc`, errors);
-      checkText(resolved.evidence, `${gLabel}.evidence`, errors);
-
-      const evidenceLinks = extractEvidenceLinks(resolved.evidence, titleLookup, sid);
-      if (evidenceLinks.length > 0) {
-        resolved.evidenceLinks = evidenceLinks;
-      }
-      resolvedGlossary[termId] = resolved;
+    checkText(conn.relation, `${sid}.connected(${conn.targetId}).relation`, errors);
+    checkText(conn.desc, `${sid}.connected(${conn.targetId}).desc`, errors);
+    if (conn.reverseRelation) {
+      checkText(conn.reverseRelation, `${sid}.connected(${conn.targetId}).reverseRelation`, errors);
     }
-
-    // chapters 検証（原文1文字完全一致 + タグ + コーパス）
-    const glossaryKeys = new Set(Object.keys(resolvedGlossary));
-    const usedTerms = new Set();
-    let totalCharCount = 0;
-
-    (story.chapters || []).forEach((ch, cIdx) => {
-      const cLabel = `${sid}.chapters[${cIdx}]`;
-      checkText(ch.partLabel, `${cLabel}.partLabel`, errors);
-      checkText(ch.heading, `${cLabel}.heading`, errors);
-      checkText(ch.epigraph, `${cLabel}.epigraph`, errors);
-      checkText(ch.chapterNote, `${cLabel}.chapterNote`, errors);
-
-      const ref = ch.sourceRef;
-      if (!ref) {
-        errors.push(`[sourceRef欠落] ${cLabel}: sourceRef が未設定です。`);
-      } else {
-        if (!VALID_PACKAGES.includes(ref.package)) {
-          errors.push(`[sourceRef不正] ${cLabel}: package '${ref.package}' が無効です。`);
-        }
-        if (!VALID_SOURCE_TYPES.includes(ref.sourceType)) {
-          errors.push(`[sourceRef不正] ${cLabel}: sourceType '${ref.sourceType}' が無効です。`);
-        }
-        try {
-          const rawJson = loadRawJson(RAW_DIR, ref);
-          const expected = resolveExpectedRawText(rawJson, ref);
-          const actual = resolveActualPlainText(ch.paragraphs);
-          if (expected !== actual) {
-            const diff = findFirstDiffContext(expected, actual);
-            errors.push(
-              `[原文不一致] ${cLabel} (${ref.sourceType}/${ref.rawId}): raw(len=${expected.length}) と paragraphs(len=${actual.length}) が位置 ${diff?.index} で不一致です。` +
-              ` raw=${JSON.stringify(diff?.expectedSnippet)} vs actual=${JSON.stringify(diff?.actualSnippet)}`
-            );
-          }
-        } catch (err) {
-          errors.push(`[原典解決エラー] ${cLabel}: ${err.message}`);
-        }
-      }
-
-      (ch.paragraphs || []).forEach((p, pIdx) => {
-        checkText(p, `${cLabel}.paragraphs[${pIdx}]`, errors);
-        totalCharCount += stripInlineTags(p).replace(/\s+/g, "").length;
-        const tagRegex = /\{\{([a-z0-9_]+)\|([^}]+)\}\}/g;
-        let m;
-        while ((m = tagRegex.exec(p)) !== null) {
-          const tId = m[1];
-          const surface = m[2];
-          usedTerms.add(tId);
-          if (!glossaryKeys.has(tId)) {
-            errors.push(
-              `[未定義用語タグ] ${cLabel}.paragraphs[${pIdx}]: {{${tId}|${surface}}} に対応する glossary.${tId} が存在しません。`
-            );
-          }
-        }
-      });
-    });
-
-    for (const gKey of glossaryKeys) {
-      if (!usedTerms.has(gKey)) {
-        errors.push(`[未使用glossary] ${sid}.glossary.${gKey}: 本文中のどこからも参照されていません。`);
-      }
+    if (conn.reverseDesc) {
+      checkText(conn.reverseDesc, `${sid}.connected(${conn.targetId}).reverseDesc`, errors);
     }
-
-    const readingMinutes = Math.max(1, Math.round(totalCharCount / 550));
-    const compiledStory = {
-      id: story.id,
-      title: story.title,
-      shelfCategory: story.shelfCategory,
-      categoryLabel: story.categoryLabel,
-      region: story.region,
-      era: story.era,
-      ...(story.releaseVersion ? { releaseVersion: story.releaseVersion } : {}),
-      ...(story.addedAt ? { addedAt: story.addedAt } : {}),
-      readingTime: `約${readingMinutes}分`,
-      charCount: totalCharCount,
-      chapterCount: story.chapters.length,
-      hook: story.hook,
-      tags: story.tags,
-      entityIds: [...storyEntityIds],
-      preGuide: story.preGuide,
-      overallTruth: story.overallTruth,
-      gameEffect: story.gameEffect,
-      connected: (story.connected || []).map((c) => ({
-        targetId: c.targetId,
-        title: storyById.get(c.targetId)?.title || c.targetId,
-        relation: c.relation,
-        desc: c.desc,
-      })),
-      glossary: resolvedGlossary,
-      chapters: story.chapters.map((ch) => ({
-        partLabel: ch.partLabel,
-        heading: ch.heading,
-        epigraph: ch.epigraph,
-        paragraphs: ch.paragraphs,
-        ...(ch.chapterNote ? { chapterNote: ch.chapterNote } : {}),
-        sourceRef: ch.sourceRef,
-      })),
-    };
-
-    compiledMap.set(story.id, compiledStory);
   }
 
-  // 双方向 connected リンクの自動展開（片方向のみ記述されていた場合の補完）
+  // glossary 解決＆検証
+  const resolvedGlossary = {};
+  const storyEntityIds = new Set();
+  for (const [termId, rawItem] of Object.entries(story.glossary || {})) {
+    const resolved = resolveGlossaryItem(termId, rawItem, entities, sid, errors);
+    if (resolved.entityId) storyEntityIds.add(resolved.entityId);
+
+    const gLabel = `${sid}.glossary.${termId}`;
+    checkText(resolved.term, `${gLabel}.term`, errors);
+    checkText(resolved.identity, `${gLabel}.identity`, errors);
+    checkText(resolved.desc, `${gLabel}.desc`, errors);
+    checkText(resolved.evidence, `${gLabel}.evidence`, errors);
+
+    const evidenceLinks = extractEvidenceLinks(resolved.evidence, titleLookup, sid);
+    if (evidenceLinks.length > 0) {
+      resolved.evidenceLinks = evidenceLinks;
+    }
+    resolvedGlossary[termId] = resolved;
+  }
+
+  // chapters 検証（原文1文字完全一致 + タグ + コーパス）
+  const glossaryKeys = new Set(Object.keys(resolvedGlossary));
+  const usedTerms = new Set();
+  let totalCharCount = 0;
+
+  (story.chapters || []).forEach((ch, cIdx) => {
+    const cLabel = `${sid}.chapters[${cIdx}]`;
+    checkText(ch.partLabel, `${cLabel}.partLabel`, errors);
+    checkText(ch.heading, `${cLabel}.heading`, errors);
+    checkText(ch.epigraph, `${cLabel}.epigraph`, errors);
+    checkText(ch.chapterNote, `${cLabel}.chapterNote`, errors);
+
+    const ref = ch.sourceRef;
+    if (!ref) {
+      errors.push(`[sourceRef欠落] ${cLabel}: sourceRef が未設定です。`);
+    } else {
+      if (!VALID_PACKAGES.includes(ref.package)) {
+        errors.push(`[sourceRef不正] ${cLabel}: package '${ref.package}' が無効です。`);
+      }
+      if (!VALID_SOURCE_TYPES.includes(ref.sourceType)) {
+        errors.push(`[sourceRef不正] ${cLabel}: sourceType '${ref.sourceType}' が無効です。`);
+      }
+      try {
+        const rawJson = loadRawJson(RAW_DIR, ref);
+        const expected = resolveExpectedRawText(rawJson, ref);
+        const actual = resolveActualPlainText(ch.paragraphs);
+        if (expected !== actual) {
+          const diff = findFirstDiffContext(expected, actual);
+          errors.push(
+            `[原文不一致] ${cLabel} (${ref.sourceType}/${ref.rawId}): raw(len=${expected.length}) と paragraphs(len=${actual.length}) が位置 ${diff?.index} で不一致です。` +
+            ` raw=${JSON.stringify(diff?.expectedSnippet)} vs actual=${JSON.stringify(diff?.actualSnippet)}`
+          );
+        }
+      } catch (err) {
+        errors.push(`[原典解決エラー] ${cLabel}: ${err.message}`);
+      }
+    }
+
+    (ch.paragraphs || []).forEach((p, pIdx) => {
+      checkText(p, `${cLabel}.paragraphs[${pIdx}]`, errors);
+      totalCharCount += stripInlineTags(p).replace(/\s+/g, "").length;
+      const tagRegex = /\{\{([a-z0-9_]+)\|([^}]+)\}\}/g;
+      let m;
+      while ((m = tagRegex.exec(p)) !== null) {
+        const tId = m[1];
+        const surface = m[2];
+        usedTerms.add(tId);
+        if (!glossaryKeys.has(tId)) {
+          errors.push(
+            `[未定義用語タグ] ${cLabel}.paragraphs[${pIdx}]: {{${tId}|${surface}}} に対応する glossary.${tId} が存在しません。`
+          );
+        }
+      }
+    });
+  });
+
+  for (const gKey of glossaryKeys) {
+    if (!usedTerms.has(gKey)) {
+      errors.push(`[未使用glossary] ${sid}.glossary.${gKey}: 本文中のどこからも参照されていません。`);
+    }
+  }
+
+  const readingMinutes = Math.max(1, Math.round(totalCharCount / 550));
+  return {
+    id: story.id,
+    title: story.title,
+    shelfCategory: story.shelfCategory,
+    categoryLabel: story.categoryLabel,
+    region: story.region,
+    era: story.era,
+    ...(story.releaseVersion ? { releaseVersion: story.releaseVersion } : {}),
+    ...(story.addedAt ? { addedAt: story.addedAt } : {}),
+    readingTime: `約${readingMinutes}分`,
+    charCount: totalCharCount,
+    chapterCount: story.chapters.length,
+    hook: story.hook,
+    tags: story.tags,
+    entityIds: [...storyEntityIds],
+    preGuide: story.preGuide,
+    overallTruth: story.overallTruth,
+    gameEffect: story.gameEffect,
+    connected: (story.connected || []).map((c) => ({
+      targetId: c.targetId,
+      title: storyById.get(c.targetId)?.title || c.targetId,
+      relation: c.relation,
+      desc: c.desc,
+    })),
+    glossary: resolvedGlossary,
+    chapters: story.chapters.map((ch) => ({
+      partLabel: ch.partLabel,
+      heading: ch.heading,
+      epigraph: ch.epigraph,
+      paragraphs: ch.paragraphs,
+      ...(ch.chapterNote ? { chapterNote: ch.chapterNote } : {}),
+      sourceRef: ch.sourceRef,
+    })),
+  };
+}
+
+function expandBidirectionalConnections(rawStories, compiledMap) {
   for (const story of rawStories) {
     for (const conn of story.connected || []) {
       const targetCompiled = compiledMap.get(conn.targetId);
@@ -307,25 +277,9 @@ function main() {
       }
     }
   }
+}
 
-  if (errors.length > 0) {
-    console.error(`\n❌ 検証失敗: ${errors.length} 件のエラーが見つかりました:\n`);
-    errors.forEach((e) => console.error("  - " + e));
-    process.exit(1);
-  }
-
-  if (validateOnly) {
-    console.log(
-      `✅ 検証成功 (--validate-only): 全 ${rawStories.length} 作品（原文1文字一致・スキーマ・公式コーパス ${Object.keys(officialCorpus.terms || {}).length} 語・マスタ・リンク整合性）すべて正常です。`
-    );
-    return;
-  }
-
-  // 配信層 (public/data/) のクリーン生成
-  const distStoriesDir = path.join(DIST_DIR, "stories");
-  fs.rmSync(DIST_DIR, { recursive: true, force: true });
-  fs.mkdirSync(distStoriesDir, { recursive: true });
-
+function buildIndexPayload(compiledMap, entities) {
   const categoryCounts = Object.fromEntries(VALID_SHELF_CATEGORIES.map((c) => [c, 0]));
   const entitiesIndex = {};
   const indexStories = [];
@@ -360,7 +314,23 @@ function main() {
       tags: compiled.tags,
       entityIds: compiled.entityIds,
     });
+  }
 
+  return {
+    generatedAt: new Date().toISOString(),
+    totalCount: indexStories.length,
+    categoryCounts,
+    entitiesIndex,
+    stories: indexStories,
+  };
+}
+
+function writeDistOutput(distDir, compiledMap, indexPayload) {
+  const distStoriesDir = path.join(distDir, "stories");
+  fs.rmSync(distDir, { recursive: true, force: true });
+  fs.mkdirSync(distStoriesDir, { recursive: true });
+
+  for (const compiled of compiledMap.values()) {
     fs.writeFileSync(
       path.join(distStoriesDir, `${compiled.id}.json`),
       JSON.stringify(compiled, null, 2) + "\n",
@@ -368,22 +338,76 @@ function main() {
     );
   }
 
-  const indexPayload = {
-    generatedAt: new Date().toISOString(),
-    totalCount: indexStories.length,
-    categoryCounts,
-    entitiesIndex,
-    stories: indexStories,
-  };
-
   fs.writeFileSync(
-    path.join(DIST_DIR, "stories-index.json"),
+    path.join(distDir, "stories-index.json"),
     JSON.stringify(indexPayload, null, 2) + "\n",
     "utf8"
   );
+}
+
+function main() {
+  const entities = readJson(path.join(SHARED_DIR, "entities.json"));
+  const officialEntities = readJson(path.join(SHARED_DIR, "official-entities.json"));
+  const officialCorpus = readJson(path.join(SHARED_DIR, "official-corpus.json"));
+
+  const checkText = createCorpusChecker(officialEntities, officialCorpus);
+  const errors = [];
+
+  validateEntitiesMaster(entities, errors, checkText);
+
+  const storyEntries = collectStoryFiles();
+  if (storyEntries.length === 0) {
+    errors.push("data/stories/ 配下にストーリーJSONが1件も見つかりません。");
+  }
+
+  const rawStories = [];
+  const storyIds = new Set();
+  for (const entry of storyEntries) {
+    const story = readJson(entry.filePath);
+    if (storyIds.has(story.id)) {
+      errors.push(`[重複ID] story.id '${story.id}' が重複しています。`);
+    }
+    storyIds.add(story.id);
+    validateStoryStructure(story, entry.folderCategory, entry.fileSlug, errors);
+    rawStories.push(story);
+  }
+
+  const titleLookup = buildTitleLookup(rawStories);
+  const storyById = new Map(rawStories.map((s) => [s.id, s]));
+  const compiledMap = new Map();
+
+  for (const story of rawStories) {
+    const compiledStory = compileAndValidateStory(story, {
+      entities,
+      storyIds,
+      storyById,
+      titleLookup,
+      checkText,
+      errors,
+    });
+    compiledMap.set(story.id, compiledStory);
+  }
+
+  expandBidirectionalConnections(rawStories, compiledMap);
+
+  if (errors.length > 0) {
+    console.error(`\n❌ 検証失敗: ${errors.length} 件のエラーが見つかりました:\n`);
+    errors.forEach((e) => console.error("  - " + e));
+    process.exit(1);
+  }
+
+  if (validateOnly) {
+    console.log(
+      `✅ 検証成功 (--validate-only): 全 ${rawStories.length} 作品（原文1文字一致・スキーマ・公式コーパス ${Object.keys(officialCorpus.terms || {}).length} 語・マスタ・リンク整合性）すべて正常です。`
+    );
+    return;
+  }
+
+  const indexPayload = buildIndexPayload(compiledMap, entities);
+  writeDistOutput(DIST_DIR, compiledMap, indexPayload);
 
   console.log(
-    `✅ ビルド＆検証成功: 全 ${indexStories.length} 作品を検証し、public/data/ (stories-index.json + stories/*.json) を生成しました。`
+    `✅ ビルド＆検証成功: 全 ${indexPayload.totalCount} 作品を検証し、public/data/ (stories-index.json + stories/*.json) を生成しました。`
   );
 }
 
