@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "テイワット文庫 編集層ストーリーJSONスキーマ",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "shelfCategory",
+    "categoryLabel",
+    "region",
+    "era",
+    "hook",
+    "tags",
+    "preGuide",
+    "overallTruth",
+    "gameEffect",
+    "glossary",
+    "chapters"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "shelfCategory": {
+      "type": "string",
+      "enum": ["book", "artifact", "weapon", "attire", "chronicle"]
+    },
+    "categoryLabel": { "type": "string", "minLength": 1 },
+    "region": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "era": { "type": "string", "minLength": 1 },
+    "releaseVersion": { "type": "string" },
+    "hook": { "type": "string", "minLength": 1 },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "preGuide": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "overallTruth": { "type": "string", "minLength": 1 },
+    "gameEffect": { "type": "string", "minLength": 1 },
+    "connected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["targetId", "relation", "desc"],
+        "additionalProperties": false,
+        "properties": {
+          "targetId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "relation": { "type": "string", "minLength": 1 },
+          "desc": { "type": "string", "minLength": 1 },
+          "reverseRelation": { "type": "string", "minLength": 1 },
+          "reverseDesc": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "glossary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["term"],
+        "additionalProperties": false,
+        "properties": {
+          "entityId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "term": { "type": "string", "minLength": 1 },
+          "identity": { "type": "string", "minLength": 1 },
+          "identityOverride": { "type": "string", "minLength": 1 },
+          "desc": { "type": "string", "minLength": 1 },
+          "descOverride": { "type": "string", "minLength": 1 },
+          "evidence": { "type": "string", "minLength": 1 },
+          "evidenceOverride": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["sourceRef", "partLabel", "heading", "epigraph", "paragraphs"],
+        "additionalProperties": false,
+        "properties": {
+          "sourceRef": {
+            "type": "object",
+            "required": ["package", "sourceType", "rawId"],
+            "additionalProperties": false,
+            "properties": {
+              "package": {
+                "type": "string",
+                "enum": ["genshin-db", "genshin-data", "yatta"]
+              },
+              "sourceType": {
+                "type": "string",
+                "enum": ["artifact", "weapon", "windglider", "book", "material"]
+              },
+              "rawId": { "type": "string", "minLength": 1 },
+              "piece": {
+                "type": "string",
+                "enum": ["flower", "plume", "sands", "goblet", "circlet"]
+              },
+              "volumeId": { "type": "integer" },
+              "field": {
+                "type": "string",
+                "enum": ["story", "description", "text"]
+              },
+              "stripPrefix": { "type": "string" },
+              "paragraphSlice": {
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0 },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          },
+          "partLabel": { "type": "string", "minLength": 1 },
+          "heading": { "type": "string", "minLength": 1 },
+          "epigraph": { "type": "string" },
+          "paragraphs": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "chapterNote": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <script>
+    (function () {
+      var theme = "night";
+      try {
+        var raw = localStorage.getItem("genshin-books-display-prefs-v1");
+        var parsed = raw ? JSON.parse(raw) : null;
+        if (parsed && (parsed.theme === "night" || parsed.theme === "paper" || parsed.theme === "sepia")) {
+          theme = parsed.theme;
+        }
+      } catch (e) {
+        // Ignore storage errors
+      }
+      document.documentElement.dataset.theme = theme;
+      var meta = document.querySelector('meta[name="color-scheme"]');
+      if (meta) {
+        meta.content = theme === "night" ? "dark" : "light";
+      }
+    })();
+  </script>
+  <title>テイワット文庫 — 原神 聖遺物・武器・書籍リーダー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body data-view="shelf">
+  <!-- Night Observatory Sky Background -->
+  <div class="celestial-backdrop" aria-hidden="true">
+    <svg class="celestial-meridians" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="starGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff9eb" stop-opacity="0.95"/>
+          <stop offset="45%" stop-color="#d8b878" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#d8b878" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Subtle Astronomical Concentric Circles & Constellation Lines -->
+      <g stroke="rgba(216, 184, 120, 0.14)" stroke-width="1" fill="none">
+        <circle cx="720" cy="140" r="260"/>
+        <circle cx="720" cy="140" r="390" stroke-dasharray="4 6"/>
+        <circle cx="720" cy="140" r="540" stroke="rgba(142, 166, 200, 0.11)"/>
+        <path d="M120,210 L215,148 L305,196 L390,115"/>
+        <path d="M1050,120 L1145,195 L1235,132 L1335,205"/>
+      </g>
+
+      <!-- Quiet Star Nodes -->
+      <g class="star-twinkle">
+        <circle cx="120" cy="210" r="5" fill="url(#starGlow)"/>
+        <circle cx="215" cy="148" r="1.6" fill="#f4e4bf"/>
+        <circle cx="305" cy="196" r="1.8" fill="#d8b878"/>
+        <circle cx="390" cy="115" r="5" fill="url(#starGlow)"/>
+        <circle cx="1050" cy="120" r="4.5" fill="url(#starGlow)"/>
+        <circle cx="1235" cy="132" r="5" fill="url(#starGlow)"/>
+      </g>
+      <g class="star-twinkle-delayed">
+        <circle cx="1145" cy="195" r="1.7" fill="#f4e4bf"/>
+        <circle cx="1335" cy="205" r="1.5" fill="#d8b878"/>
+        <circle cx="520" cy="460" r="1.3" fill="rgba(236, 231, 220, 0.55)"/>
+        <circle cx="940" cy="520" r="1.3" fill="rgba(236, 231, 220, 0.55)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="reading-progress" id="reading-progress" hidden></div>
+  <div class="reader-footer-status" id="reader-footer-status" aria-hidden="true" hidden>
+    <span class="reader-footer-chapter" id="reader-footer-chapter"></span>
+    <span class="reader-footer-sep" aria-hidden="true">・</span>
+    <span class="reader-footer-percent" id="reader-footer-percent">0%</span>
+  </div>
+
+  <main class="main-container">
+    <!-- Bookshelf View -->
+    <section id="shelf-view" tabindex="-1">
+      <header class="observatory-hero">
+        <svg class="observatory-chart-bg" viewBox="0 0 960 280" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <g stroke="var(--chart-stroke-main)" stroke-width="0.9" fill="none">
+            <circle cx="480" cy="130" r="118"/>
+            <circle cx="480" cy="130" r="175" stroke-dasharray="3 5"/>
+            <circle cx="480" cy="130" r="245" stroke="var(--chart-stroke-sub)"/>
+            <line x1="160" y1="130" x2="800" y2="130" stroke="var(--chart-stroke-axis)"/>
+            <line x1="480" y1="0" x2="480" y2="260" stroke="var(--chart-stroke-axis)"/>
+          </g>
+          <g fill="var(--chart-star-fill)" opacity="0.75">
+            <circle cx="245" cy="96" r="1.6"/>
+            <circle cx="295" cy="64" r="1.2"/>
+            <circle cx="672" cy="72" r="1.5"/>
+            <circle cx="718" cy="112" r="1.3"/>
+          </g>
+        </svg>
+
+        <div class="shelf-theme-switcher" id="shelf-theme-switcher" role="group" aria-label="背景テーマ">
+          <button type="button" class="shelf-theme-option" data-setting="theme" data-value="night" aria-pressed="true">
+            <span class="theme-swatch theme-swatch-night" aria-hidden="true"></span>
+            <span>夜空</span>
+          </button>
+          <button type="button" class="shelf-theme-option" data-setting="theme" data-value="paper" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-paper" aria-hidden="true"></span>
+            <span>生成り紙</span>
+          </button>
+          <button type="button" class="shelf-theme-option" data-setting="theme" data-value="sepia" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-sepia" aria-hidden="true"></span>
+            <span>セピア</span>
+          </button>
+        </div>
+
+        <div class="observatory-header-inner">
+          <p class="observatory-eyebrow">✦ Teyvat Library ✦</p>
+          <h1 class="observatory-title">テイワット文庫</h1>
+          <p class="observatory-sub">原神 聖遺物・武器・書籍リーダー</p>
+        </div>
+
+        <nav class="category-tabs" id="category-tabs" aria-label="カテゴリー絞り込み">
+          <button type="button" class="category-tab" data-filter="all" aria-pressed="true">すべて</button>
+          <button type="button" class="category-tab" data-filter="book" aria-pressed="false">書籍</button>
+          <button type="button" class="category-tab" data-filter="artifact" aria-pressed="false">聖遺物</button>
+          <button type="button" class="category-tab" data-filter="weapon" aria-pressed="false">武器</button>
+          <button type="button" class="category-tab" data-filter="attire" aria-pressed="false">風の翼</button>
+          <button type="button" class="category-tab" data-filter="chronicle" aria-pressed="false">突破・育成素材</button>
+        </nav>
+      </header>
+
+      <div class="shelf-toolbar" aria-label="人物・地域・キーワード検索">
+        <div class="shelf-filters">
+          <select id="entity-filter" class="filter-control" aria-label="登場人物で絞り込む">
+            <option value="">登場人物：すべて</option>
+          </select>
+          <select id="region-filter" class="filter-control" aria-label="地域で絞り込む">
+            <option value="">地域：すべて</option>
+          </select>
+          <input
+            type="search"
+            id="search-filter"
+            class="filter-control filter-search"
+            placeholder="タイトル・キーワード・時代で検索…"
+            aria-label="タイトル・キーワード・時代で検索"
+          >
+        </div>
+        <p class="filter-summary" id="filter-result-summary" aria-live="polite"></p>
+      </div>
+
+      <!-- Story Cards Grid -->
+      <div class="story-grid" id="story-grid"></div>
+    </section>
+
+    <!-- Reader View -->
+    <article id="reader-view" class="reader-view" data-annotations="on" tabindex="-1" hidden inert>
+      <div class="reader-nav-row" style="margin-top: 1rem;">
+        <button type="button" class="back-link" id="back-to-shelf-btn">← 書架へ戻る</button>
+        <div class="reader-controls">
+          <button type="button" class="control-pill" id="toggle-annotations-btn" aria-pressed="true">
+            <span>✦ 用語ガイド ON</span>
+          </button>
+          <button type="button" class="control-pill" id="display-settings-btn" popovertarget="display-settings-popover">
+            <span>Aa 表示設定</span>
+          </button>
+        </div>
+      </div>
+
+      <header class="reader-header" id="reader-header"></header>
+      <nav class="chapter-toc" id="chapter-toc" aria-label="章目次"></nav>
+      <div id="chapters-container"></div>
+      <aside class="connected-box" id="connected-container" hidden></aside>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <p>テイワット文庫 — 非公式ファンアーカイブ（原文テキストはゲーム内収録資料に基づき無改変で掲載しています）</p>
+    <p>本サイトは HoYoverse の公式サービスではありません。ゲーム内テキストの著作権は COGNOSPHERE PTE. LTD. に帰属します。</p>
+  </footer>
+
+  <!-- Native Popovers Container -->
+  <div id="popovers-container"></div>
+
+  <!-- Display Settings Popover (Aa) -->
+  <div id="display-settings-popover" popover="auto" class="display-popover" role="dialog" aria-labelledby="display-settings-title">
+    <div class="popover-header">
+      <h3 class="popover-term-title" id="display-settings-title">Aa 表示設定</h3>
+      <button type="button" class="popover-close" popovertarget="display-settings-popover" popovertargetaction="hide">✕ 閉じる</button>
+    </div>
+    <div class="display-settings-groups">
+      <fieldset class="setting-group">
+        <legend class="setting-label">文字サイズ</legend>
+        <div class="setting-segmented">
+          <button type="button" class="setting-option" data-setting="fontSize" data-value="small" aria-pressed="false">小</button>
+          <button type="button" class="setting-option" data-setting="fontSize" data-value="medium" aria-pressed="true">標準</button>
+          <button type="button" class="setting-option" data-setting="fontSize" data-value="large" aria-pressed="false">大</button>
+        </div>
+      </fieldset>
+      <fieldset class="setting-group">
+        <legend class="setting-label">書体</legend>
+        <div class="setting-segmented">
+          <button type="button" class="setting-option" data-setting="fontFamily" data-value="mincho" aria-pressed="true">明朝</button>
+          <button type="button" class="setting-option" data-setting="fontFamily" data-value="gothic" aria-pressed="false">ゴシック</button>
+        </div>
+      </fieldset>
+      <fieldset class="setting-group">
+        <legend class="setting-label">背景テーマ</legend>
+        <div class="setting-segmented">
+          <button type="button" class="setting-option" data-setting="theme" data-value="night" aria-pressed="true">
+            <span class="theme-swatch theme-swatch-night" aria-hidden="true"></span>
+            <span>夜空</span>
+          </button>
+          <button type="button" class="setting-option" data-setting="theme" data-value="paper" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-paper" aria-hidden="true"></span>
+            <span>生成り紙</span>
+          </button>
+          <button type="button" class="setting-option" data-setting="theme" data-value="sepia" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-sepia" aria-hidden="true"></span>
+            <span>セピア</span>
+          </button>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "テイワット文庫 共通人物・用語マスタ (entities.json)",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "required": ["name", "kind", "defaultIdentity", "defaultDesc", "defaultEvidence"],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "description": "一覧フィルタ・インデックス表示用の名称"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["character", "god", "organization", "concept", "place"],
+        "description": "エンティティ種別"
+      },
+      "defaultIdentity": {
+        "type": "string",
+        "pattern": "^(正体：|真名：|鳴神名：|解説：|有力説：)",
+        "description": "確度区分プレフィックス付きの正体・肩書き"
+      },
+      "defaultDesc": {
+        "type": "string",
+        "minLength": 1,
+        "description": "デフォルトの背景解説"
+      },
+      "defaultEvidence": {
+        "type": "string",
+        "minLength": 1,
+        "description": "デフォルトの出典・根拠（『作品名』を含む場合は配信時に自動リンク化）"
+      }
+    }
+  }
+}

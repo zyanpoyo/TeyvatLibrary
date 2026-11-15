@@ -1,0 +1,35 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+credentials.json
+
+# Dependencies & build outputs
+node_modules/
+dist/
+build/
+public/data/
+.vite/
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Temporary data & auto-generated corpus cache
+raw_*.json
+*.tmp
+.agents/skills/genshin-story-curator/resources/official-corpus.json

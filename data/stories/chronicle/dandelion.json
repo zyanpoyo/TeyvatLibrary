@@ -1,0 +1,108 @@
+{
+  "$schema": "../../schemas/story.schema.json",
+  "id": "dandelion",
+  "title": "獅牙戦士の叙事詩",
+  "shelfCategory": "chronicle",
+  "categoryLabel": "突破素材（四幕詩）",
+  "region": [
+    "モンド"
+  ],
+  "era": "旧貴族時代（約1000年前）",
+  "releaseVersion": "1.0",
+  "hook": "鎖に繋がれた奴隷剣闘士ヴァネッサは、なぜモンドの「自由の象徴」となったのか",
+  "tags": [
+    "ヴァネッサ",
+    "西風騎士団創設",
+    "突破素材4段階連作"
+  ],
+  "preGuide": [
+    "舞台：今から約1000年前、腐敗した旧貴族（ローレンス家）が支配していた暗黒時代のモンド。",
+    "主人公：異国（ナタ）から流れ着き、闘技場の剣闘士として鎖に繋がれていた赤髪の少女ヴァネッサ。",
+    "読みどころ：武器突破素材の4段階（緑・青・紫・金）の短い説明文を1つに繋げると、「物理的な鎖」から「世界を守る責任という鎖」へ昇華する美しい四幕詩になります。"
+  ],
+  "overallTruth": "ヴァネッサは実はいつでも金属の鎖など引きちぎれるほどの怪力を持っていましたが、人質に取られた一族を守るためにあえて剣闘士として戦っていました。風神バルバトスの助力を得て貴族を打倒した後、彼女は初代「蒲公英騎士（西風騎士団長）」となり、最後は風立ちの地の巨木で天空の島へと昇天し、「西風の鷹」となりました。",
+  "gameEffect": "武器突破素材シリーズ：獅牙戦士の枷（★2）→ 獅牙戦士の鎖（★3）→ 獅牙戦士の手錠（★4）→ 獅牙戦士の理想（★5）",
+  "connected": [
+    {
+      "targetId": "wolfs",
+      "relation": "同じモンドの英雄譚",
+      "desc": "『狼の末路』——北風の騎士と奔狼アンドリアスの絆の物語"
+    }
+  ],
+  "glossary": {
+    "dn_vanessa": {
+      "entityId": "vennessa",
+      "term": "ヴァネッサ",
+      "descOverride": "1000年前に旧貴族の圧政からモンドを解放した大英雄。現在のジン団長が受け継ぐ「蒲公英騎士（ダンディライオンナイト）」と「獅牙騎士」の両方の称号の起源です。",
+      "evidenceOverride": "突破素材『獅牙戦士の理想』・武器『風鷹剣』・公式セレベンツ漫画プロローグ"
+    },
+    "dn_fire": {
+      "term": "故郷の神火",
+      "identity": "解説：炎の国「ナタ」のルーツ（ムーナタ人）",
+      "desc": "ヴァネッサの一族は燃えるような赤髪を持つ「ムーナタ人」であり、流浪の末にモンドへ辿り着きました。",
+      "evidence": "突破素材『獅牙戦士の手錠』・公式セレベンツ漫画プロローグ（改訂表記）"
+    }
+  },
+  "chapters": [
+    {
+      "sourceRef": {
+        "package": "genshin-db",
+        "sourceType": "material",
+        "rawId": "fettersofthedandeliongladiator",
+        "field": "description",
+        "stripPrefix": "武器に突破の力を付与する材料。\n"
+      },
+      "partLabel": "第一幕（★2：獅牙戦士の枷）",
+      "heading": "誇張された枷の伝説",
+      "epigraph": "煉武秘境：セシリアの苗床 / 武器突破素材 第一段階",
+      "paragraphs": [
+        "人々は英雄の物語を誇張して描く傾向がある。かつて英雄を束縛した枷まで、自由の敵として描かれている。\nそのため、この枷も通常ではない力が付与された。"
+      ]
+    },
+    {
+      "sourceRef": {
+        "package": "genshin-db",
+        "sourceType": "material",
+        "rawId": "chainsofthedandeliongladiator",
+        "field": "description",
+        "stripPrefix": "武器に突破の力を付与する材料。\n"
+      },
+      "partLabel": "第二幕（★3：獅牙戦士の鎖）",
+      "heading": "剣闘士の背負った鎖",
+      "epigraph": "煉武秘境：セシリアの苗床 / 武器突破素材 第二段階",
+      "paragraphs": [
+        "遥か昔、剣闘士は鎖を背負っていた。獅牙の戦士、大英雄{{dn_vanessa|ヴァネッサ}}も例外ではなかった。"
+      ]
+    },
+    {
+      "sourceRef": {
+        "package": "genshin-db",
+        "sourceType": "material",
+        "rawId": "shacklesofthedandeliongladiator",
+        "field": "description",
+        "stripPrefix": "武器に突破の力を付与する材料。\n"
+      },
+      "partLabel": "第三幕（★4：獅牙戦士の手錠）",
+      "heading": "彼女を本当に縛っていたもの",
+      "epigraph": "煉武秘境：セシリアの苗床 / 武器突破素材 第三段階",
+      "paragraphs": [
+        "ヴァネッサは手錠や鎖で束縛されたわけではない。彼女が抵抗しようとするなら、いつでもモンドの金属をバラバラにすることができる。なにせここには優れた鉱石も、{{dn_fire|故郷の神火}}もないから。\n彼女を縛ったのは、一族を守りたい責任であった。"
+      ]
+    },
+    {
+      "sourceRef": {
+        "package": "genshin-db",
+        "sourceType": "material",
+        "rawId": "dreamofthedandeliongladiator",
+        "field": "description",
+        "stripPrefix": "武器に突破の力を付与する材料。\n"
+      },
+      "partLabel": "第四幕（★5：獅牙戦士の理想）",
+      "heading": "一族からモンドへ、そして世界へ",
+      "epigraph": "煉武秘境：セシリアの苗床 / 武器突破素材 最終段階",
+      "paragraphs": [
+        "ヴァネッサは自由を手に入れたが、結局彼女を縛るものは大きくなった。一族はモンドになり、そして「自由」になり、世界となった。\nこの世界はもっと強くなってほしいと、彼女は本気で願った。"
+      ]
+    }
+  ]
+}
