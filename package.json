@@ -11,7 +11,8 @@
     "extract-raw": "node scripts/extract-raw.mjs",
     "sync-corpus": "node scripts/sync-corpus.mjs",
     "build:data": "node scripts/build-stories.mjs",
-    "validate": "node scripts/build-stories.mjs --validate-only"
+    "validate": "node scripts/build-stories.mjs --validate-only",
+    "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "genshin-data": "^0.65.1",
