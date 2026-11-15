@@ -1,0 +1,76 @@
+.celestialBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--bg-backdrop);
+  transition: opacity 0.45s ease, filter 0.45s ease;
+}
+
+:global(:root[data-theme="night"] body[data-view="reader"]) .celestialBackdrop {
+  opacity: 0.65;
+  filter: brightness(0.8);
+}
+
+.celestialMeridians {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: var(--meridians-opacity);
+  transition: opacity 0.3s ease;
+}
+
+.starTwinkle {
+  animation: twinkle 5s ease-in-out infinite alternate;
+}
+
+.starTwinkleDelayed {
+  animation: twinkle 6.5s ease-in-out 2s infinite alternate;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .starTwinkle,
+  .starTwinkleDelayed {
+    animation: none !important;
+  }
+}
+
+.mainContainer {
+  max-width: 66rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 5rem;
+}
+
+@media (max-width: 600px) {
+  .mainContainer {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+.siteFooter {
+  max-width: 66rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4.25rem;
+  border-top: 1px solid var(--site-footer-border);
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.siteFooter p {
+  margin: 0.2rem 0;
+}

@@ -19,8 +19,8 @@
   - **読書状態と新着表示**: 前回の続き再開バナー、カード上の `✦ 読了`・`NEW`（追加から14日以内かつ未読）・`🔖 あとで読む` バッジ、読破率サマリー表示
 - **リーダー画面**
   - **時系列・連作構成**: 複数部位や段階に分かれたテキストを章立てして通し読みできる構成
-  - **用語ガイド（Popover）**: 原文の意味を補うインライン用語解説（`用語ガイド ON/OFF` 切替対応）
-  - **表示設定（Aa）**: 文字サイズ（小 / 標準 / 大）、書体（明朝 / ゴシック）、背景テーマ（夜空 / 生成り紙 / セピア）の切り替え
+  - **用語ガイド（Dialog）**: 原文の意味を補うインライン用語解説ダイアログ（`用語ガイド ON/OFF` 切替・出典リンク対応）
+  - **表示設定（Aa）**: 文字サイズ（小 / 標準 / 大）、書体（明朝 / ゴシック）、背景テーマ（夜空 / 生成り紙 / セピア）の切り替え（Popover メニュー）
   - **読書状態の保存（`localStorage`）**: スクロール90%到達または真相メモ展開での自動読了マーク、手動読了／あとで読むトグル、途中位置の自動しおり保存（別タブ同期対応）
   - **章目次・読了進捗・関連作品リンク**: 読書進捗バーと章末の関連作品カード表示
 - **データ検証・ビルドパイプライン**
@@ -29,7 +29,8 @@
 
 ### 主な技術構成
 
-- **フロントエンド**: Vanilla JavaScript (ES Modules) / HTML / CSS（`vite`, `@oddbird/popover-polyfill`）
+- **フロントエンド**: React 19 / TypeScript / React Router（`createHashRouter`）/ Radix UI（`@radix-ui/react-popover`, `@radix-ui/react-dialog`）/ CSS Modules / Vite
+- **テスト / 品質保証**: `tsc --noEmit`、`Vitest` + React Testing Library、`Playwright`（Chromium E2E）
 - **原典データソース / CLI**: `Node.js`、`genshin-db`、`genshin-data`
 
 ---
@@ -67,7 +68,7 @@ npm run dev
 
 ### 本番用ビルド
 
-配信用 JSON の生成（`npm run build:data`）と Vite による静的アセットのビルドを実行し、`dist/` へ出力します。
+配信用 JSON の生成（`npm run build:data`）、TypeScript 型チェック（`tsc --noEmit`）、および Vite による静的アセットのビルドを実行し、`dist/` へ出力します。
 
 ```bash
 npm run build
@@ -91,7 +92,8 @@ npm run preview
 | :--- | :--- |
 | `npm run build:data` | `data/` の原典・編集データ・共通マスタを検証し、フロントエンド配信用 JSON を `public/data/` に生成します |
 | `npm run validate` | 配信用ファイルは出力せず、データ構造や原文一致などのバリデーションのみを実行します |
-| `npm test` | フロントエンドのコアロジック（読書状態・カタログ選出・ルーティング）の単体テストを実行します |
+| `npm run typecheck` | `tsc --noEmit` による TypeScript の静的型チェックを実行します |
+| `npm test` | Vitest + React Testing Library によるドメインロジック・状態管理・UI コンポーネントの単体/結合テストを実行します |
 | `npm run test:e2e` | Playwright（Chromium）による UI リグレッションテストを実行します（開発サーバー自動起動込み） |
 | `npm run test:all` | 単体テスト（`npm test`）と UI リグレッションテスト（`npm run test:e2e`）を一括実行します |
 | `npm run extract-raw -- --type <sourceType> --id <rawId>` | `genshin-db` / `genshin-data`（書籍本文は Yatta API）から指定アイテムの原典スナップショットを `data/raw/` へ抽出します |
@@ -103,11 +105,20 @@ npm run preview
 
 ```text
 .
-├── index.html          # エントリーHTML（書架・リーダーUI）
-├── vite.config.js      # Vite 設定
+├── index.html          # Vite エントリーHTML（ルートマウント・フォント読み込み）
+├── tsconfig.json       # TypeScript コンパイラ設定
+├── vite.config.js      # Vite / React / Vitest 設定
 ├── package.json        # スクリプト・依存関係定義
-├── src/                # フロントエンドソース（API・状態管理・描画・スタイル）
-├── tests/              # 単体テスト（*.test.mjs）および Playwright UIテスト（e2e/）
+├── src/                # React + TypeScript フロントエンドソース
+│   ├── api/            # 作品一覧・詳細 JSON フェッチ
+│   ├── components/     # layout / shelf / reader / common の React コンポーネント & CSS Modules
+│   ├── domain/         # カタログ絞り込み・テキスト構文トークナイザ・スクロール判定の純粋ロジック
+│   ├── hooks/          # 読書セッション・アクティブ章判定・操作バー表示制御・テーマ同期フック
+│   ├── router/         # HashRouter ルート定義＆旧ハッシュ互換（#story/<id>）
+│   ├── state/          # reading-state / prefs ストア＆ Context Provider
+│   ├── styles/         # カラートークン（tokens.css）＆共通 CSS Module
+│   └── types/          # ストーリー・状態型定義
+├── tests/              # Vitest テスト（*.test.ts, *.test.tsx）および Playwright UIテスト（e2e/）
 ├── scripts/            # 原典抽出・コーパス同期・検証＆配信データビルドスクリプト
 ├── data/               # 原典スナップショット（raw）・編集データ（stories）・共通マスタ（shared）・スキーマ（schemas）
 ├── public/             # ビルド時に生成される配信用データ（public/data/）

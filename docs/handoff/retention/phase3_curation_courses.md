@@ -57,7 +57,7 @@
 
 ---
 
-## 3.3 書架・リーダー画面でのフェア棚＆連続読書体験（`src/render/shelf.js`, `src/render/reader.js`）
+## 3.3 書架・リーダー画面でのフェア棚＆連続読書体験（`src/components/shelf/ShelfPage.tsx`, `src/components/reader/ReaderPage.tsx`, `src/components/reader/ReaderArticle.tsx`）
 
 1. **書架の「おすすめフェア棚（キュレーション導線）」セクション**:
    - 書架上部に書店フェアのような特集棚セクションを配置し、種別バッジ（`初心者おすすめ` / `キャラ別セット` / `物語まとめ`）付きで切り口ごとに見やすく並べる。
