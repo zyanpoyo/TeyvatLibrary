@@ -279,6 +279,19 @@ export function validateEntitiesMaster(entities, errors, checkText) {
   }
 }
 
+export function isValidIsoDateString(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const [y, m, d] = value.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
 export function validateStoryStructure(story, folderCategory, fileSlug, errors) {
   const sid = story.id || fileSlug;
   if (!story.id || !/^[a-z0-9_]+$/.test(story.id)) {
@@ -292,6 +305,9 @@ export function validateStoryStructure(story, folderCategory, fileSlug, errors) 
   }
   if (story.shelfCategory !== folderCategory) {
     errors.push(`[スキーマ] ${sid}: 配置フォルダ (${folderCategory}/) と shelfCategory (${story.shelfCategory}) が一致しません。`);
+  }
+  if (story.addedAt !== undefined && !isValidIsoDateString(story.addedAt)) {
+    errors.push(`[スキーマ] ${sid}.addedAt: YYYY-MM-DD 形式の有効な日付を指定してください。`);
   }
   const requiredStr = ["title", "categoryLabel", "era", "hook", "overallTruth", "gameEffect"];
   for (const key of requiredStr) {
