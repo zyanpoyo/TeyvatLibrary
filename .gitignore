@@ -33,3 +33,9 @@ Thumbs.db
 raw_*.json
 *.tmp
 .agents/skills/genshin-story-curator/resources/official-corpus.json
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
