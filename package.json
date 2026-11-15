@@ -16,7 +16,7 @@
   "devDependencies": {
     "genshin-data": "^0.65.1",
     "genshin-db": "^5.2.15",
-    "vite": "^6.0.0"
+    "vite": "^8.3.6"
   },
   "dependencies": {
     "@oddbird/popover-polyfill": "^0.4.1"
