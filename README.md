@@ -92,6 +92,8 @@ npm run preview
 | `npm run build:data` | `data/` の原典・編集データ・共通マスタを検証し、フロントエンド配信用 JSON を `public/data/` に生成します |
 | `npm run validate` | 配信用ファイルは出力せず、データ構造や原文一致などのバリデーションのみを実行します |
 | `npm test` | フロントエンドのコアロジック（読書状態・カタログ選出・ルーティング）の単体テストを実行します |
+| `npm run test:e2e` | Playwright（Chromium）による UI リグレッションテストを実行します（開発サーバー自動起動込み） |
+| `npm run test:all` | 単体テスト（`npm test`）と UI リグレッションテスト（`npm run test:e2e`）を一括実行します |
 | `npm run extract-raw -- --type <sourceType> --id <rawId>` | `genshin-db` / `genshin-data`（書籍本文は Yatta API）から指定アイテムの原典スナップショットを `data/raw/` へ抽出します |
 | `npm run sync-corpus` | インストール済みパッケージおよび `data/raw/` から公式カタカナ語コーパス（`data/shared/official-corpus.json`）を生成・同期します |
 
@@ -105,6 +107,7 @@ npm run preview
 ├── vite.config.js      # Vite 設定
 ├── package.json        # スクリプト・依存関係定義
 ├── src/                # フロントエンドソース（API・状態管理・描画・スタイル）
+├── tests/              # 単体テスト（*.test.mjs）および Playwright UIテスト（e2e/）
 ├── scripts/            # 原典抽出・コーパス同期・検証＆配信データビルドスクリプト
 ├── data/               # 原典スナップショット（raw）・編集データ（stories）・共通マスタ（shared）・スキーマ（schemas）
 ├── public/             # ビルド時に生成される配信用データ（public/data/）
