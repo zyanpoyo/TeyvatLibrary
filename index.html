@@ -149,8 +149,19 @@
             placeholder="タイトル・キーワード・時代で検索…"
             aria-label="タイトル・キーワード・時代で検索"
           >
+          <select id="sort-filter" class="filter-control" aria-label="並び替え">
+            <option value="recommended">並び順：おすすめ順</option>
+            <option value="newest">並び順：新着順</option>
+            <option value="shortest">並び順：短い順</option>
+          </select>
         </div>
-        <p class="filter-summary" id="filter-result-summary" aria-live="polite"></p>
+        <div class="shelf-toolbar-meta">
+          <p class="filter-summary" id="filter-result-summary" aria-live="polite"></p>
+          <button type="button" id="random-story-btn" class="random-read-btn">
+            <span aria-hidden="true">🎲</span>
+            <span id="random-story-btn-label">未読から1篇読む</span>
+          </button>
+        </div>
       </div>
 
       <!-- Story Cards Grid -->

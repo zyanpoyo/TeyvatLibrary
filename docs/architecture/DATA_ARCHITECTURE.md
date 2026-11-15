@@ -193,6 +193,7 @@ genshin-books/
 ### 4.3 ストーリーJSON（`data/stories/<shelfCategory>/<id>.json`）の完全スキーマ
 
 各章（`chapters[]`）が自身の `sourceRef` を持つことで、**単一アイテムの作品**も**異種カテゴリー横断のオムニバス作品**もまったく同じスキーマで表現・検証できる。
+また、任意フィールド `"addedAt": "YYYY-MM-DD"` を設定することで、書架の「新着順」並び替えや追加から14日以内かつ未読の `NEW` バッジ表示の対象にできる（ビルド時に実在日付形式を検証し、`stories-index.json` へ引き継ぐ）。
 
 #### 例1：聖遺物（単一セットの時系列再構成）— `data/stories/artifact/crimson_witch.json`
 
@@ -472,6 +473,7 @@ function resolveActualPlainText(paragraphs) {
       "categoryLabel": "聖遺物（連作短編）",
       "region": ["モンド", "スメール"],
       "era": "500年前の災厄",
+      "addedAt": "2026-11-15",
       "readingTime": "約4分",
       "charCount": 2150,
       "chapterCount": 5,

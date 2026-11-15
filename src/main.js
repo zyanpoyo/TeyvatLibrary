@@ -9,8 +9,10 @@ import {
 import { escapeHtml } from "./utils/html.js";
 import {
   getStoryHash,
+  pickRandomStory,
   populateFilterOptions,
   renderCategoryTabs,
+  renderRandomReadButton,
   renderResumeBanner,
   renderShelf,
 } from "./render/shelf.js";
@@ -34,6 +36,7 @@ const filters = {
   entityId: "",
   region: "",
   query: "",
+  sort: "recommended",
 };
 
 let indexData = null;
@@ -62,6 +65,9 @@ const statusFilterEl = document.getElementById("status-filter");
 const entityFilterEl = document.getElementById("entity-filter");
 const regionFilterEl = document.getElementById("region-filter");
 const searchFilterEl = document.getElementById("search-filter");
+const sortFilterEl = document.getElementById("sort-filter");
+const randomStoryBtn = document.getElementById("random-story-btn");
+const randomStoryBtnLabel = document.getElementById("random-story-btn-label");
 const filterResultSummaryEl = document.getElementById("filter-result-summary");
 const storyGrid = document.getElementById("story-grid");
 const readerHeader = document.getElementById("reader-header");
@@ -323,6 +329,7 @@ function updateShelfView() {
   if (!indexData) return;
   renderResumeBanner(resumeBannerContainer, indexData, readingState);
   renderCategoryTabs(categoryTabsEl, indexData, filters.category);
+  renderRandomReadButton(randomStoryBtn, randomStoryBtnLabel, indexData, readingState);
   renderShelf({
     storyGrid,
     resultSummaryEl: filterResultSummaryEl,
@@ -338,10 +345,12 @@ function resetFilters() {
   filters.entityId = "";
   filters.region = "";
   filters.query = "";
+  filters.sort = "recommended";
   if (statusFilterEl) statusFilterEl.value = "all";
   if (entityFilterEl) entityFilterEl.value = "";
   if (regionFilterEl) regionFilterEl.value = "";
   if (searchFilterEl) searchFilterEl.value = "";
+  if (sortFilterEl) sortFilterEl.value = "recommended";
   updateShelfView();
 }
 
@@ -677,6 +686,18 @@ regionFilterEl?.addEventListener("change", () => {
 searchFilterEl?.addEventListener("input", () => {
   filters.query = searchFilterEl.value;
   updateShelfView();
+});
+
+sortFilterEl?.addEventListener("change", () => {
+  filters.sort = sortFilterEl.value || "recommended";
+  updateShelfView();
+});
+
+randomStoryBtn?.addEventListener("click", () => {
+  const picked = pickRandomStory(indexData?.stories, readingState, lastOpenedStoryId);
+  if (picked) {
+    navigateToStory(picked.id);
+  }
 });
 
 window.addEventListener("popstate", (event) => {

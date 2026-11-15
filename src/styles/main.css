@@ -624,7 +624,9 @@ body {
   flex-shrink: 0;
 }
 
-.read-badge {
+.read-badge,
+.featured-badge,
+.new-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
@@ -633,10 +635,26 @@ body {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.read-badge {
   color: var(--accent-gold-bright);
   background: var(--accent-gold-soft);
   border: 1px solid var(--accent-gold);
-  white-space: nowrap;
+}
+
+.featured-badge {
+  color: var(--accent-gold-bright);
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--border-gold);
+}
+
+.new-badge {
+  color: var(--bg-deep);
+  background: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  letter-spacing: 0.06em;
 }
 
 .card-bookmark-btn {
@@ -1551,6 +1569,51 @@ body {
   color: var(--text-muted);
 }
 
+.shelf-toolbar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem 0.85rem;
+}
+
+.random-read-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-block-size: 2.35rem;
+  padding: 0.42rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-gold);
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.random-read-btn:hover:not(:disabled),
+.random-read-btn:focus-visible:not(:disabled) {
+  border-color: var(--accent-gold);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.random-read-btn:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+.random-read-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .filter-summary {
   margin: 0;
   font-size: 0.78125rem;
@@ -1723,6 +1786,13 @@ body {
   .filter-control {
     width: 100%;
   }
+  .shelf-toolbar-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .random-read-btn {
+    width: 100%;
+  }
   .resume-banner-cta {
     display: none;
   }
@@ -1730,6 +1800,7 @@ body {
 
 @media (pointer: coarse) {
   .filter-control,
+  .random-read-btn,
   .card-bookmark-btn,
   .resume-banner-dismiss {
     min-block-size: 44px;
