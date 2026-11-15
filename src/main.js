@@ -1,13 +1,20 @@
 import { fetchStoriesIndex, fetchStoryDetail } from "./api/stories.js";
 import { createDisplayPrefsState, DISPLAY_PREFS_KEY } from "./state/prefs.js";
+import {
+  AUTO_READ_THRESHOLD,
+  BOOKMARK_THRESHOLD_MIN,
+  createReadingState,
+  READING_STATE_KEY,
+} from "./state/reading-state.js";
 import { escapeHtml } from "./utils/html.js";
 import {
   getStoryHash,
   populateFilterOptions,
   renderCategoryTabs,
+  renderResumeBanner,
   renderShelf,
 } from "./render/shelf.js";
-import { renderStoryReader } from "./render/reader.js";
+import { renderStoryReader, updateReaderStateButtons } from "./render/reader.js";
 
 if (!Object.hasOwn(HTMLElement.prototype, "popover")) {
   import("@oddbird/popover-polyfill");
@@ -15,9 +22,15 @@ if (!Object.hasOwn(HTMLElement.prototype, "popover")) {
 
 const BASE_TITLE = document.title;
 const displayPrefsState = createDisplayPrefsState();
+const readingState = createReadingState();
+
+if ("scrollRestoration" in history) {
+  history.scrollRestoration = "manual";
+}
 
 const filters = {
   category: "all",
+  status: "all",
   entityId: "",
   region: "",
   query: "",
@@ -29,6 +42,10 @@ let annotationsEnabled = true;
 let isDisplayPopoverOpen = false;
 let activeView = "shelf";
 let activeStoryId = null;
+let autoReadSuppressedForActiveStory = false;
+let suppressSessionRecordUntil = 0;
+let bookmarkSaveTimer = null;
+let pendingSessionSnapshot = null;
 let currentDepth = 0;
 let shelfDepth = 0;
 let shelfScrollY = 0;
@@ -39,7 +56,9 @@ let loadToken = 0;
 const shelfView = document.getElementById("shelf-view");
 const readerView = document.getElementById("reader-view");
 const readerNavRow = document.querySelector(".reader-nav-row");
+const resumeBannerContainer = document.getElementById("resume-banner-container");
 const categoryTabsEl = document.getElementById("category-tabs");
+const statusFilterEl = document.getElementById("status-filter");
 const entityFilterEl = document.getElementById("entity-filter");
 const regionFilterEl = document.getElementById("region-filter");
 const searchFilterEl = document.getElementById("search-filter");
@@ -162,13 +181,11 @@ function resolveActiveChapterIndex() {
     return;
   }
 
-  if (visibleChapterIndices.size === 0) return;
-
   const targetLine = window.innerHeight * 0.32;
   let bestIndex = currentChapterIndex;
   let bestDistance = Infinity;
 
-  for (const idx of visibleChapterIndices) {
+  for (let idx = 0; idx < activeChapterSections.length; idx += 1) {
     const el = activeChapterSections[idx];
     if (!el) continue;
     const rect = el.getBoundingClientRect();
@@ -226,43 +243,116 @@ function setupChapterObserver(story) {
   }
 }
 
-function updateReadingProgress() {
+function clearPendingBookmarkSave() {
+  if (bookmarkSaveTimer !== null) {
+    clearTimeout(bookmarkSaveTimer);
+    bookmarkSaveTimer = null;
+  }
+  pendingSessionSnapshot = null;
+}
+
+function flushBookmarkSave() {
+  if (bookmarkSaveTimer !== null) {
+    clearTimeout(bookmarkSaveTimer);
+    bookmarkSaveTimer = null;
+  }
+  if (pendingSessionSnapshot) {
+    const snapshot = pendingSessionSnapshot;
+    pendingSessionSnapshot = null;
+    readingState.updateLastSession(snapshot);
+  }
+}
+
+function scheduleBookmarkSave(snapshot) {
+  pendingSessionSnapshot = snapshot;
+  if (bookmarkSaveTimer !== null) {
+    clearTimeout(bookmarkSaveTimer);
+  }
+  bookmarkSaveTimer = setTimeout(() => {
+    bookmarkSaveTimer = null;
+    flushBookmarkSave();
+  }, 250);
+}
+
+function syncActiveStoryReaderButtons() {
+  if (!activeStoryId) return;
+  updateReaderStateButtons(readerView, {
+    isRead: readingState.isRead(activeStoryId),
+    isBookmarked: readingState.isBookmarked(activeStoryId),
+  });
+}
+
+function updateReadingProgress({ recordSession = true } = {}) {
   if (readerView.hidden) return;
   const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-  const pct = scrollable > 0 ? Math.min(100, Math.max(0, (window.scrollY / scrollable) * 100)) : 100;
+  const ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 1;
+  const pct = ratio * 100;
   readingProgress.style.width = `${pct}%`;
   readerFooterPercent.textContent = `${Math.round(pct)}%`;
   resolveActiveChapterIndex();
+
+  if (!recordSession || !activeStoryId || scrollable <= 0) return;
+  if (performance.now() < suppressSessionRecordUntil) return;
+
+  if (ratio >= AUTO_READ_THRESHOLD) {
+    clearPendingBookmarkSave();
+    if (!autoReadSuppressedForActiveStory) {
+      if (readingState.markRead(activeStoryId)) {
+        syncActiveStoryReaderButtons();
+      }
+    } else {
+      readingState.updateLastSession({
+        storyId: activeStoryId,
+        chapterIndex: currentChapterIndex,
+        scrollRatio: ratio,
+      });
+    }
+    return;
+  }
+
+  if (ratio > BOOKMARK_THRESHOLD_MIN) {
+    scheduleBookmarkSave({
+      storyId: activeStoryId,
+      chapterIndex: currentChapterIndex,
+      scrollRatio: ratio,
+    });
+  }
 }
 
 function updateShelfView() {
   if (!indexData) return;
+  renderResumeBanner(resumeBannerContainer, indexData, readingState);
   renderCategoryTabs(categoryTabsEl, indexData, filters.category);
   renderShelf({
     storyGrid,
     resultSummaryEl: filterResultSummaryEl,
     indexData,
     filters,
+    readingState,
   });
 }
 
 function resetFilters() {
   filters.category = "all";
+  filters.status = "all";
   filters.entityId = "";
   filters.region = "";
   filters.query = "";
+  if (statusFilterEl) statusFilterEl.value = "all";
   if (entityFilterEl) entityFilterEl.value = "";
   if (regionFilterEl) regionFilterEl.value = "";
   if (searchFilterEl) searchFilterEl.value = "";
   updateShelfView();
 }
 
-async function openStory(storyId, { moveFocus = false } = {}) {
+async function openStory(storyId, { moveFocus = false, restoreScrollRatio = null } = {}) {
+  flushBookmarkSave();
   const token = ++loadToken;
   closeOpenPopovers();
 
   activeView = "story";
   activeStoryId = storyId;
+  autoReadSuppressedForActiveStory = false;
   document.body.dataset.view = "reader";
   shelfView.hidden = true;
   shelfView.inert = true;
@@ -284,13 +374,40 @@ async function openStory(storyId, { moveFocus = false } = {}) {
 
     renderStoryReader(
       { readerHeader, chapterToc, chaptersContainer, popoversContainer, connectedContainer },
-      story
+      story,
+      readingState
     );
     document.title = `${story.title} | テイワット文庫`;
+    suppressSessionRecordUntil = performance.now() + 400;
     window.scrollTo({ top: 0, behavior: "instant" });
     resetReaderNavVisibility();
     setupChapterObserver(story);
-    updateReadingProgress();
+
+    const hasRestoreRatio =
+      typeof restoreScrollRatio === "number" &&
+      Number.isFinite(restoreScrollRatio) &&
+      restoreScrollRatio > BOOKMARK_THRESHOLD_MIN &&
+      restoreScrollRatio < AUTO_READ_THRESHOLD;
+
+    if (hasRestoreRatio) {
+      const applyRestoredScroll = () => {
+        suppressSessionRecordUntil = performance.now() + 400;
+        const scrollable = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        window.scrollTo({
+          top: Math.round(scrollable * restoreScrollRatio),
+          behavior: "instant",
+        });
+        updateReadingProgress({ recordSession: false });
+      };
+      applyRestoredScroll();
+      requestAnimationFrame(() => {
+        if (token === loadToken && activeView === "story" && activeStoryId === storyId) {
+          applyRestoredScroll();
+        }
+      });
+    } else {
+      updateReadingProgress({ recordSession: false });
+    }
 
     if (moveFocus) {
       readerView.focus({ preventScroll: true });
@@ -308,12 +425,14 @@ async function openStory(storyId, { moveFocus = false } = {}) {
 }
 
 function showShelf({ restoreFocus = false, restoreScroll = false } = {}) {
+  flushBookmarkSave();
   loadToken++;
   closeOpenPopovers();
   resetReaderNavVisibility();
   teardownChapterObserver();
   activeView = "shelf";
   activeStoryId = null;
+  autoReadSuppressedForActiveStory = false;
   document.title = BASE_TITLE;
   document.body.dataset.view = "shelf";
   readerView.hidden = true;
@@ -322,21 +441,22 @@ function showShelf({ restoreFocus = false, restoreScroll = false } = {}) {
   shelfView.inert = false;
   readingProgress.hidden = true;
   readerFooterStatus.hidden = true;
+  updateShelfView();
   window.scrollTo({ top: restoreScroll ? shelfScrollY : 0, behavior: "instant" });
 
   if (restoreFocus) {
-    const targetCard = lastOpenedStoryId
-      ? storyGrid.querySelector(`.story-card[data-story-id="${CSS.escape(lastOpenedStoryId)}"]`)
+    const targetLink = lastOpenedStoryId
+      ? storyGrid.querySelector(`.story-card[data-story-id="${CSS.escape(lastOpenedStoryId)}"] .card-primary-link`)
       : null;
-    if (targetCard) {
-      targetCard.focus({ preventScroll: true });
+    if (targetLink) {
+      targetLink.focus({ preventScroll: true });
     } else {
       shelfView.focus({ preventScroll: true });
     }
   }
 }
 
-function navigateToStory(storyId) {
+function navigateToStory(storyId, { restoreScrollRatio = null } = {}) {
   if (!validStoryIds.has(storyId)) return;
 
   if (activeView === "story" && activeStoryId === storyId) {
@@ -359,7 +479,7 @@ function navigateToStory(storyId) {
     getStoryHash(storyId)
   );
   currentDepth = newDepth;
-  openStory(storyId, { moveFocus: true });
+  openStory(storyId, { moveFocus: true, restoreScrollRatio });
 }
 
 function navigateToShelf() {
@@ -415,10 +535,38 @@ function syncRouteFromUrl(state) {
 }
 
 // Event Listeners
+resumeBannerContainer?.addEventListener("click", (e) => {
+  const dismissBtn = e.target.closest('[data-action="dismiss-resume"]');
+  if (dismissBtn && resumeBannerContainer.contains(dismissBtn)) {
+    readingState.clearLastSession();
+    renderResumeBanner(resumeBannerContainer, indexData, readingState);
+    return;
+  }
+
+  const resumeLink = e.target.closest('[data-action="resume-story"]');
+  if (!resumeLink || !resumeBannerContainer.contains(resumeLink)) return;
+  if (isModifiedClick(e)) return;
+  e.preventDefault();
+  const storyId = resumeLink.dataset.storyId;
+  const session = readingState.getLastSession(validStoryIds);
+  const restoreScrollRatio = session && session.storyId === storyId ? session.scrollRatio : null;
+  navigateToStory(storyId, { restoreScrollRatio });
+});
+
 storyGrid.addEventListener("click", (e) => {
   const resetBtn = e.target.closest('[data-action="reset-filters"]');
   if (resetBtn) {
     resetFilters();
+    return;
+  }
+  const bookmarkBtn = e.target.closest('[data-action="toggle-bookmark"]');
+  if (bookmarkBtn && storyGrid.contains(bookmarkBtn)) {
+    e.preventDefault();
+    const storyId = bookmarkBtn.dataset.storyId;
+    if (storyId) {
+      readingState.toggleBookmark(storyId);
+      updateShelfView();
+    }
     return;
   }
   if (isModifiedClick(e)) return;
@@ -427,6 +575,40 @@ storyGrid.addEventListener("click", (e) => {
   e.preventDefault();
   navigateToStory(card.dataset.storyId);
 });
+
+readerView.addEventListener("click", (e) => {
+  const bookmarkBtn = e.target.closest('[data-action="toggle-bookmark"]');
+  if (bookmarkBtn && readerView.contains(bookmarkBtn)) {
+    const storyId = bookmarkBtn.dataset.storyId || activeStoryId;
+    if (!storyId) return;
+    readingState.toggleBookmark(storyId);
+    syncActiveStoryReaderButtons();
+    return;
+  }
+
+  const readBtn = e.target.closest('[data-action="toggle-read"]');
+  if (readBtn && readerView.contains(readBtn)) {
+    const storyId = readBtn.dataset.storyId || activeStoryId;
+    if (!storyId) return;
+    const nextRead = readingState.toggleRead(storyId);
+    autoReadSuppressedForActiveStory = !nextRead;
+    if (nextRead) {
+      clearPendingBookmarkSave();
+    }
+    syncActiveStoryReaderButtons();
+  }
+});
+
+chaptersContainer.addEventListener("toggle", (e) => {
+  const details = e.target;
+  if (!details || !details.classList?.contains("lore-details")) return;
+  if (details.open && activeView === "story" && activeStoryId && !autoReadSuppressedForActiveStory) {
+    clearPendingBookmarkSave();
+    if (readingState.markRead(activeStoryId)) {
+      syncActiveStoryReaderButtons();
+    }
+  }
+}, true);
 
 connectedContainer.addEventListener("click", (e) => {
   if (isModifiedClick(e)) return;
@@ -474,6 +656,11 @@ categoryTabsEl.addEventListener("click", (e) => {
   const btn = e.target.closest(".category-tab");
   if (!btn || !categoryTabsEl.contains(btn)) return;
   filters.category = btn.dataset.filter;
+  updateShelfView();
+});
+
+statusFilterEl?.addEventListener("change", () => {
+  filters.status = statusFilterEl.value || "all";
   updateShelfView();
 });
 
@@ -534,10 +721,25 @@ bindDisplaySettingClicks(displaySettingsPopover);
 bindDisplaySettingClicks(shelfThemeSwitcher);
 
 window.addEventListener("storage", (event) => {
-  if (event.key !== DISPLAY_PREFS_KEY && event.key !== null) return;
-  displayPrefsState.load();
-  displayPrefsState.apply(displaySettingContainers);
-  updateReadingProgress();
+  if (event.key === DISPLAY_PREFS_KEY || event.key === null) {
+    displayPrefsState.load();
+    displayPrefsState.apply(displaySettingContainers);
+    updateReadingProgress({ recordSession: false });
+  }
+  if (event.key === READING_STATE_KEY || event.key === null) {
+    readingState.load();
+    updateShelfView();
+    if (activeView === "story" && activeStoryId) {
+      syncActiveStoryReaderButtons();
+    }
+  }
+});
+
+window.addEventListener("pagehide", flushBookmarkSave);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    flushBookmarkSave();
+  }
 });
 
 window.addEventListener("scroll", () => {
@@ -548,6 +750,7 @@ window.addEventListener("scroll", () => {
 async function init() {
   displayPrefsState.load();
   displayPrefsState.apply(displaySettingContainers);
+  readingState.load();
 
   storyGrid.innerHTML = `<p class="loading-status">✦ 書架データを読み込んでいます…</p>`;
 
@@ -562,7 +765,12 @@ async function init() {
       currentDepth = 0;
       shelfDepth = null;
       history.replaceState({ depth: 0, view: "story", storyId: initialStoryId }, "");
-      await openStory(initialStoryId, { moveFocus: false });
+      const savedSession = readingState.getLastSession(validStoryIds);
+      const restoreScrollRatio =
+        savedSession && savedSession.storyId === initialStoryId
+          ? savedSession.scrollRatio
+          : null;
+      await openStory(initialStoryId, { moveFocus: false, restoreScrollRatio });
     } else {
       currentDepth = 0;
       shelfDepth = 0;

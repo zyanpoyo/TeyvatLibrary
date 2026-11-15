@@ -126,8 +126,16 @@
         </nav>
       </header>
 
+      <div id="resume-banner-container" class="resume-banner-container" hidden></div>
+
       <div class="shelf-toolbar" aria-label="人物・地域・キーワード検索">
         <div class="shelf-filters">
+          <select id="status-filter" class="filter-control" aria-label="読書状態で絞り込む">
+            <option value="all">状態：すべて</option>
+            <option value="unread">未読のみ</option>
+            <option value="read">読了済み</option>
+            <option value="bookmarked">🔖 あとで読む</option>
+          </select>
           <select id="entity-filter" class="filter-control" aria-label="登場人物で絞り込む">
             <option value="">登場人物：すべて</option>
           </select>

@@ -587,7 +587,8 @@ body {
 }
 
 .story-card:hover,
-.story-card:focus-visible {
+.story-card:focus-visible,
+.story-card:has(.card-primary-link:focus-visible) {
   transform: translateY(-2px);
   border-color: var(--accent-gold);
   box-shadow: var(--shadow-card-hover);
@@ -595,11 +596,83 @@ body {
   outline-style: solid;
 }
 
+.card-primary-link {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.25rem;
+}
+
+.card-primary-link:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 4px;
+}
+
 .card-top-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.75rem;
+}
+
+.card-status-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.read-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.14rem 0.52rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent-gold-bright);
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--accent-gold);
+  white-space: nowrap;
+}
+
+.card-bookmark-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  min-block-size: 1.75rem;
+  padding: 0.16rem 0.58rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--pill-bg);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.card-bookmark-btn:hover,
+.card-bookmark-btn:focus-visible {
+  border-color: var(--accent-gold);
+  color: var(--text-primary);
+}
+
+.card-bookmark-btn:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+.card-bookmark-btn[aria-pressed="true"] {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold-bright);
+  font-weight: 600;
 }
 
 .card-emblem {
@@ -825,7 +898,33 @@ body {
   color: var(--text-secondary);
   font-size: 0.95rem;
   line-height: 1.7;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
+}
+
+.reader-state-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1.45rem;
+}
+
+.reader-state-bar .control-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.reader-completion-box {
+  max-width: 36em;
+  margin: 1.75rem auto 0;
+  display: flex;
+  justify-content: center;
+}
+
+.reader-completion-btn {
+  padding: 0.55rem 1.35rem;
+  font-size: 0.875rem;
 }
 
 /* 前提ガイド：システム解説としてゴシック体＋左アクセント線で明確に区別 */
@@ -1456,7 +1555,107 @@ body {
   margin: 0;
   font-size: 0.78125rem;
   color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.45rem;
+}
+
+.summary-sep {
+  color: var(--accent-gold);
+  opacity: 0.7;
+}
+
+.summary-progress {
+  color: var(--accent-gold-bright);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Resume Reading Banner */
+.resume-banner-container {
+  margin-bottom: 1rem;
+}
+
+.resume-banner {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-gold);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: 0.65rem;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.resume-banner:hover {
+  border-color: var(--accent-gold);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.resume-banner-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.72rem 0.9rem 0.72rem 1rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 0.84375rem;
+}
+
+.resume-banner-link:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: -2px;
+}
+
+.resume-banner-icon {
+  flex-shrink: 0;
+}
+
+.resume-banner-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.resume-banner-text strong {
+  color: var(--accent-gold-bright);
+}
+
+.resume-banner-cta {
+  flex-shrink: 0;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  color: var(--accent-gold-bright);
   white-space: nowrap;
+}
+
+.resume-banner-dismiss {
+  flex-shrink: 0;
+  min-inline-size: 2.5rem;
+  border: none;
+  border-left: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.resume-banner-dismiss:hover,
+.resume-banner-dismiss:focus-visible {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+}
+
+.resume-banner-dismiss:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: -2px;
 }
 
 .shelf-empty-state,
@@ -1524,10 +1723,15 @@ body {
   .filter-control {
     width: 100%;
   }
+  .resume-banner-cta {
+    display: none;
+  }
 }
 
 @media (pointer: coarse) {
-  .filter-control {
+  .filter-control,
+  .card-bookmark-btn,
+  .resume-banner-dismiss {
     min-block-size: 44px;
   }
 }
