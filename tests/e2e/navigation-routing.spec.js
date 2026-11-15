@@ -13,19 +13,17 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
     await page.locator(".story-card[data-story-id='mock_witch'] .card-primary-link").click();
 
     await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
-    await expect(page).toHaveURL(/#story\/mock_witch$/);
+    await expect(page).toHaveURL(/#\/story\/mock_witch$/);
     await expect(page).toHaveTitle(/燃え盛る炎の魔女（テスト版）/);
-    await expect(page.locator("#shelf-view")).toBeHidden();
-    await expect(page.locator("#shelf-view")).toHaveAttribute("inert", "");
+    await expect(page.locator("#shelf-view")).toHaveCount(0);
     await expect(page.locator("#reader-view")).toBeVisible();
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
 
     // 「← 書架へ戻る」で復帰するとフォーカスが元のカードリンクに戻る
     await page.locator("#back-to-shelf-btn").click();
     await expect(page.locator("body")).toHaveAttribute("data-view", "shelf");
-    await expect(page).not.toHaveURL(/#story\//);
-    await expect(page.locator("#reader-view")).toBeHidden();
-    await expect(page.locator("#reader-view")).toHaveAttribute("inert", "");
+    await expect(page).not.toHaveURL(/#\/?story\//);
+    await expect(page.locator("#reader-view")).toHaveCount(0);
     await expect(
       page.locator(".story-card[data-story-id='mock_witch'] .card-primary-link")
     ).toBeFocused();
@@ -33,7 +31,7 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
     // ブラウザの進む・戻るでも同期する
     await page.goForward();
     await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
-    await expect(page).toHaveURL(/#story\/mock_witch$/);
+    await expect(page).toHaveURL(/#\/story\/mock_witch$/);
 
     await page.goBack();
     await expect(page.locator("body")).toHaveAttribute("data-view", "shelf");
@@ -74,7 +72,7 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
 
     // 章末の関連作品リンクから mock_elegy へ遷移
     await page.locator(".connected-item[data-target-id='mock_elegy']").click();
-    await expect(page).toHaveURL(/#story\/mock_elegy$/);
+    await expect(page).toHaveURL(/#\/story\/mock_elegy$/);
     await expect(page.locator(".reader-title")).toHaveText("終焉を嘆く詩（テスト版）");
 
     // 用語 Popover を開き、出典リンクから mock_witch へ遷移（同時にPopoverが閉じる）
@@ -83,7 +81,7 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
     await expect(popover).toBeVisible();
 
     await popover.locator(".evidence-link[data-target-id='mock_witch']").click();
-    await expect(page).toHaveURL(/#story\/mock_witch$/);
+    await expect(page).toHaveURL(/#\/story\/mock_witch$/);
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
     await expect(popover).toHaveCount(0);
   });

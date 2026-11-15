@@ -1,0 +1,96 @@
+.resumeBannerContainer {
+  margin-bottom: 1rem;
+}
+
+.resumeBanner {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-gold);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: 0.65rem;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.resumeBanner:hover {
+  border-color: var(--accent-gold);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.resumeBannerLink {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.72rem 0.9rem 0.72rem 1rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 0.84375rem;
+}
+
+.resumeBannerLink:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: -2px;
+}
+
+.resumeBannerIcon {
+  flex-shrink: 0;
+}
+
+.resumeBannerText {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.resumeBannerText strong {
+  color: var(--accent-gold-bright);
+}
+
+.resumeBannerCta {
+  flex-shrink: 0;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  color: var(--accent-gold-bright);
+  white-space: nowrap;
+}
+
+.resumeBannerDismiss {
+  flex-shrink: 0;
+  min-inline-size: 2.5rem;
+  border: none;
+  border-left: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.resumeBannerDismiss:hover,
+.resumeBannerDismiss:focus-visible {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+}
+
+.resumeBannerDismiss:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: -2px;
+}
+
+@media (max-width: 599px) {
+  .resumeBannerCta {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .resumeBannerDismiss {
+    min-block-size: 44px;
+  }
+}

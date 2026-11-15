@@ -8,7 +8,7 @@
 
 ## Phase 1: 読了スタンプ・自動しおり・未読フィルタ・読破率
 
-### 1.1 状態管理モジュール（`src/state/reading-state.js` の新設）
+### 1.1 状態管理モジュール（`src/state/reading-state.ts`, `src/state/AppProviders.tsx`）
 - **ストレージキー**: `export const READING_STATE_KEY = "genshin-books-reading-state-v1";`
 - **データ構造**:
   ```json
@@ -26,7 +26,7 @@
   }
   ```
 
-### 1.2 読了判定としおり保存のトリガー（`src/main.js`, `src/render/reader.js`）
+### 1.2 読了判定としおり保存のトリガー（`src/hooks/useReaderSession.ts`, `src/components/reader/ReaderPage.tsx`, `src/components/reader/ReaderArticle.tsx`）
 1. **自動読了マーク**:
    - リーダー画面でスクロール進捗が `90%` 以上に到達した時点、または章末の `<details class="lore-details">`（読了後の真相・考察メモ）を開いた（`toggle` イベントで `details.open === true` になった）時点で、`readStories[storyId]` に記録する。
 2. **手動読了トグル＆あとで読む（ブックマーク）**:
@@ -34,7 +34,7 @@
 3. **自動しおり（`lastSession`）**:
    - リーダー画面でのスクロール時（`requestAnimationFrame` または 250ms デバウンス）に、現在の `storyId`・`currentChapterIndex`・`scrollRatio`（`0`〜`1`）を `lastSession` に保存する。ただし、そのセッションで `scrollRatio >= 0.9`（読了到達）になった場合は「読みかけ」から外す。
 
-### 1.3 書架UIへの反映（`index.html`, `src/render/shelf.js`）
+### 1.3 書架UIへの反映（`src/components/shelf/ShelfPage.tsx`, `src/components/shelf/ResumeBanner.tsx`, `src/components/shelf/StoryCard.tsx`, `src/components/shelf/ShelfToolbar.tsx`）
 1. **「前回の続きから読む」再開バナー**:
    - `lastSession` が存在し、かつ `scrollRatio > 0.05` かつ `scrollRatio < 0.9` の場合、書架上部に再開バー（「📖 前回の続き：『白夜国館蔵』第3章（42%）から再開する」）を表示し、クリックで該当位置へ復元スクロールする。
 2. **カードの読了バッジ**:
@@ -53,14 +53,14 @@
 
 ## Phase 2: 「今日の一編」動的ピックアップ・おまかせ読書・新着表示
 
-### 2.1 特等席カード（Featured）の動的選出（`src/render/shelf.js`）
+### 2.1 特等席カード（Featured）の動的選出（`src/domain/catalog.ts`, `src/components/shelf/ShelfPage.tsx`）
 - 現状の `idx === 0` 固定の `is-featured` 判定を改め、フィルタ未適用かつ並び替えが「おすすめ順」時の先頭ピックアップ枠を以下の優先順位で選出する。
   1. **未読作品**の中から、ローカル日付文字列（`YYYY-MM-DD`）から算出した簡易ハッシュ値をシードとして1作品を決定論的に選出する（「今日の物語ピックアップ」ラベルを付与）。
   2. 全作品が読了済みの場合は、全作品の中から日付シードで1作品を選出する。
 
-### 2.2 「おまかせで1篇読む」ショートカット（`index.html`, `src/main.js`）
+### 2.2 「おまかせで1篇読む」ショートカット（`src/domain/catalog.ts`, `src/components/shelf/ShelfToolbar.tsx`, `src/components/shelf/ShelfPage.tsx`）
 - 書架ツールバーに「🎲 未読から1篇読む」（全件読了時は「🎲 おまかせで1篇読む」）ボタンを配置する。
-- クリック時は現在のフィルタ状態に関わらず全収録作品の未読（複数ある場合は `charCount <= 1800` の短編を優先）からランダムに1作品を選び、`navigateToStory(storyId)` で直接リーダー画面へ遷移する。
+- クリック時は現在のフィルタ状態に関わらず全収録作品の未読（複数ある場合は `charCount <= 1800` の短編を優先）からランダムに1作品を選び、`handleOpenStory(storyId)`（`/story/<id>` 遷移）で直接リーダー画面へ遷移する。
 
 ### 2.3 新着管理フィールド（`data/schemas/story.schema.json`, `scripts/build-stories.mjs`）
 - ストーリーJSONに任意フィールド `"addedAt": "YYYY-MM-DD"` を追加可能にし、実在日付検証の上で `stories-index.json` へ引き継ぐ。

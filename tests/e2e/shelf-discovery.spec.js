@@ -87,7 +87,7 @@ test.describe("書架の探索・フィルタリング・並び替え", () => {
 
     await randomBtn.click();
     await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
-    expect(["#story/mock_witch", "#story/mock_elegy"]).toContain(new URL(page.url()).hash);
+    expect(["#/story/mock_witch", "#/story/mock_elegy"]).toContain(new URL(page.url()).hash);
 
     // 全作品を読了済みに設定してリロード
     const dataset = createMockDataset();

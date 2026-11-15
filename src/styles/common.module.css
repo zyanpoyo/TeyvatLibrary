@@ -1,0 +1,88 @@
+.categoryBadge {
+  color: var(--accent-gold-bright);
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--badge-border);
+  padding: 0.14rem 0.58rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.controlPill {
+  background: var(--pill-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.36rem 0.85rem;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.controlPill:hover {
+  border-color: var(--accent-gold);
+  color: var(--text-primary);
+}
+
+.controlPill[aria-pressed="true"] {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold-bright);
+  font-weight: 600;
+}
+
+.themeSwatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  forced-color-adjust: none;
+}
+
+.themeSwatchNight {
+  background: #10172d;
+}
+
+.themeSwatchPaper {
+  background: #f8f4eb;
+}
+
+.themeSwatchSepia {
+  background: #ead9b7;
+}
+
+.emptyState,
+.loadingStatus {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2.75rem 1.5rem;
+  background: var(--empty-bg);
+  border: 1px solid var(--empty-border);
+  border-radius: 0.75rem;
+}
+
+.emptyTitle {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  margin: 0 0 0.5rem;
+}
+
+.emptyDesc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.25rem;
+}
+
+@media (pointer: coarse) {
+  .controlPill {
+    min-block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

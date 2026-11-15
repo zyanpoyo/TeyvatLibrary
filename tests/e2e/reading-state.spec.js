@@ -66,7 +66,7 @@ test.describe("読書状態・しおり・再開バナー・スクロール連�
     await expect(resumeBanner).toBeVisible();
     await resumeBanner.locator('[data-action="resume-story"]').click();
 
-    await expect(page).toHaveURL(/#story\/mock_witch$/);
+    await expect(page).toHaveURL(/#\/story\/mock_witch$/);
     await expect
       .poll(async () => page.evaluate(() => window.scrollY))
       .toBeGreaterThan(targetY * 0.7);

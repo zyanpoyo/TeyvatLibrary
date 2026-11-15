@@ -10,7 +10,7 @@
 - 現在 `public/data/stories-index.json` の `entitiesIndex` には `{ name, kind, storyIds }` のみが出力されている。
 - ここに [`data/shared/entities.json`](../../../data/shared/entities.json) の `defaultIdentity`・`defaultDesc`・`defaultEvidence`・`evidenceLinks`（ビルド時自動解決）を含めて出力する。
 
-### 4.2 名鑑ビューUIの実装（`index.html`, `src/render/entities.js`, `src/main.js`）
+### 4.2 名鑑ビューUIの実装（`src/router/routes.tsx`, `src/components/entities/` 等を新設して統合）
 - 書架上部のナビゲーションまたはタブから切り替えられる「人物・用語名鑑」ビュー（またはドロワー／モーダル）を追加する。
 - 種別（`character`: 人物 / `god`: 魔神・執政 / `organization`: 組織 / `concept`: 歴史・重要用語 / `place`: 地域・地名）でグルーピングまたは絞り込み表示する。
 - 各人物カードには以下を表示する:
