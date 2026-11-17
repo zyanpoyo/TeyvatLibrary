@@ -114,8 +114,8 @@ npm run preview
 ├── src/                # React + TypeScript フロントエンドソース
 │   ├── api/            # 作品一覧・詳細 JSON フェッチ
 │   ├── components/     # layout / shelf / reader / common の React コンポーネント & CSS Modules
-│   ├── domain/         # カタログ絞り込み・テキスト構文トークナイザ・スクロール判定の純粋ロジック
-│   ├── hooks/          # 読書セッション・アクティブ章判定・操作バー表示制御・テーマ同期フック
+│   ├── domain/         # カタログ絞り込み・テキスト構文トークナイザの純粋ロジック
+│   ├── hooks/          # リーダー閲覧セッション統合（進捗・章追跡・操作バー制御）・テーマ同期フック
 │   ├── router/         # HashRouter ルート定義＆旧ハッシュ互換（#story/<id>）
 │   ├── state/          # reading-state / prefs ストア＆ Context Provider
 │   ├── styles/         # カラートークン（tokens.css）＆共通 CSS Module
