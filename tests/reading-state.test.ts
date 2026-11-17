@@ -4,6 +4,7 @@ import {
   BOOKMARK_THRESHOLD_MIN,
   createReadingState,
   READING_STATE_KEY,
+  roundScrollRatio,
 } from "../src/state/reading-state";
 
 function installMockLocalStorage(initialMap: Record<string, string> = {}) {
@@ -141,6 +142,45 @@ describe("reading-state store", () => {
     expect(state.isRead("mock_elegy")).toBe(true);
     expect(state.isBookmarked("mock_witch")).toBe(true);
 
+    // Simulate localStorage.clear() storage event (key === null)
+    localStorage.clear();
+    window.dispatchEvent(new StorageEvent("storage", { key: null }));
+    expect(listener).toHaveBeenCalledTimes(3);
+    expect(state.getReadCount()).toBe(0);
+
     unsubscribe();
+  });
+
+  it("rounds scrollRatio consistently before checking thresholds and supports clearLastSession", () => {
+    expect(roundScrollRatio(0.0504)).toBe(0.05);
+    expect(roundScrollRatio(0.8996)).toBe(0.9);
+    expect(roundScrollRatio(Number.NaN)).toBe(0);
+
+    const state = createReadingState();
+    state.load();
+
+    // 0.0504 rounds to 0.05 -> rejected
+    expect(
+      state.updateLastSession({ storyId: "byakuyakoku", chapterIndex: 0, scrollRatio: 0.0504 })
+    ).toBe(false);
+    expect(state.getLastSession()).toBeNull();
+
+    // Valid intermediate ratio saved
+    expect(
+      state.updateLastSession({ storyId: "byakuyakoku", chapterIndex: 1, scrollRatio: 0.45 })
+    ).toBe(true);
+    expect(state.getLastSession()?.scrollRatio).toBe(0.45);
+
+    // 0.8996 rounds to 0.9 -> clears existing session for same storyId
+    expect(
+      state.updateLastSession({ storyId: "byakuyakoku", chapterIndex: 2, scrollRatio: 0.8996 })
+    ).toBe(true);
+    expect(state.getLastSession()).toBeNull();
+
+    // clearLastSession removes active session and returns false when already empty
+    state.updateLastSession({ storyId: "byakuyakoku", chapterIndex: 1, scrollRatio: 0.3 });
+    expect(state.clearLastSession()).toBe(true);
+    expect(state.getLastSession()).toBeNull();
+    expect(state.clearLastSession()).toBe(false);
   });
 });

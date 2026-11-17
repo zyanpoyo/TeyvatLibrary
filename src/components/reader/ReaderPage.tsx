@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { fetchStoryDetail } from "../../api/stories";
-import { useActiveChapter } from "../../hooks/useActiveChapter";
-import { useAutoHideNav } from "../../hooks/useAutoHideNav";
-import { getMatchingSessionScrollRatio, useReaderSession } from "../../hooks/useReaderSession";
+import { useReaderSession } from "../../hooks/useReaderSession";
 import {
   useDisplayPrefsStore,
   useReadingStateStore,
@@ -29,7 +27,7 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { store: readingStore, snapshot: readingSnapshot } = useReadingStateStore();
+  const { store: readingStore } = useReadingStateStore();
   const { prefs: displayPrefs } = useDisplayPrefsStore();
   const {
     indexData,
@@ -43,8 +41,6 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
   } = useShelfContext();
 
   const readerViewRef = useRef<HTMLElement | null>(null);
-  const navRowRef = useRef<HTMLDivElement | null>(null);
-  const chaptersContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [story, setStory] = useState<StoryDetail | null>(initialStory);
   const [error, setError] = useState<string | null>(null);
@@ -53,32 +49,26 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
   const [activeTermId, setActiveTermId] = useState<string | null>(null);
   const [isDisplayPopoverOpen, setIsDisplayPopoverOpen] = useState(false);
 
-  // Capture restoreScrollRatio once per storyId transition so mid-reading bookmark updates never re-trigger scroll restoration
-  const initialMountRef = useRef(true);
-  const capturedRatioRef = useRef<{ storyId: string; ratio: number | null }>({
-    storyId: "",
-    ratio: null,
-  });
-
-  if (capturedRatioRef.current.storyId !== storyId) {
-    const locationState = location.state as { restoreScrollRatio?: number } | null;
-    let ratio: number | null =
-      typeof locationState?.restoreScrollRatio === "number"
-        ? locationState.restoreScrollRatio
-        : null;
-    if (ratio === null && initialMountRef.current && shelfDepthInSession === null) {
-      ratio = getMatchingSessionScrollRatio(readingStore, storyId, validStoryIds);
-    }
-    capturedRatioRef.current = { storyId, ratio };
-  }
-  useEffect(() => {
-    initialMountRef.current = false;
-  }, []);
-
-  const restoreScrollRatio = capturedRatioRef.current.ratio;
+  const locationState = location.state as { restoreScrollRatio?: unknown } | null;
+  const explicitRestoreRatio =
+    typeof locationState?.restoreScrollRatio === "number"
+      ? locationState.restoreScrollRatio
+      : null;
 
   const isInvalidStoryId =
     Boolean(indexData) && validStoryIds.size > 0 && !validStoryIds.has(storyId);
+
+  const reader = useReaderSession({
+    storyId,
+    story,
+    readingState: readingStore,
+    displayPrefs,
+    explicitRestoreRatio,
+    allowStoredSessionRestore: shelfDepthInSession === null,
+    validStoryIds,
+    navigationKey: location.key,
+    keepNavVisible: isDisplayPopoverOpen,
+  });
 
   // If browser navigated back prior to shelfDepthInSession, invalidate shelf depth
   useEffect(() => {
@@ -104,7 +94,6 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
     setIsLoading(true);
     setActiveTermId(null);
     setIsDisplayPopoverOpen(false);
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
 
     fetchStoryDetail(storyId)
       .then((data) => {
@@ -140,83 +129,33 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
     };
   }, []);
 
-  const { currentChapterLabel, resolveActiveChapter } = useActiveChapter(
-    story,
-    chaptersContainerRef
-  );
-
-  const { isNavHidden } = useAutoHideNav(
-    navRowRef,
-    Boolean(story),
-    isDisplayPopoverOpen,
-    story?.id
-  );
-
-  const {
-    progressPercent,
-    progressExactPercent,
-    clearPendingBookmark,
-    stopSession,
-    setAutoReadSuppressed,
-    isAutoReadSuppressed,
-  } = useReaderSession({
-    story,
-    restoreScrollRatio,
-    readingState: readingStore,
-    resolveActiveChapter,
-    displayPrefs,
-  });
-
   const handleBackToShelf = useCallback(() => {
-    stopSession();
-    setActiveTermId(null);
-    setIsDisplayPopoverOpen(false);
-    const currentIdx = getHistoryIndex();
-    if (shelfDepthInSession !== null && currentIdx !== null && currentIdx > shelfDepthInSession) {
+    reader.leave(() => {
+      setActiveTermId(null);
+      setIsDisplayPopoverOpen(false);
+      const currentIdx = getHistoryIndex();
+      if (shelfDepthInSession !== null && currentIdx !== null && currentIdx > shelfDepthInSession) {
+        setShouldRestoreShelfFocus(true);
+        setShouldRestoreShelfScroll(true);
+        navigate(shelfDepthInSession - currentIdx);
+        return;
+      }
       setShouldRestoreShelfFocus(true);
-      setShouldRestoreShelfScroll(true);
-      navigate(shelfDepthInSession - currentIdx);
-      return;
-    }
-    setShouldRestoreShelfFocus(true);
-    setShouldRestoreShelfScroll(false);
-    navigate("/");
+      setShouldRestoreShelfScroll(false);
+      navigate("/");
+    });
   }, [
-    stopSession,
+    reader.leave,
     shelfDepthInSession,
     navigate,
     setShouldRestoreShelfFocus,
     setShouldRestoreShelfScroll,
   ]);
 
-  const handleToggleBookmark = useCallback(() => {
-    if (!story) return;
-    readingStore.toggleBookmark(story.id);
-  }, [story, readingStore]);
-
-  const handleToggleRead = useCallback(() => {
-    if (!story) return;
-    const nextRead = readingStore.toggleRead(story.id);
-    setAutoReadSuppressed(!nextRead);
-    if (nextRead) {
-      clearPendingBookmark();
-    }
-  }, [story, readingStore, setAutoReadSuppressed, clearPendingBookmark]);
-
-  const handleLoreOpened = useCallback(() => {
-    if (!story || isAutoReadSuppressed()) return;
-    clearPendingBookmark();
-    readingStore.markRead(story.id);
-  }, [story, isAutoReadSuppressed, clearPendingBookmark, readingStore]);
-
   if (isInvalidStoryId) {
     return <Navigate to="/" replace />;
   }
 
-  // Subscribe to readingSnapshot changes via context snapshot
-  void readingSnapshot;
-  const isRead = story ? readingStore.isRead(story.id) : false;
-  const isBookmarked = story ? readingStore.isBookmarked(story.id) : false;
   const activeGlossaryEntry =
     story && activeTermId ? story.glossary?.[activeTermId] ?? null : null;
 
@@ -225,7 +164,7 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
       <div
         className={styles.readingProgress}
         id="reading-progress"
-        style={{ width: `${progressExactPercent}%` }}
+        style={{ width: `${reader.progressExactPercent}%` }}
       />
       <div
         className={styles.readerFooterStatus}
@@ -233,13 +172,13 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
         aria-hidden="true"
       >
         <span className={styles.readerFooterChapter} id="reader-footer-chapter">
-          {currentChapterLabel}
+          {reader.currentChapterLabel}
         </span>
         <span className={styles.readerFooterSep} aria-hidden="true">
           ・
         </span>
         <span className={styles.readerFooterPercent} id="reader-footer-percent">
-          {progressPercent}%
+          {reader.progressPercent}%
         </span>
       </div>
 
@@ -251,8 +190,8 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
         tabIndex={-1}
       >
         <ReaderNavBar
-          navRowRef={navRowRef}
-          isHidden={isNavHidden}
+          navRowRef={reader.navRowRef}
+          isHidden={reader.isNavHidden}
           annotationsEnabled={annotationsEnabled}
           isDisplayPopoverOpen={isDisplayPopoverOpen}
           onBackToShelf={handleBackToShelf}
@@ -286,12 +225,12 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
           <>
             <ReaderArticle
               story={story}
-              isRead={isRead}
-              isBookmarked={isBookmarked}
-              chaptersContainerRef={chaptersContainerRef}
-              onToggleBookmark={handleToggleBookmark}
-              onToggleRead={handleToggleRead}
-              onLoreOpened={handleLoreOpened}
+              isRead={reader.isRead}
+              isBookmarked={reader.isBookmarked}
+              chaptersContainerRef={reader.chaptersContainerRef}
+              onToggleBookmark={reader.toggleBookmark}
+              onToggleRead={reader.toggleRead}
+              onLoreOpened={reader.markLoreOpened}
               onSelectTerm={(termId) => setActiveTermId(termId)}
             />
 

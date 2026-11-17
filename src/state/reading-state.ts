@@ -4,6 +4,14 @@ export const READING_STATE_KEY = "genshin-books-reading-state-v1";
 export const BOOKMARK_THRESHOLD_MIN = 0.05;
 export const AUTO_READ_THRESHOLD = 0.9;
 
+/**
+ * スクロール進捗率を小数第3位へ丸める。閾値判定の前に必ず適用して端数ズレを防ぐ。
+ */
+export function roundScrollRatio(ratio: number): number {
+  if (typeof ratio !== "number" || !Number.isFinite(ratio)) return 0;
+  return Math.round(ratio * 1000) / 1000;
+}
+
 function createEmptyState(): ReadingStateSnapshot {
   return {
     readStories: {},
@@ -42,23 +50,19 @@ function normalizeState(raw: unknown): ReadingStateSnapshot {
     const chapterIndex = ls.chapterIndex;
     const scrollRatio = ls.scrollRatio;
     const updatedAt = ls.updatedAt;
-    if (
-      typeof storyId === "string" &&
-      storyId &&
-      typeof scrollRatio === "number" &&
-      Number.isFinite(scrollRatio) &&
-      scrollRatio > BOOKMARK_THRESHOLD_MIN &&
-      scrollRatio < AUTO_READ_THRESHOLD
-    ) {
-      next.lastSession = {
-        storyId,
-        chapterIndex:
-          typeof chapterIndex === "number" && Number.isInteger(chapterIndex) && chapterIndex >= 0
-            ? chapterIndex
-            : 0,
-        scrollRatio,
-        updatedAt: typeof updatedAt === "string" ? updatedAt : "",
-      };
+    if (typeof storyId === "string" && storyId && typeof scrollRatio === "number" && Number.isFinite(scrollRatio)) {
+      const roundedRatio = roundScrollRatio(scrollRatio);
+      if (roundedRatio > BOOKMARK_THRESHOLD_MIN && roundedRatio < AUTO_READ_THRESHOLD) {
+        next.lastSession = {
+          storyId,
+          chapterIndex:
+            typeof chapterIndex === "number" && Number.isInteger(chapterIndex) && chapterIndex >= 0
+              ? chapterIndex
+              : 0,
+          scrollRatio: roundedRatio,
+          updatedAt: typeof updatedAt === "string" ? updatedAt : "",
+        };
+      }
     }
   }
 
@@ -214,13 +218,11 @@ export function createReadingState(): ReadingStateStore {
     const session = state.lastSession;
     if (!session) return null;
     if (validStoryIds && !validStoryIds.has(session.storyId)) return null;
-    if (
-      session.scrollRatio <= BOOKMARK_THRESHOLD_MIN ||
-      session.scrollRatio >= AUTO_READ_THRESHOLD
-    ) {
+    const roundedRatio = roundScrollRatio(session.scrollRatio);
+    if (roundedRatio <= BOOKMARK_THRESHOLD_MIN || roundedRatio >= AUTO_READ_THRESHOLD) {
       return null;
     }
-    return { ...session };
+    return { ...session, scrollRatio: roundedRatio };
   }
 
   function updateLastSession({
@@ -235,7 +237,8 @@ export function createReadingState(): ReadingStateStore {
     if (!storyId || typeof scrollRatio !== "number" || !Number.isFinite(scrollRatio)) {
       return false;
     }
-    if (scrollRatio >= AUTO_READ_THRESHOLD) {
+    const roundedRatio = roundScrollRatio(scrollRatio);
+    if (roundedRatio >= AUTO_READ_THRESHOLD) {
       if (state.lastSession?.storyId === storyId) {
         commit({
           readStories: state.readStories,
@@ -246,12 +249,7 @@ export function createReadingState(): ReadingStateStore {
       }
       return false;
     }
-    if (scrollRatio <= BOOKMARK_THRESHOLD_MIN) {
-      return false;
-    }
-
-    const roundedRatio = Math.round(scrollRatio * 1000) / 1000;
-    if (roundedRatio <= BOOKMARK_THRESHOLD_MIN || roundedRatio >= AUTO_READ_THRESHOLD) {
+    if (roundedRatio <= BOOKMARK_THRESHOLD_MIN) {
       return false;
     }
 
