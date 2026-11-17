@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatGenderPlaceholders,
   formatRegion,
   parseEvidenceTokens,
   parseParagraphTokens,
@@ -39,6 +40,30 @@ describe("text-parser", () => {
       { type: "subhead", label: "段落見出し" },
       { type: "br" },
       { type: "text", value: "本文" },
+    ]);
+  });
+
+  it("formatGenderPlaceholders formats {M#...}{F#...} placeholders into readable text", () => {
+    expect(formatGenderPlaceholders("{M#彼女}{F#彼}は微笑んだ。")).toBe(
+      "彼女／彼は微笑んだ。"
+    );
+    expect(formatGenderPlaceholders("{F#彼}{M#彼女}もまた旅立った。")).toBe(
+      "彼女／彼もまた旅立った。"
+    );
+    expect(formatGenderPlaceholders("{M#旅人}{F#旅人}の記憶")).toBe(
+      "旅人の記憶"
+    );
+  });
+
+  it("parseParagraphTokens formats gender placeholders inside text and inline terms", () => {
+    const tokens = parseParagraphTokens(
+      "金髪の王は人混みを見た。{M#彼女}{F#彼}はしばらく{{fl_twin|{M#姫}{F#王子}}}として滞在した。"
+    );
+
+    expect(tokens).toEqual([
+      { type: "text", value: "金髪の王は人混みを見た。彼女／彼はしばらく" },
+      { type: "term", termId: "fl_twin", surface: "姫／王子" },
+      { type: "text", value: "として滞在した。" },
     ]);
   });
 

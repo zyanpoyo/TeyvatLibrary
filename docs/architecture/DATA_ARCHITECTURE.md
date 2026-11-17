@@ -108,11 +108,12 @@ genshin-books/
 │   │   ├── weapon/
 │   │   │   └── elegyfortheend.json
 │   │   ├── windglider/
-│   │   │   └── wings_of_fate_s_course_intertwined.json
+│   │   │   └── wingsoffatescourseintertwined.json
 │   │   ├── material/
-│   │   │   ├── fetters_of_the_dandelion_gladiator.json
-│   │   │   ├── molten_moment.json
-│   │   │   └── ashen_heart.json
+│   │   │   ├── fettersofthedandeliongladiator.json
+│   │   │   ├── ashenheart.json
+│   │   │   ├── hellfirebutterfly.json
+│   │   │   └── moltenmoment.json
 │   │   └── book/
 │   │       └── the_byakuyakoku_collection.json
 │   │
@@ -259,38 +260,41 @@ genshin-books/
 
 #### 例2：複数素材を束ねる連作オムニバス（週ボス育成素材3種）— `data/stories/chronicle/signora_chronicle.json`
 
+> [!NOTE]
+> 以下のJSON例は構造イメージを示した設計例であり、実データでは `rawId`（`ashenheart` / `hellfirebutterfly` / `moltenmoment`）や公式名称（『獄炎の蝶』）、時系列順の幕並び、および各章の `stripPrefix`（冒頭定型文の除去宣言）を正確に指定する。
+
 ```json
 {
   "$schema": "../../schemas/story.schema.json",
   "id": "signora_chronicle",
   "title": "紅蓮の蛾と灰燼の追憶（淑女討伐録）",
   "shelfCategory": "chronicle",
-  "categoryLabel": "突破・育成素材（週ボス素材連作）",
+  "categoryLabel": "育成素材（週ボス素材連作）",
   "region": ["稲妻", "スネージナヤ", "モンド"],
-  "era": "現代（魔神任務第二章）〜500年前",
-  "releaseVersion": "2.1",
+  "era": "500年前の災厄〜現代",
+  "addedAt": "2026-11-17",
   "hook": "氷の邪眼が砕け散る最期の瞬間、傲慢な『淑女』は500年前の純白の夢と彼の名を思い出した——",
   "tags": ["ロザリン（淑女）", "道化（ピエロ）", "週ボス育成素材3部作"],
   "preGuide": [
-    "舞台：稲妻・天守閣での御前試合、および彼女がファデュイ執行官となった日の記憶。",
-    "構成：週ボス育成素材3種（『溶滅の刻』『獄火の蝶』『灰燼の心』）を時系列順に編纂しています。",
+    "舞台：500年前の災厄から、現代・稲妻の天守閣での決戦まで。",
+    "構成：週ボス育成素材3種（『灰燼の心』『獄炎の蝶』『溶滅の刻』）を時系列順に編纂しています。",
     "読みどころ：聖遺物『燃え盛る炎の魔女』では明かされなかった彼女の本名「ロザリン」と、最期の瞬間に見た夢が直接語られます。"
   ],
-  "overallTruth": "聖遺物『燃え盛る炎の魔女』と『蒼白の炎（無垢の花）』の結末にあたる公式テキスト群です。…",
-  "gameEffect": "追憶：紅蓮の如き霜（Lv.70以上）報酬素材『溶滅の刻』『獄火の蝶』『灰燼の心』",
+  "overallTruth": "聖遺物『燃え盛る炎の魔女』と『蒼白の炎（無垢の花）』の完結編にあたる公式記録群です。…",
+  "gameEffect": "週ボス「淑女」（Lv.70以上）挑戦報酬素材『灰燼の心』『獄炎の蝶』『溶滅の刻』。",
   "connected": [
     {
       "targetId": "crimson_witch",
       "relation": "500年前の発端（聖遺物：燃え盛る炎の魔女）",
       "desc": "『燃え盛る炎の魔女』——彼女がなぜ自らの身体を液体の炎へと変えたのか",
-      "reverseRelation": "500年後の最期と本名の開示（伝承：紅蓮の蛾と灰燼の追憶）",
-      "reverseDesc": "『紅蓮の蛾と灰燼の追憶』——天守閣で討たれた『淑女』が最期に見た純白の夢"
+      "reverseRelation": "500年後の最期と真実（伝承：紅蓮の蛾と灰燼の追憶）",
+      "reverseDesc": "『紅蓮の蛾と灰燼の追憶（淑女討伐録）』——天守閣で討たれた『淑女』が最期に見た純白の夢"
     }
   ],
   "glossary": {
-    "sg_first": {
+    "sg_jester": {
       "entityId": "pierro",
-      "term": "最初のファデュイ"
+      "term": "最初の愚者"
     }
   },
   "chapters": [
@@ -298,42 +302,45 @@ genshin-books/
       "sourceRef": {
         "package": "genshin-db",
         "sourceType": "material",
-        "rawId": "molten_moment",
-        "field": "description"
+        "rawId": "ashenheart",
+        "field": "description",
+        "stripPrefix": "本来の力を発揮した「淑女」を倒して手に入れた、大きな力を秘めた異形の欠片。\n"
       },
-      "partLabel": "第一幕（育成素材：溶滅の刻）",
-      "heading": "長い夢と純白の世界",
-      "epigraph": "「淑女」の力が込められた、何かの欠片。",
+      "partLabel": "第一幕（育成素材：灰燼の心）",
+      "heading": "最初の愚者に見出された日",
+      "epigraph": "本来の力を発揮した「淑女」を倒して手に入れた、大きな力を秘めた異形の欠片。",
+      "paragraphs": [
+        "涙でさえも炎をかき消すことはできない。…\n彼女の心が永遠の火に焼かれる前に、{{sg_jester|最初の愚者}}が彼女を見つけ出した。…"
+      ]
+    },
+    {
+      "sourceRef": {
+        "package": "genshin-db",
+        "sourceType": "material",
+        "rawId": "hellfirebutterfly",
+        "field": "description",
+        "stripPrefix": "本来の力を発揮した「淑女」を倒して獲得した、大きな力を秘めた異形の欠片。\n"
+      },
+      "partLabel": "第二幕（育成素材：獄炎の蝶）",
+      "heading": "氷の封印と忘れ去られた本名",
+      "epigraph": "本来の力を発揮した「淑女」を倒して獲得した、大きな力を秘めた異形の欠片。",
+      "paragraphs": [
+        "氷の封印が解かれ、過去の意志が蒼白の牢獄を突き破った。…"
+      ]
+    },
+    {
+      "sourceRef": {
+        "package": "genshin-db",
+        "sourceType": "material",
+        "rawId": "moltenmoment",
+        "field": "description",
+        "stripPrefix": "本来の力を発揮した「淑女」を倒して手に入れた、大きな力を秘めた異形の欠片。\n"
+      },
+      "partLabel": "第三幕（育成素材：溶滅の刻）",
+      "heading": "純白の夢からの目覚め",
+      "epigraph": "本来の力を発揮した「淑女」を倒して手に入れた、大きな力を秘めた異形の欠片。",
       "paragraphs": [
         "「私は長い夢を見た。」\n「夢の中では、私たちが作った純白の世界で、あんたと再会した。」…"
-      ]
-    },
-    {
-      "sourceRef": {
-        "package": "genshin-db",
-        "sourceType": "material",
-        "rawId": "hellfire_butterfly",
-        "field": "description"
-      },
-      "partLabel": "第二幕（育成素材：獄火の蝶）",
-      "heading": "氷の封印と忘れ去られた本名",
-      "epigraph": "「淑女」の力が込められた氷の封印が破壊され、過去の意志が蒼白の繭を突き破った時…",
-      "paragraphs": [
-        "彼女は自分の本名を思い出した。…"
-      ]
-    },
-    {
-      "sourceRef": {
-        "package": "genshin-db",
-        "sourceType": "material",
-        "rawId": "ashen_heart",
-        "field": "description"
-      },
-      "partLabel": "第三幕（育成素材：灰燼の心）",
-      "heading": "涙でさえも炎を消せない",
-      "epigraph": "「淑女」の思いが込められた、何かの欠片。",
-      "paragraphs": [
-        "涙でさえも炎を消せない。溶けた鉄のような熱い哀しみと怒りが彼女の血管を駆け巡り、涙腺から迸る。\nすべての炎に焼き尽くされる前に、{{sg_first|最初のファデュイ}}が彼女を見つけた。…"
       ]
     }
   ]
@@ -426,6 +433,10 @@ function resolveActualPlainText(paragraphs) {
 > [!IMPORTANT]
 > **なぜ `stripPrefix` や `paragraphSlice` を `sourceRef` に明記するのか？**
 > 恣意的な中抜きや要約・改ざんを防止するためです。「先頭の定型文（`stripPrefix`）を除いた残り全文」または「連続する段落スライス（`paragraphSlice`）の合算」が原典と1文字の狂いもなく一致することを機械的に検証できます。
+
+### 5.3 性別分岐テンプレート記法（`{M#...}{F#...}`）の表示層展開
+- 風の翼『交錯する運命の翼』など、原典テキスト内にゲーム内の主人公性別分岐記法（`{M#彼女}{F#彼}` 等）が含まれる場合、編集層（`data/stories/`）の `paragraphs` では**原文1文字一致の原則に従って記法を無改変のまま保持**する。
+- フロントエンドのテキストパーサ（`src/domain/text-parser.ts` の `parseParagraphTokens` / `formatGenderPlaceholders`）が描画時に `彼女／彼` のような可読表記へ透過的に展開する（前後の文字列や `{{term_id|...}}` 用語タグ内であっても安全に展開される）。
 
 ---
 
