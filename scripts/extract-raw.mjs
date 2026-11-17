@@ -1,20 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
+import {
+  SOURCE_TYPE_TO_DB_FOLDER,
+  loadGenshinDataBooks,
+  loadGenshinDbJapanese,
+} from "./lib/genshin-sources.mjs";
 
-const require = createRequire(import.meta.url);
 const ROOT = process.cwd();
 const RAW_DIR = path.join(ROOT, "data", "raw");
-
-const DB_JSON_PATH = path.join(ROOT, "node_modules", "genshin-db", "src", "min", "data.min.json");
-const DATA_DIST_DIR = path.join(ROOT, "node_modules", "genshin-data", "dist");
-
-const SOURCE_TYPE_TO_DB_FOLDER = {
-  artifact: "artifacts",
-  weapon: "weapons",
-  material: "materials",
-  windglider: "windgliders",
-};
 
 // 初期収録9作品で使用する原典スナップショット定義
 const INITIAL_MANIFEST = [
@@ -44,28 +37,6 @@ function parseArgs(argv) {
     else if (a === "--id" && argv[i + 1]) args.id = argv[++i];
   }
   return args;
-}
-
-function loadGenshinDbJapanese() {
-  if (!fs.existsSync(DB_JSON_PATH)) {
-    throw new Error(`genshin-db data not found at ${DB_JSON_PATH}. Run 'npm install' first.`);
-  }
-  const db = JSON.parse(fs.readFileSync(DB_JSON_PATH, "utf8"));
-  return db?.data?.Japanese || {};
-}
-
-function loadGenshinDataBooks() {
-  if (!fs.existsSync(DATA_DIST_DIR)) {
-    throw new Error(`genshin-data dist not found at ${DATA_DIST_DIR}. Run 'npm install' first.`);
-  }
-  const bookFile = fs.readdirSync(DATA_DIST_DIR).find(
-    (f) => f.startsWith("data_japanese_books.") && f.endsWith(".cjs")
-  );
-  if (!bookFile) {
-    throw new Error("Could not find data_japanese_books.*.cjs in genshin-data.");
-  }
-  const mod = require(path.join(DATA_DIST_DIR, bookFile));
-  return mod.default || mod;
 }
 
 async function fetchYattaBookRaw(bookMeta) {

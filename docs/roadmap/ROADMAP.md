@@ -33,7 +33,7 @@
 
 ### 1.3 コンテンツ制作パイプラインの自動化
 - [ ] **全公式テキストのローカル検索インデックス化**（[HANDOFF.md](../handoff/HANDOFF.md) Step 2）
-  - `genshin-db` の全日本語データ（`characters`, `artifacts`, `weapons`, `materials`, `windgliders`, `outfits`）を横断検索できるローカルインデックスを整備する。
+  - `genshin-db` の全日本語データ（`characters`, `artifacts`, `weapons`, `materials`, `windgliders`, `outfits`）を横断検索できるローカルインデックスを整備する（※初期CLIとして `npm run lore:search` / `npm run lore:inspect`（[`lore-tools.mjs`](../../scripts/lore-tools.mjs)）を実装済み）。
 - [ ] **開発時バッチ変換スクリプト（`scripts/enrich-story`）**（[HANDOFF.md](../handoff/HANDOFF.md) Step 2）
   - 原典テキストと抽出根拠を元に、`hook`・`preGuide`・時系列 `chapters`・`{{term_id|...}}` 注釈・`glossary`・`overallTruth`・`connected` をビルド前に半自動生成するパイプラインを構築する。
 
