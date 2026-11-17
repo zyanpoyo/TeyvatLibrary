@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
+import {
+  getGenshinSourcePaths,
+  loadGenshinDataJapaneseModules,
+  loadGenshinDbJapanese,
+} from "./lib/genshin-sources.mjs";
 
-const require = createRequire(import.meta.url);
 const ROOT = process.cwd();
-const DB_JSON_PATH = path.join(ROOT, "node_modules", "genshin-db", "src", "min", "data.min.json");
-const DATA_DIST_DIR = path.join(ROOT, "node_modules", "genshin-data", "dist");
 const RAW_DIR = path.join(ROOT, "data", "raw");
 const CORPUS_PATH = path.join(ROOT, "data", "shared", "official-corpus.json");
 
@@ -59,23 +60,18 @@ function main() {
   const customLoreCounts = new Map();
 
   // 1. genshin-data の全日本語モジュール
-  const dataFiles = fs.readdirSync(DATA_DIST_DIR).filter(
-    (f) => f.startsWith("data_japanese_") && f.endsWith(".cjs")
-  );
-  for (const file of dataFiles) {
-    const mod = require(path.join(DATA_DIST_DIR, file));
-    walkValue(termCounts, mod.default || mod);
+  const dataModules = loadGenshinDataJapaneseModules(ROOT);
+  for (const { data } of dataModules) {
+    walkValue(termCounts, data);
   }
 
   // 2. genshin-db の全日本語セクション
   let dbFolderCount = 0;
-  if (fs.existsSync(DB_JSON_PATH)) {
-    const dbRoot = JSON.parse(fs.readFileSync(DB_JSON_PATH, "utf8"));
-    const jpDb = dbRoot?.data?.Japanese;
-    if (jpDb) {
-      dbFolderCount = Object.keys(jpDb).length;
-      walkValue(termCounts, jpDb);
-    }
+  const { dbJsonPath } = getGenshinSourcePaths(ROOT);
+  if (fs.existsSync(dbJsonPath)) {
+    const jpDb = loadGenshinDbJapanese(ROOT);
+    dbFolderCount = Object.keys(jpDb).length;
+    walkValue(termCounts, jpDb);
   }
 
   // 3. data/raw/ 内のスナップショット（書籍 Readable 本文など npm に無いテキストを含む）
@@ -101,7 +97,7 @@ function main() {
       genshinDataVersion: gdataPkg.version,
       genshinDbVersion: gdbPkg.version,
       updatedAt: new Date().toISOString(),
-      dataModuleCount: dataFiles.length,
+      dataModuleCount: dataModules.length,
       dbFolderCount,
       rawFileCount,
       termCount: termCounts.size,

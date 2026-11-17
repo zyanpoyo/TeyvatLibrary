@@ -1,23 +1,33 @@
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   VALID_SHELF_CATEGORIES,
   VALID_IDENTITY_PREFIXES,
   VALID_PACKAGES,
   VALID_SOURCE_TYPES,
+  buildTitleLookup,
   createCorpusChecker,
+  extractEvidenceLinks,
+  findEntityLinkHints,
   findFirstDiffContext,
+  findSubtitleLinkErrors,
   loadRawJson,
   resolveActualPlainText,
   resolveExpectedRawText,
   stripInlineTags,
+  validateEntitiesJsonSchema,
   validateEntitiesMaster,
+  validateStoryJsonSchema,
   validateStoryStructure,
 } from "./lib/validator.mjs";
+
+export { extractEvidenceLinks, buildTitleLookup };
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, "data");
 const RAW_DIR = path.join(DATA_DIR, "raw");
+const SCHEMAS_DIR = path.join(DATA_DIR, "schemas");
 const SHARED_DIR = path.join(DATA_DIR, "shared");
 const STORIES_DIR = path.join(DATA_DIR, "stories");
 const DIST_DIR = path.join(ROOT, "public", "data");
@@ -80,43 +90,7 @@ function resolveGlossaryItem(termId, rawItem, entities, sid, errors) {
   return resolved;
 }
 
-export function extractEvidenceLinks(evidence, titleLookup, selfId = null) {
-  if (!evidence) return [];
-  const links = [];
-  const seenIds = new Set();
-  const matches = evidence.matchAll(/『([^』]+)』/g);
-  for (const m of matches) {
-    const citedTitle = m[1];
-    const targetId = titleLookup.get(citedTitle);
-    if (targetId && targetId !== selfId && !seenIds.has(targetId)) {
-      seenIds.add(targetId);
-      links.push({ title: citedTitle, storyId: targetId });
-    }
-  }
-  return links;
-}
-
-function buildTitleLookup(rawStories) {
-  const titleLookup = new Map();
-  const ambiguousTitles = new Set();
-  const registerTitleAlias = (alias, id) => {
-    if (!alias) return;
-    if (titleLookup.has(alias) && titleLookup.get(alias) !== id) {
-      ambiguousTitles.add(alias);
-    } else {
-      titleLookup.set(alias, id);
-    }
-  };
-  for (const st of rawStories) {
-    registerTitleAlias(st.title, st.id);
-    const baseTitle = st.title.replace(/（[^）]+）$/, "").trim();
-    if (baseTitle !== st.title) registerTitleAlias(baseTitle, st.id);
-  }
-  for (const amb of ambiguousTitles) titleLookup.delete(amb);
-  return titleLookup;
-}
-
-function compileAndValidateStory(story, { entities, storyIds, storyById, titleLookup, checkText, errors }) {
+function compileAndValidateStory(story, { entities, storyIds, storyById, titleLookup, checkText, errors, warnings }) {
   const sid = story.id;
   checkText(story.title, `${sid}.title`, errors);
   checkText(story.hook, `${sid}.hook`, errors);
@@ -154,6 +128,11 @@ function compileAndValidateStory(story, { entities, storyIds, storyById, titleLo
     checkText(resolved.identity, `${gLabel}.identity`, errors);
     checkText(resolved.desc, `${gLabel}.desc`, errors);
     checkText(resolved.evidence, `${gLabel}.evidence`, errors);
+
+    const ownEvidence = rawItem.evidenceOverride || rawItem.evidence;
+    if (ownEvidence) {
+      findSubtitleLinkErrors(ownEvidence, `${gLabel}.evidence`, titleLookup, sid, errors);
+    }
 
     const evidenceLinks = extractEvidenceLinks(resolved.evidence, titleLookup, sid);
     if (evidenceLinks.length > 0) {
@@ -222,6 +201,10 @@ function compileAndValidateStory(story, { entities, storyIds, storyById, titleLo
     if (!usedTerms.has(gKey)) {
       errors.push(`[未使用glossary] ${sid}.glossary.${gKey}: 本文中のどこからも参照されていません。`);
     }
+  }
+
+  if (warnings) {
+    warnings.push(...findEntityLinkHints(story, entities, storyEntityIds));
   }
 
   const readingMinutes = Math.max(1, Math.round(totalCharCount / 550));
@@ -346,14 +329,17 @@ function writeDistOutput(distDir, compiledMap, indexPayload) {
 }
 
 function main() {
+  const entitiesSchema = readJson(path.join(SCHEMAS_DIR, "entities.schema.json"));
+  const storySchema = readJson(path.join(SCHEMAS_DIR, "story.schema.json"));
   const entities = readJson(path.join(SHARED_DIR, "entities.json"));
   const officialEntities = readJson(path.join(SHARED_DIR, "official-entities.json"));
   const officialCorpus = readJson(path.join(SHARED_DIR, "official-corpus.json"));
 
   const checkText = createCorpusChecker(officialEntities, officialCorpus);
   const errors = [];
+  const warnings = [];
 
-  validateEntitiesMaster(entities, errors, checkText);
+  validateEntitiesJsonSchema(entities, entitiesSchema, errors);
 
   const storyEntries = collectStoryFiles();
   if (storyEntries.length === 0) {
@@ -368,11 +354,13 @@ function main() {
       errors.push(`[重複ID] story.id '${story.id}' が重複しています。`);
     }
     storyIds.add(story.id);
+    validateStoryJsonSchema(story, storySchema, entry.fileSlug, errors);
     validateStoryStructure(story, entry.folderCategory, entry.fileSlug, errors);
     rawStories.push(story);
   }
 
   const titleLookup = buildTitleLookup(rawStories);
+  validateEntitiesMaster(entities, errors, checkText, titleLookup);
   const storyById = new Map(rawStories.map((s) => [s.id, s]));
   const compiledMap = new Map();
 
@@ -384,11 +372,18 @@ function main() {
       titleLookup,
       checkText,
       errors,
+      warnings,
     });
     compiledMap.set(story.id, compiledStory);
   }
 
   expandBidirectionalConnections(rawStories, compiledMap);
+
+  if (warnings.length > 0) {
+    console.warn(`\n⚠️ ヒント (${warnings.length} 件):`);
+    warnings.forEach((w) => console.warn("  - " + w));
+    console.warn("");
+  }
 
   if (errors.length > 0) {
     console.error(`\n❌ 検証失敗: ${errors.length} 件のエラーが見つかりました:\n`);
@@ -411,4 +406,6 @@ function main() {
   );
 }
 
-main();
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  main();
+}

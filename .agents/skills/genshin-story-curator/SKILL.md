@@ -25,8 +25,12 @@ description: >-
 | `book` | `book` | `node_modules/genshin-data` ＋ **Yatta Readable API** | 同上（`https://gi.yatta.moe/api/v2/jp/...` への外部HTTP通信が発生するため、実行前にネットワーク利用可否を確認する） |
 
 ### 実行ルール
-1. **`rawId` の実物確認**: `genshin-db` のキーはスペース・記号なしの連結小文字（例：`moltenmoment`, `hellfirebutterfly`, `defenderswill`）であり、資料上の仮名称や旧翻訳と異なる場合がある。抽出前に `node_modules/genshin-db` 内の正確な `rawId` と日本語正式名称を確認する。
-2. **本文長トリアージ（事前確認）**: 公式データには `story` が未収録（0字）や 100字未満の極短文アイテム（例：`静水流転の輝き` 0字、`水仙十字の剣` 93字）が存在する。執筆着手前に `data/raw/` の本文量を確認し、不足する場合は別作品の章へ統合するか同シリーズの他長文作品へ構成を見直す。
+1. **`rawId` とクロスリファレンスの事前調査（`lore:search` / `lore:inspect`）**: 執筆着手前に以下の CLI で正式 `rawId`・関連装備横断・文字数・段落構造・カタカナ未登録語を確認する。
+   ```bash
+   npm run lore:search -- <キーワード>
+   npm run lore:inspect -- --type <sourceType> --id <rawId>
+   ```
+2. **本文長トリアージ（事前確認）**: 公式データには `story` が未収録（0字）や 100字未満の極短文アイテム（例：`静水流転の輝き` 0字、`水仙十字の剣` 93字）が存在する。`lore:inspect` が警告を出した場合は別作品の章へ統合するか同シリーズの他長文作品へ構成を見直す。
 3. **コーパス更新**: 新しい書籍（Yatta API 経由）を追加した時や `genshin-db` / `genshin-data` を更新した時は、以下を実行して [`data/shared/official-corpus.json`](../../../data/shared/official-corpus.json) に反映する。
    ```bash
    npm run sync-corpus
@@ -101,9 +105,12 @@ npm run build:data
 ```
 
 ### エラー検出時の対処
+- **`[JSONスキーマ]`**: [`data/schemas/story.schema.json`](../../../data/schemas/story.schema.json) / [`entities.schema.json`](../../../data/schemas/entities.schema.json) の必須項目・パターン・未定義プロパティ禁止（`additionalProperties: false`）に違反している箇所を修正する。
 - **`[原文不一致]`**: `data/raw/` と照合し、段落分割（`\n\n` と `\n`）、`stripPrefix` の1文字差異、タグ内文字列の改変を修正する。
 - **`[NG固有名詞検出]`**: メッセージで示された公式表記（例：`ツァーリツァ` → `氷の女皇`、`ロストム` → `ルースタン`）へ修正する。
 - **`[公式コーパス未登録カタカナ]`**: サジェストの公式表記に合わせるか、解説文を和語・漢字へ言い換える。公式テキストに存在しない正当なメディア由来語・必須一般語のみ [`data/shared/official-entities.json`](../../../data/shared/official-entities.json) へ追加する。
+- **`[出典リンク表記エラー]`**: 収録済み他作品名の後に `（...）` を `『』` の中へ含めたためリンク不発になっている箇所（例：`『蒼白の炎（無垢の花）』`）を `『蒼白の炎』（無垢の花）` 形式へ修正する。
 - **`[出典根拠欠落]` / `[確度区分欠落]`**: 該当 `glossary`（または `entities.json`）に `evidence` と5種プレフィックスを補う。
+- **`⚠️ [エンティティ未連携候補]`（非ブロッキング警告）**: 本文や `overallTruth` に登録済み人物名が登場しているものの `glossary` の `entityId` に未反映の作品を通知する。主役級の関係であれば `entityId` 連携を追加する。
 
 - **完了条件**: `npm run validate` および `npm run build:data` が終了コード `0` で成功し、[`public/data/stories-index.json`](../../../public/data/stories-index.json) に追加作品の件数・`entityIds`・`evidenceLinks` が正しく反映されていること（ロードマップや設計書の進捗に影響する場合は [`doc-sync`](../doc-sync/SKILL.md) スキルに従って更新対象を確認する）。

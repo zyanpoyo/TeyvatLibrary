@@ -97,6 +97,8 @@ npm run preview
 | `npm run test:e2e` | Playwright（Chromium）による UI リグレッションテストを実行します（開発サーバー自動起動込み） |
 | `npm run test:all` | 単体テスト（`npm test`）と UI リグレッションテスト（`npm run test:e2e`）を一括実行します |
 | `npm run extract-raw -- --type <sourceType> --id <rawId>` | `genshin-db` / `genshin-data`（書籍本文は Yatta API）から指定アイテムの原典スナップショットを `data/raw/` へ抽出します |
+| `npm run lore:inspect -- --type <sourceType> --id <rawId>` | 記事化前に対象アイテムの文字数・段落構成・コーパス未登録カタカナ語を事前検査します |
+| `npm run lore:search -- <keyword>` | インストール済みの `genshin-db`・`genshin-data`・`data/raw/` から関連テキストを横断検索します |
 | `npm run sync-corpus` | インストール済みパッケージおよび `data/raw/` から公式カタカナ語コーパス（`data/shared/official-corpus.json`）を生成・同期します |
 
 ---

@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "extract-raw": "node scripts/extract-raw.mjs",
     "sync-corpus": "node scripts/sync-corpus.mjs",
+    "lore:inspect": "node scripts/lore-tools.mjs inspect",
+    "lore:search": "node scripts/lore-tools.mjs search",
     "build:data": "node scripts/build-stories.mjs",
     "validate": "node scripts/build-stories.mjs --validate-only",
     "test": "vitest run",

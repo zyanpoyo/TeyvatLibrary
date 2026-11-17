@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { validateAgainstJsonSchema } from "./json-schema.mjs";
 
 export const VALID_SHELF_CATEGORIES = ["book", "artifact", "weapon", "attire", "chronicle"];
 export const VALID_ENTITY_KINDS = ["character", "god", "organization", "concept", "place"];
@@ -247,7 +248,7 @@ export function createCorpusChecker(officialEntities, officialCorpus) {
   };
 }
 
-export function validateEntitiesMaster(entities, errors, checkText) {
+export function validateEntitiesMaster(entities, errors, checkText, titleLookup = null) {
   const validKinds = new Set(VALID_ENTITY_KINDS);
   for (const [entityId, entity] of Object.entries(entities)) {
     const label = `entities.${entityId}`;
@@ -277,7 +278,95 @@ export function validateEntitiesMaster(entities, errors, checkText) {
     checkText(entity.defaultIdentity, `${label}.defaultIdentity`, errors);
     checkText(entity.defaultDesc, `${label}.defaultDesc`, errors);
     checkText(entity.defaultEvidence, `${label}.defaultEvidence`, errors);
+    if (titleLookup) {
+      findSubtitleLinkErrors(entity.defaultEvidence, `${label}.defaultEvidence`, titleLookup, null, errors);
+    }
   }
+}
+
+export function findSubtitleLinkErrors(evidence, contextLabel, titleLookup, selfId = null, errors = []) {
+  if (!evidence || !titleLookup) return errors;
+  for (const match of String(evidence).matchAll(/『([^』]+)』/g)) {
+    const citedTitle = match[1];
+    if (titleLookup.has(citedTitle)) continue;
+
+    const baseTitle = citedTitle.replace(/（[^）]+）$/, "").trim();
+    if (!baseTitle || baseTitle === citedTitle) continue;
+
+    const targetId = titleLookup.get(baseTitle);
+    if (targetId && targetId !== selfId) {
+      errors.push(
+        `[出典リンク表記エラー] ${contextLabel}: 『${citedTitle}』は補足が括弧内にあるためリンク化されません -> 『${baseTitle}』（補足）の形式に修正してください（対象: ${targetId}）。`
+      );
+    }
+  }
+  return errors;
+}
+
+export function findEntityLinkHints(story, entities, usedEntityIds = []) {
+  const hints = [];
+  const sid = story?.id || "story";
+  const used = usedEntityIds instanceof Set ? usedEntityIds : new Set(usedEntityIds || []);
+  const bodyText = (story?.chapters || [])
+    .flatMap((ch) => (ch.paragraphs || []).map((p) => stripInlineTags(p)))
+    .join("\n");
+  const searchable = `${story?.overallTruth || ""}\n${bodyText}`;
+
+  for (const [eid, entity] of Object.entries(entities || {})) {
+    if (used.has(eid)) continue;
+    const baseName = String(entity?.name || "").replace(/（[^）]+）$/, "").trim();
+    if (baseName.length < 2) continue;
+    if (searchable.includes(baseName)) {
+      hints.push(
+        `[エンティティ未連携候補] ${sid}: 「${baseName}」(${eid}) への言及がありますが glossary の entityId に含まれていません。`
+      );
+    }
+  }
+  return hints;
+}
+
+export function extractEvidenceLinks(evidence, titleLookup, selfId = null) {
+  if (!evidence) return [];
+  const links = [];
+  const seenIds = new Set();
+  const matches = String(evidence).matchAll(/『([^』]+)』/g);
+  for (const m of matches) {
+    const citedTitle = m[1];
+    const targetId = titleLookup.get(citedTitle);
+    if (targetId && targetId !== selfId && !seenIds.has(targetId)) {
+      seenIds.add(targetId);
+      links.push({ title: citedTitle, storyId: targetId });
+    }
+  }
+  return links;
+}
+
+export function buildTitleLookup(rawStories) {
+  const titleLookup = new Map();
+  const ambiguousTitles = new Set();
+  const registerTitleAlias = (alias, id) => {
+    if (!alias) return;
+    if (titleLookup.has(alias) && titleLookup.get(alias) !== id) {
+      ambiguousTitles.add(alias);
+    } else {
+      titleLookup.set(alias, id);
+    }
+  };
+  for (const st of rawStories || []) {
+    registerTitleAlias(st.title, st.id);
+    const baseTitle = String(st.title || "").replace(/（[^）]+）$/, "").trim();
+    if (baseTitle !== st.title) registerTitleAlias(baseTitle, st.id);
+  }
+  for (const amb of ambiguousTitles) titleLookup.delete(amb);
+  return titleLookup;
+}
+
+export function validateStoryJsonSchema(story, storySchema, fileSlug, errors) {
+  validateAgainstJsonSchema(story, storySchema, story?.id || fileSlug || "story", errors);
+}
+
+export function validateEntitiesJsonSchema(entities, entitiesSchema, errors) {
+  validateAgainstJsonSchema(entities, entitiesSchema, "entities", errors);
 }
 
 export function isValidIsoDateString(value) {
