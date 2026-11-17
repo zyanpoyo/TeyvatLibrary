@@ -1,6 +1,6 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
+import entitiesSchema from "../data/schemas/entities.schema.json";
+import storySchema from "../data/schemas/story.schema.json";
 import { validateAgainstJsonSchema } from "../scripts/lib/json-schema.mjs";
 import {
   VALID_IDENTITY_PREFIXES,
@@ -160,13 +160,6 @@ describe("validator text, corpus, and link checks", () => {
 
   it("enforces the 3 purified identity prefixes across validator and JSON schemas", () => {
     expect(VALID_IDENTITY_PREFIXES).toEqual(["正体：", "解説：", "有力説："]);
-
-    const entitiesSchema = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "data", "schemas", "entities.schema.json"), "utf8")
-    );
-    const storySchema = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "data", "schemas", "story.schema.json"), "utf8")
-    );
 
     const validEntityErrors: string[] = [];
     validateAgainstJsonSchema(
