@@ -62,7 +62,7 @@ export function ShelfToolbar({
     : "未読作品からランダムに1篇開く";
 
   return (
-    <div className={styles.shelfToolbar} aria-label="人物・地域・キーワード検索">
+    <div className={styles.shelfToolbar} aria-label="人物・用語・地域・キーワード検索">
       <div className={styles.shelfFilters}>
         <select
           id="status-filter"
@@ -85,13 +85,13 @@ export function ShelfToolbar({
         <select
           id="entity-filter"
           className={styles.filterControl}
-          aria-label="登場人物で絞り込む"
+          aria-label="登場人物・用語で絞り込む"
           value={filters.entityId}
           onChange={(e) =>
             onChangeFilters((prev) => ({ ...prev, entityId: e.target.value }))
           }
         >
-          <option value="">登場人物：すべて</option>
+          <option value="">登場人物・用語：すべて</option>
           {entities.map(([id, info]) => (
             <option key={id} value={id}>
               {info.name} ({info.storyIds?.length || 0})

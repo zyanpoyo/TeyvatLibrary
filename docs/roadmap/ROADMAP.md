@@ -7,25 +7,25 @@
 ## 1. 機能追加ロードマップ
 
 ### 1.1 読書体験・検索機能の拡張
-- [x] **読了チェックマーク・しおり・進捗のローカル保存**（[`reading-state.ts`](../../src/state/reading-state.ts) / [RETENTION_ROADMAP.md](../handoff/RETENTION_ROADMAP.md) Phase 1-2 にて実装済み）
+- [x] **読了チェックマーク・途中しおり・進捗のローカル保存**（[`reading-state.ts`](../../src/state/reading-state.ts) / [RETENTION_ROADMAP.md](../handoff/RETENTION_ROADMAP.md) Phase 1-2 にて実装済み）
 - [ ] **時代（`era`）軸での横断フィルタリング**（[HANDOFF.md](../handoff/HANDOFF.md) Step 4）
-  - 「500年前の災厄」「魔神戦争」「旧貴族時代」などの時代区分で絞り込める専用フィルタを書架に追加する（現状の `ShelfFilters` はカテゴリー・読書状態・登場人物・地域・キーワード・並び順に対応）。
+  - 「500年前の災厄」「魔神戦争」「旧貴族時代」などの時代区分で絞り込める専用フィルタを書架に追加する（現状の `ShelfFilters` はカテゴリー・読書状態・登場人物・用語・地域・キーワード・並び順に対応）。
 
-### 1.2 トップページ「3大特集プレイリスト」機能
-複数の書籍・聖遺物・武器を横断し、読むべき順序付きで案内する特集セクションを書架トップに配置する。
+### 1.2 トップページ「3大フェア棚（読書コース）」機能
+複数の書籍・聖遺物・武器を横断し、読むべき順序付きで案内するフェア棚（読書コース：[`phase3_curation_courses.md`](../handoff/retention/phase3_curation_courses.md) に統合）を書架トップに配置する。
 
-- [ ] **特集UI（プレイリストカード／ステップ導線）の実装**
-  - **特集①：【推しキャラ深掘り】本編では語られない「ファデュイ執行官」の過去**
+- [ ] **フェア棚／読書コース UI（`courses.json`・ステップ導線）の実装**
+  - **コース①：【推しキャラ深掘り】本編では語られない「ファデュイ執行官」の過去**
     1. 聖遺物『燃え盛る炎の魔女』（収録済み：[`crimson_witch.json`](../../data/stories/artifact/crimson_witch.json)）
     2. 聖遺物『華館夢醒形骸記』（収録済み：[`husk.json`](../../data/stories/artifact/husk.json)）
     3. 聖遺物『蒼白の炎』（収録済み：[`pale_flame.json`](../../data/stories/artifact/pale_flame.json)）
     4. 書籍『ペリンヘリ』 ＆ 武器『赤月のシルエット』（未収録）
-  - **特集②：【一気読み連載】フォンテーヌ「水仙十字院」の軌跡をたどる**
+  - **コース②：【一気読み連載】フォンテーヌ「水仙十字院」の軌跡をたどる**
     1. 聖遺物『水仙の夢』（収録済み：[`nymphsdream.json`](../../data/stories/artifact/nymphsdream.json)）＆ 『ファントムハンター』（収録済み：[`marechausseehunter.json`](../../data/stories/artifact/marechausseehunter.json)）
     2. 武器『サーンドルの渡し守』（収録済み：[`fleuvecendreferryman.json`](../../data/stories/weapon/fleuvecendreferryman.json)）＆ 『超越の鍵』（収録済み：[`ateaspoonoftranscendence.json`](../../data/stories/weapon/ateaspoonoftranscendence.json)）
     3. 武器『久遠流転の大典』（収録済み：[`tomeoftheeternalflow.json`](../../data/stories/weapon/tomeoftheeternalflow.json) ※なお `genshin-db` 上で『静水流転の輝き』は本文0文字、`水仙十字の剣` は93文字の短文であることを確認）
     4. 武器『ルミドゥースの挽歌』（収録済み：[`lumidouceelegy.json`](../../data/stories/weapon/lumidouceelegy.json)）
-  - **特集③：【テイワット創世記】『日月前事』から最新聖遺物まで繋がる世界の真相**
+  - **コース③：【テイワット創世記】『日月前事』から最新聖遺物まで繋がる世界の真相**
     1. 書籍『白夜国館蔵（第2巻『日月前事』）』（収録済み：[`byakuyakoku.json`](../../data/stories/book/byakuyakoku.json)）
     2. 書籍『竹林月夜』（未収録）
     3. 書籍『白姫と六人の小人』（未収録）
@@ -39,7 +39,7 @@
 
 ### 1.4 運用・アクセス解析基盤
 - [ ] **Google Analytics によるアナリティクス追跡対応**
-  - 具体的な計測仕様・実装方法は今後決定（主な検討事項：GA4 タグ／測定IDの設定方法、ハッシュルーティング `#story/<id>` 遷移を含むページビュー計測、カスタムイベント設計〔作品開封・検索・用語ガイド表示・関連作品遷移等〕、プライバシー表記・Cookie同意要否）。
+  - 具体的な計測仕様・実装方法は今後決定（主な検討事項：GA4 タグ／測定IDの設定方法、ハッシュルーティング `#/story/<id>` 遷移を含むページビュー計測、カスタムイベント設計〔作品開封・検索・用語ガイド表示・関連作品遷移等〕、プライバシー表記・Cookie同意要否）。
 
 ---
 

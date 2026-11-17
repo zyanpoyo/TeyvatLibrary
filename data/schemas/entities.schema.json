@@ -19,8 +19,8 @@
       },
       "defaultIdentity": {
         "type": "string",
-        "pattern": "^(正体：|真名：|鳴神名：|解説：|有力説：)",
-        "description": "確度区分プレフィックス付きの正体・肩書き"
+        "pattern": "^(正体：|解説：|有力説：)",
+        "description": "確度区分プレフィックス付きの正体・解説・有力説"
       },
       "defaultDesc": {
         "type": "string",

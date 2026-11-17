@@ -1,5 +1,8 @@
 # テイワット文庫（原神 聖遺物・武器・書籍リーダー）— 次期AI引き継ぎ設計書 (HANDOFF)
 
+> [!IMPORTANT]
+> **歴史的引き継ぎ文書（移行完了済み）**: 本ドキュメントは、初期の単一 HTML プロトタイプ（`index.html` 内データ構成）から React + TypeScript + Vite 構成の本番アプリへ移行する前の設計引き継ぎ記録です。現行仕様の正本は [`README.md`](../../README.md)・[`GLOSSARY.md`](../../GLOSSARY.md)・[`DATA_ARCHITECTURE.md`](../architecture/DATA_ARCHITECTURE.md)・[`AGENTS.md`](../../AGENTS.md) を参照してください。
+
 本ドキュメントは、プロトタイプ（`index.html`）で検証・確定した仕様とデータ構造を引き継ぎ、本番Webアプリケーションへ拡張するための設計・実装指示書である。
 
 ---

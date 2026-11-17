@@ -160,6 +160,9 @@ describe("Shelf & Reader integration (MemoryRouter + Radix UI)", () => {
 
     await screen.findByText("燃え盛る炎の魔女");
     expect(screen.getByText("終焉を嘆く詩")).toBeInTheDocument();
+    expect(screen.getByLabelText("登場人物・用語で絞り込む")).toHaveDisplayValue(
+      "登場人物・用語：すべて"
+    );
 
     // Bookmark mock_elegy
     const bookmarkBtn = screen.getByRole("button", { name: "『終焉を嘆く詩』をあとで読む" });

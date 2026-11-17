@@ -68,7 +68,7 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
     await expect(page.locator("#story-grid .story-card")).toHaveCount(3);
   });
 
-  test("関連作品カードおよび用語Popover内の出典リンクから別作品へ連続遷移できる", async ({ page }) => {
+  test("関連作品カードおよび用語ガイド内の出典リンクから別作品へ連続遷移できる", async ({ page }) => {
     await page.goto("/#story/mock_witch");
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
 
@@ -77,7 +77,7 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
     await expect(page).toHaveURL(/#\/story\/mock_elegy$/);
     await expect(page.locator(".reader-title")).toHaveText("終焉を嘆く詩（テスト版）");
 
-    // 用語 Popover を開き、出典リンクから mock_witch へ遷移（同時にPopoverが閉じる）
+    // 用語ガイド（Dialog）を開き、出典リンクから mock_witch へ遷移（同時にダイアログが閉じる）
     await page.locator(".glossary-term").first().click();
     const popover = page.locator("#pop-mock_elegy-el_knight");
     await expect(popover).toBeVisible();

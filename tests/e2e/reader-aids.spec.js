@@ -32,7 +32,7 @@ test.describe("リーダーの読書補助UIとモバイル表示", () => {
     await expect(page.locator("#chapter-toc")).toBeHidden();
   });
 
-  test("インライン用語Popoverの開閉と用語ガイドON/OFFトグルが動作する", async ({ page }) => {
+  test("インライン用語ガイドの開閉と用語ガイドON/OFFトグルが動作する", async ({ page }) => {
     await page.goto("/#story/mock_witch");
 
     const termBtn = page.locator(".glossary-term").first();
@@ -62,7 +62,7 @@ test.describe("リーダーの読書補助UIとモバイル表示", () => {
     await expect(page.locator(".glossary-badge").first()).toBeVisible();
   });
 
-  test("モバイルビューポート（390x844）でも書架・リーダー・ボトムシートPopoverが操作できる", async ({ page }) => {
+  test("モバイルビューポート（390x844）でも書架・リーダー・ボトムシート型用語ガイドが操作できる", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
 

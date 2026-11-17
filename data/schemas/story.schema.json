@@ -36,7 +36,6 @@
       "minItems": 1
     },
     "era": { "type": "string", "minLength": 1 },
-    "releaseVersion": { "type": "string" },
     "addedAt": {
       "type": "string",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
@@ -77,8 +76,8 @@
         "properties": {
           "entityId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
           "term": { "type": "string", "minLength": 1 },
-          "identity": { "type": "string", "minLength": 1 },
-          "identityOverride": { "type": "string", "minLength": 1 },
+          "identity": { "type": "string", "pattern": "^(正体：|解説：|有力説：)" },
+          "identityOverride": { "type": "string", "pattern": "^(正体：|解説：|有力説：)" },
           "desc": { "type": "string", "minLength": 1 },
           "descOverride": { "type": "string", "minLength": 1 },
           "evidence": { "type": "string", "minLength": 1 },
