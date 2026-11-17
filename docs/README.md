@@ -6,3 +6,4 @@
 | :--- | :--- | :--- |
 | **アーキテクチャ (`architecture/`)** | [DATA_ARCHITECTURE.md](architecture/DATA_ARCHITECTURE.md) | 3層データモデル（Raw / Curation / Dist）、1作品＝1 JSONスキーマ、5分類UIカテゴリーと章単位 `sourceRef`、共通人物マスタ・双方向リンク自動解決、原文1文字完全一致検証仕様 |
 | **引き継ぎ・プロダクト仕様 (`handoff/`)** | [HANDOFF.md](handoff/HANDOFF.md) | プロトタイプで確定したコアUX・ビジュアル原則、データソース比較表、クロスリファレンス人物特定ロジック、本番Webアプリ化の実装ステップ |
+| **ロードマップ (`roadmap/`)** | [ROADMAP.md](roadmap/ROADMAP.md) | 機能追加計画（読了・しおり・時代フィルタ・3大特集プレイリスト・自動注釈パイプライン）およびMVP優先収録作品ラインナップ |
