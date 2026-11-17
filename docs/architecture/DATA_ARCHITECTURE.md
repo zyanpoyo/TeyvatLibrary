@@ -1,6 +1,6 @@
 # 「テイワット文庫」データアーキテクチャ設計書（改訂確定版）
 
-本ドキュメントは、プロトタイプ（[`index.html`](../../index.html)）で検証したコアUXを維持しつつ、npm レジストリ上の原神データパッケージ（`genshin-db` / `genshin-data`）の全カテゴリー調査結果と設計レビュー（`/grill-me`）での決定事項を反映した、本番リリース向けデータアーキテクチャ仕様書である。
+本ドキュメントは、初期プロトタイプ（単一HTML版）で検証したコアUXを土台に、npm レジストリ上の原神データパッケージ（`genshin-db` / `genshin-data`）の全カテゴリー調査結果と設計レビューでの決定事項を反映した、データアーキテクチャ設計書である。
 
 ---
 
@@ -28,7 +28,7 @@ npm レジストリ上の `genshin-db@5.2.15` と `genshin-data@0.65.1` は収�
 | **`artifact`**<br>（聖遺物） | `genshin-db`<br>(`artifacts`) | 63 セット | 各部位（`flower`, `plume`, `sands`, `goblet`, `circlet`）の `description` ＆ `story` | 1部位平均455〜522字（最大3,164字）。`genshin-data` には `story` が無いため必ず `genshin-db` を使用する。 |
 | **`weapon`**<br>（武器） | `genshin-db`<br>(`weapons`) | 256 件<br>(`story`有 246件) | `description` ＆ `story` | 平均772字（最大2,251字）。`genshin-data` には `story` が無いため必ず `genshin-db` を使用する。 |
 | **`windglider`**<br>（風の翼） | `genshin-db`<br>(`windgliders`) | 19 件 | `description` ＆ `story` | 全19件に長文 `story` あり（平均908字、最大1,593字）。`genshin-data` にはカテゴリー自体が存在しない。 |
-| **`book`**<br>（書籍） | `genshin-data` (`books`)<br>＋ **Yatta Readable API** | 619 シリーズ<br>(1,224 巻) | `volumes[].description`（要約）＋ Yatta API `readable/Book<storyId>`（本文） | npm パッケージには `storyId` と要約しか無いため、抽出スクリプトで Yatta API から各巻本文を結合して `data/raw/books/` に保存する。 |
+| **`book`**<br>（書籍） | `genshin-data` (`books`)<br>＋ **Yatta Readable API** | 619 シリーズ<br>(1,224 巻) | `volumes[].description`（要約）＋ Yatta API `readable/Book<storyId>`（本文） | npm パッケージには `storyId` と要約しか無いため、抽出スクリプトで Yatta API から各巻本文を結合して `data/raw/book/` に保存する。 |
 
 ### 2.2 連作・オムニバス・出典対象となる短〜中文カテゴリー（`description`）
 単体では100〜500字程度のため、**複数段階の連作**（突破素材★2〜★5、週ボス育成素材3種、元素宝石など）として編纂するカテゴリー。本アーキテクチャで扱う `sourceType` は **`material` のみ**に限定する。
@@ -207,7 +207,6 @@ genshin-books/
   "categoryLabel": "聖遺物（連作短編）",
   "region": ["モンド", "スメール"],
   "era": "500年前の災厄",
-  "releaseVersion": "1.0",
   "hook": "愛する人を失った少女は、涙が枯れた日に自らの身体を「液体の炎」へと変えた——",
   "tags": ["ロザリン（淑女）", "500年前の災厄", "全5章・時系列順"],
   "preGuide": [
@@ -438,8 +437,9 @@ function resolveActualPlainText(paragraphs) {
 - 風の翼『交錯する運命の翼』など、原典テキスト内にゲーム内の主人公性別分岐記法（`{M#彼女}{F#彼}` 等）が含まれる場合、編集層（`data/stories/`）の `paragraphs` では**原文1文字一致の原則に従って記法を無改変のまま保持**する。
 - フロントエンドのテキストパーサ（`src/domain/text-parser.ts` の `parseParagraphTokens` / `formatGenderPlaceholders`）が描画時に `彼女／彼` のような可読表記へ透過的に展開する（前後の文字列や `{{term_id|...}}` 用語タグ内であっても安全に展開される）。
 
-### 5.4 JSON スキーマ・出典リンク整合性・エンティティ候補チェック
+### 5.4 JSON スキーマ・確度区分・出典リンク整合性・エンティティ候補チェック
 - **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json` と `story.schema.json` の必須項目・正規表現パターン・列挙値・未定義プロパティ禁止（`additionalProperties: false`）を厳密に検査する。
+- **確度区分チェック (`VALID_IDENTITY_PREFIXES`)**: `glossary` の `identity` / `identityOverride` および `entities.json` の `defaultIdentity` は、情報の性質・確度を表す 3 種プレフィックス（**`正体：` / `解説：` / `有力説：`**）のいずれかで始まることを強制する。
 - **出典リンク表記チェック (`findSubtitleLinkErrors`)**: `evidence` / `evidenceOverride` / `defaultEvidence` に収録済み他作品のタイトルが含まれるにもかかわらず `『作品名（補足）』` のように括弧を内側へ含めたため `evidenceLinks` が不発になっている記述をエラーとして検出する（部位・巻の補足は必ず `『作品名』（補足）` のように外へ配置する）。
 - **未連携エンティティ候補ヒント (`findEntityLinkHints`)**: 本文または `overallTruth` に `entities.json` 登録済み人物・概念名が登場しているにもかかわらず `entityId` 連携に含まれていない場合、非ブロッキングな注意喚起（`⚠️ ヒント`）を出力して見落としを防ぐ。
 
@@ -452,19 +452,19 @@ function resolveActualPlainText(paragraphs) {
 ### 6.1 Story Compiler による4つの自動解決処理
 
 1. **`glossary` のマスタ継承解決**:
-   - `glossary[key].entityId` が指定されている場合、`data/shared/entities.json` から `defaultIdentity`, `defaultDesc`, `defaultEvidence` を引き継ぎ、`descOverride` や個別指定があれば上書きしてフラットなオブジェクトに展開する。
-   - 同時に、その作品に登場するすべての `entityId` の配列（`entityIds: ["rosalyne", "rustan"]`）を抽出し、一覧画面の「キャラクター別逆引きフィルタ」用にインデックス化する。
+   - `glossary[key].entityId` が指定されている場合、`data/shared/entities.json` から `defaultIdentity`, `defaultDesc`, `defaultEvidence` を引き継ぎ、`identityOverride` / `descOverride` / `evidenceOverride`（または個別指定）があれば上書きしてフラットなオブジェクトに展開する。
+   - 同時に、その作品に登場するすべての `entityId` の配列（`entityIds: ["rosalyne", "rustan"]`）を抽出し、一覧画面の「登場人物・用語逆引きフィルタ」用にインデックス化する。
 2. **双方向 `connected` リンクの自動展開**:
    - 作品 `A` の `connected` に `{ targetId: "B", relation: "...", desc: "...", reverseRelation: "...", reverseDesc: "..." }` が記述されている場合、作品 `B` の配信JSONの `connected` 配列にも自動的に `A` への逆リンクを追加する（すでに `B` 側に `targetId: "A"` が明示定義されている場合はそちらを優先し、重複させない）。
 3. **`evidence` 文字列内の収録作品タイトル自動リンク化**:
-   - `glossary` の `evidence` 文字列（例：`"聖遺物『守護の心』・武器『西風剣』『終焉を嘆く詩』"`）を走査し、`『...』` 内の名称がすでに書架に収録されている作品（例：`『終焉を嘆く詩』` → `id: "elegy"`）と一致する場合、配信JSONに `evidenceLinks: [{ title: "終焉を嘆く詩", storyId: "elegy" }]` を自動付与する。これにより、用語Popover内の出典名をクリックして該当作品へ直接ジャンプできる。
+   - `glossary` の `evidence` 文字列（例：`"聖遺物『守護の心』・武器『西風剣』『終焉を嘆く詩』"`）を走査し、`『...』` 内の名称がすでに書架に収録されている作品（例：`『終焉を嘆く詩』` → `id: "elegy"`）と一致する場合、配信JSONに `evidenceLinks: [{ title: "終焉を嘆く詩", storyId: "elegy" }]` を自動付与する。これにより、用語ガイド（Dialog）内の出典名をクリックして該当作品へ直接ジャンプできる。
 4. **読了目安時間（`readingTime`）とカテゴリー件数の自動集計**:
    - 全章のプレーンテキスト文字数を合算し、`Math.max(1, Math.round(charCount / 550))` から `"約N分"` を自動算出する。
 
 ---
 
 ### 6.2 配信ファイル①：書架・検索用軽量インデックス（`public/data/stories-index.json`）
-書架（一覧画面）の初期表示、5分類タブ切り替え、キャラ・地域・時代フィルタリング専用の軽量ファイル（本文・用語辞書を含まないため、100作品でも約30〜40KB）。
+書架（一覧画面）の初期表示、5分類タブ切り替え、登場人物・用語・地域フィルタリング専用の軽量ファイル（本文・用語辞書を含まないため、100作品でも約30〜40KB）。
 
 ```json
 {
@@ -478,8 +478,8 @@ function resolveActualPlainText(paragraphs) {
     "chronicle": 2
   },
   "entitiesIndex": {
-    "rosalyne": { "name": "ロザリン（淑女）", "storyIds": ["crimson_witch", "pale_flame", "signora_chronicle"] },
-    "rustan": { "name": "ルースタン", "storyIds": ["crimson_witch", "elegy"] }
+    "rosalyne": { "name": "ロザリン（淑女）", "kind": "character", "storyIds": ["crimson_witch", "pale_flame", "signora_chronicle"] },
+    "rustan": { "name": "ルースタン", "kind": "character", "storyIds": ["crimson_witch", "elegy"] }
   },
   "stories": [
     {
@@ -508,7 +508,7 @@ function resolveActualPlainText(paragraphs) {
 
 ## 7. 新規ストーリー追加時の標準ワークフロー
 
-今後、新しい書籍・武器・聖遺物・風の翼・突破素材・オムニバス伝承を追加する際は、以下の4ステップで完結する。
+今後、新しい書籍・武器・聖遺物・風の翼・突破素材・オムニバス伝承を追加する際は、事前調査 CLI（`npm run lore:search` / `npm run lore:inspect`）で対象 `rawId`・本文長・カタカナ表記を確認した上で、以下の4ステップで完結する。
 
 ```mermaid
 sequenceDiagram

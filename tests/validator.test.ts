@@ -1,6 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { validateAgainstJsonSchema } from "../scripts/lib/json-schema.mjs";
 import {
+  VALID_IDENTITY_PREFIXES,
   buildTitleLookup,
   createCorpusChecker,
   extractEvidenceLinks,
@@ -153,5 +156,107 @@ describe("validator text, corpus, and link checks", () => {
     expect(hints).toHaveLength(1);
     expect(hints[0]).toContain("オロバシノミコト");
     expect(hints[0]).toContain("orobashi");
+  });
+
+  it("enforces the 3 purified identity prefixes across validator and JSON schemas", () => {
+    expect(VALID_IDENTITY_PREFIXES).toEqual(["正体：", "解説：", "有力説："]);
+
+    const entitiesSchema = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "data", "schemas", "entities.schema.json"), "utf8")
+    );
+    const storySchema = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "data", "schemas", "story.schema.json"), "utf8")
+    );
+
+    const validEntityErrors: string[] = [];
+    validateAgainstJsonSchema(
+      {
+        test_a: {
+          name: "テストA",
+          kind: "character",
+          defaultIdentity: "正体：テスト",
+          defaultDesc: "説明",
+          defaultEvidence: "記録",
+        },
+        test_b: {
+          name: "テストB",
+          kind: "concept",
+          defaultIdentity: "解説：テスト",
+          defaultDesc: "説明",
+          defaultEvidence: "記録",
+        },
+        test_c: {
+          name: "テストC",
+          kind: "god",
+          defaultIdentity: "有力説：テスト",
+          defaultDesc: "説明",
+          defaultEvidence: "記録",
+        },
+      },
+      entitiesSchema,
+      "entities",
+      validEntityErrors
+    );
+    expect(validEntityErrors).toEqual([]);
+
+    const invalidEntityErrors: string[] = [];
+    validateAgainstJsonSchema(
+      {
+        legacy_a: {
+          name: "テストD",
+          kind: "character",
+          defaultIdentity: "鳴神名：テスト",
+          defaultDesc: "説明",
+          defaultEvidence: "記録",
+        },
+        legacy_b: {
+          name: "テストE",
+          kind: "god",
+          defaultIdentity: "真名：テスト",
+          defaultDesc: "説明",
+          defaultEvidence: "記録",
+        },
+      },
+      entitiesSchema,
+      "entities",
+      invalidEntityErrors
+    );
+    expect(invalidEntityErrors.filter((e) => e.includes("パターン"))).toHaveLength(2);
+
+    const storyWithLegacyIdentityErrors: string[] = [];
+    validateAgainstJsonSchema(
+      {
+        id: "sample_story",
+        title: "サンプル",
+        shelfCategory: "weapon",
+        categoryLabel: "武器",
+        region: ["モンド"],
+        era: "現代",
+        hook: "フック",
+        tags: [],
+        preGuide: ["前提"],
+        overallTruth: "真相",
+        gameEffect: "効果",
+        glossary: {
+          term_one: {
+            term: "語句",
+            identity: "鳴神名：テスト",
+          },
+        },
+        chapters: [
+          {
+            sourceRef: { package: "genshin-db", sourceType: "weapon", rawId: "sample" },
+            partLabel: "第一章",
+            heading: "見出し",
+            epigraph: "",
+            paragraphs: ["本文"],
+          },
+        ],
+      },
+      storySchema,
+      "sample_story",
+      storyWithLegacyIdentityErrors
+    );
+    expect(storyWithLegacyIdentityErrors.some((e) => e.includes("glossary.term_one.identity"))).toBe(true);
   });
 });

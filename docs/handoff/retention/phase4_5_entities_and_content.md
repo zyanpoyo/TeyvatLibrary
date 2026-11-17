@@ -1,26 +1,26 @@
-# Phase 4 & 5 詳細仕様：「登場人物・神・組織名鑑」ビュー＆収録作品の継続拡充
+# Phase 4 & 5 詳細仕様：「人物・用語名鑑」ビュー＆収録作品の継続拡充
 
-本仕様は、共通人物マスタ（[`data/shared/entities.json`](../../../data/shared/entities.json)）を設定確認辞書として活用する **Phase 4（名鑑ビュー）** と、機能実装後のコンテンツ拡充指針である **Phase 5（作品追加の優先順位）** を定義する。
+本仕様は、人物・用語マスタ（[`data/shared/entities.json`](../../../data/shared/entities.json)）を設定確認辞書として活用する **Phase 4（人物・用語名鑑ビュー）** と、機能実装後のコンテンツ拡充指針である **Phase 5（作品追加の優先順位）** を定義する。
 
 ---
 
-## Phase 4: 「登場人物・神・組織名鑑（Entities Archive）」ビューの独立
+## Phase 4: 「人物・用語名鑑（Entities Archive）」ビューの独立
 
 ### 4.1 インデックス出力の拡張（`scripts/build-stories.mjs`）
 - 現在 `public/data/stories-index.json` の `entitiesIndex` には `{ name, kind, storyIds }` のみが出力されている。
 - ここに [`data/shared/entities.json`](../../../data/shared/entities.json) の `defaultIdentity`・`defaultDesc`・`defaultEvidence`・`evidenceLinks`（ビルド時自動解決）を含めて出力する。
 
-### 4.2 名鑑ビューUIの実装（`src/router/routes.tsx`, `src/components/entities/` 等を新設して統合）
+### 4.2 人物・用語名鑑ビューUIの実装（`src/router/routes.tsx`, `src/components/entities/` 等を新設して統合）
 - 書架上部のナビゲーションまたはタブから切り替えられる「人物・用語名鑑」ビュー（またはドロワー／モーダル）を追加する。
 - 種別（`character`: 人物 / `god`: 魔神・執政 / `organization`: 組織 / `concept`: 歴史・重要用語 / `place`: 地域・地名）でグルーピングまたは絞り込み表示する。
-- 各人物カードには以下を表示する:
+- 各エンティティカードには以下を表示する:
   - 名称（`name`）と正体（`defaultIdentity`）
   - 背景解説（`defaultDesc`）と出典リンク（`defaultEvidence`）
   - **登場する物語リスト（`storyIds`）**: 作品タイトル・カテゴリー・読了バッジ（`✦ 読了`）を表示し、クリックで該当作品のリーダー画面へ直接遷移する。
 
 ### 4.3 Phase 4 完了条件（Completion Criteria）
-- [ ] `entities.json` に登録された全エンティティの解説と出典リンク、および関連作品リストが名鑑ビューから閲覧できること。
-- [ ] 名鑑内の関連作品リンクおよび出典リンク（`evidenceLinks`）をクリックすると、該当作品のリーダー画面へ遷移すること。
+- [ ] `entities.json` に登録された全エンティティの解説と出典リンク、および関連作品リストが人物・用語名鑑ビューから閲覧できること。
+- [ ] 人物・用語名鑑内の関連作品リンクおよび出典リンク（`evidenceLinks`）をクリックすると、該当作品のリーダー画面へ遷移すること。
 
 ---
 

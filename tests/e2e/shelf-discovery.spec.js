@@ -30,7 +30,7 @@ test.describe("書架の探索・フィルタリング・並び替え", () => {
     ).toHaveText("NEW");
   });
 
-  test("カテゴリータブで絞り込みができ、0件の風の翼では準備中メッセージが表示される", async ({ page }) => {
+  test("カテゴリータブで絞り込みができ、0件のタブでは統一空状態メッセージが表示される", async ({ page }) => {
     await page.locator(".category-tab[data-filter='artifact']").click();
     await expect(page.locator(".category-tab[data-filter='artifact']")).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator("#story-grid .story-card")).toHaveCount(1);
@@ -38,11 +38,11 @@ test.describe("書架の探索・フィルタリング・並び替え", () => {
 
     await page.locator(".category-tab[data-filter='attire']").click();
     await expect(page.locator("#story-grid .story-card")).toHaveCount(0);
-    await expect(page.locator(".shelf-empty-title")).toContainText("準備中のカテゴリーです");
-    await expect(page.locator(".shelf-empty-desc")).toContainText("風の翼");
+    await expect(page.locator(".shelf-empty-title")).toContainText("条件に一致する物語が見つかりません");
+    await expect(page.locator(".shelf-empty-desc")).toContainText("登場人物・用語");
   });
 
-  test("登場人物・地域・キーワードで絞り込み、0件時に条件リセットで全件に戻せる", async ({ page }) => {
+  test("登場人物・用語、地域、キーワードで絞り込み、0件時に条件リセットで全件に戻せる", async ({ page }) => {
     await page.locator("#entity-filter").selectOption("orobashi");
     await expect(page.locator("#story-grid .story-card")).toHaveCount(1);
     await expect(page.locator("#story-grid .story-card").first()).toHaveAttribute("data-story-id", "mock_byakuyakoku");

@@ -143,13 +143,6 @@ export function ShelfPage() {
     }
   }, [stories, readingStore, lastOpenedStoryId, handleOpenStory]);
 
-  const isUnpopulatedAttire =
-    filters.category === "attire" &&
-    (!filters.status || filters.status === "all") &&
-    !filters.entityId &&
-    !filters.region &&
-    !(filters.query || "").trim();
-
   return (
     <section id="shelf-view" ref={shelfRef} className={styles.shelfView} tabIndex={-1}>
       <ObservatoryHeader
@@ -188,12 +181,10 @@ export function ShelfPage() {
         ) : ordered.length === 0 ? (
           <div className={commonStyles.emptyState}>
             <p className={`${commonStyles.emptyTitle} shelf-empty-title`}>
-              ✦ {isUnpopulatedAttire ? "準備中のカテゴリーです" : "条件に一致する物語が見つかりません"}
+              ✦ 条件に一致する物語が見つかりません
             </p>
             <p className={`${commonStyles.emptyDesc} shelf-empty-desc`}>
-              {isUnpopulatedAttire
-                ? "「風の翼」の収録作品は今後のアップデートで追加予定です。"
-                : "カテゴリーや読書状態・登場人物・地域・検索語句の条件を変更してお試しください。"}
+              カテゴリーや読書状態・登場人物・用語・地域・検索語句の条件を変更してお試しください。
             </p>
             <button
               type="button"
