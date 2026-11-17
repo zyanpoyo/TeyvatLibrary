@@ -42,11 +42,13 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
     await page.goto("/");
     await expect(page.locator("#story-grid .story-card")).toHaveCount(3);
 
+    const targetLink = page.locator("#story-grid .story-card").last().locator(".card-primary-link");
     await page.evaluate(() => window.scrollTo(0, 320));
+    await targetLink.scrollIntoViewIfNeeded();
     const savedY = await page.evaluate(() => window.scrollY);
     expect(savedY).toBeGreaterThan(200);
 
-    await page.locator(".story-card[data-story-id='mock_elegy'] .card-primary-link").click();
+    await targetLink.click();
     await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
 

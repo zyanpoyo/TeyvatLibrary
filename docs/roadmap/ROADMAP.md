@@ -21,10 +21,10 @@
     3. 聖遺物『蒼白の炎』（収録済み：[`pale_flame.json`](../../data/stories/artifact/pale_flame.json)）
     4. 書籍『ペリンヘリ』 ＆ 武器『赤月のシルエット』（未収録）
   - **特集②：【一気読み連載】フォンテーヌ「水仙十字院」の軌跡をたどる**
-    1. 聖遺物『水仙の夢』（未収録）
-    2. 武器『水仙十字の剣』（未収録）
-    3. 武器『静水流転の輝き』 ＆ 『久遠流転の大典』（未収録）
-    4. 武器『ルミドゥースの挽歌』（未収録）
+    1. 聖遺物『水仙の夢』（収録済み：[`nymphsdream.json`](../../data/stories/artifact/nymphsdream.json)）＆ 『ファントムハンター』（収録済み：[`marechausseehunter.json`](../../data/stories/artifact/marechausseehunter.json)）
+    2. 武器『サーンドルの渡し守』（収録済み：[`fleuvecendreferryman.json`](../../data/stories/weapon/fleuvecendreferryman.json)）＆ 『超越の鍵』（収録済み：[`ateaspoonoftranscendence.json`](../../data/stories/weapon/ateaspoonoftranscendence.json)）
+    3. 武器『久遠流転の大典』（収録済み：[`tomeoftheeternalflow.json`](../../data/stories/weapon/tomeoftheeternalflow.json) ※なお `genshin-db` 上で『静水流転の輝き』は本文0文字、`水仙十字の剣` は93文字の短文であることを確認）
+    4. 武器『ルミドゥースの挽歌』（収録済み：[`lumidouceelegy.json`](../../data/stories/weapon/lumidouceelegy.json)）
   - **特集③：【テイワット創世記】『日月前事』から最新聖遺物まで繋がる世界の真相**
     1. 書籍『白夜国館蔵（第2巻『日月前事』）』（収録済み：[`byakuyakoku.json`](../../data/stories/book/byakuyakoku.json)）
     2. 書籍『竹林月夜』（未収録）
@@ -63,7 +63,7 @@
 | ✅ | **燃え盛る炎の魔女** | 「淑女」シニョーラ（ロザリン） | [`crimson_witch.json`](../../data/stories/artifact/crimson_witch.json) として収録済み。本編未描写の過去を描く代表作。 |
 | ✅ | **蒼白の炎** | ファデュイ執行官（道化・博士・散兵・淑女・富者） | [`pale_flame.json`](../../data/stories/artifact/pale_flame.json) として収録済み。執行官5名の勧誘オムニバス。 |
 | ✅ | **華館夢醒形骸記** | 放浪者（スカラマシュ / 傾奇者） | [`husk.json`](../../data/stories/artifact/husk.json) として収録済み。たたら砂事件など放浪者の過去を綴る名作。 |
-| ⬜ | **水仙の夢** | 水仙十字院（アラン・ルネ・マリアン・ジェイコブ） | フォンテーヌ大型世界任務の核心。おとぎ話形式のため用語ガイド（Popover）が特に活きる。 |
+| ✅ | **水仙の夢**（＋**ファントムハンター**） | 水仙十字院（アラン・ルネ・マリアン・ジェイコブ） | [`nymphsdream.json`](../../data/stories/artifact/nymphsdream.json) / [`marechausseehunter.json`](../../data/stories/artifact/marechausseehunter.json) として第2バッチで収録済み。表裏の視点から読むことで物語の全容が立体化。 |
 | ⬜ | **楽園の絶花** ＆ **金メッキの夢** | 花神・キングデシェレト・マハールッカデヴァータ | スメール砂漠の三神の友情と破滅を描く大河ロマン。固有名詞が多く用語解説の恩恵が大きい。 |
 | ⬜ | **深廊の終曲** ＆ **黒曜の秘典** | 原初の龍ニーベルンゲン・過客の少女・ナタ古史 | 天理・龍王・月の三姉妹・ナタ古史に関わる最新考察トレンド直結の聖遺物群。 |
 
@@ -71,8 +71,8 @@
 
 | 状態 | 武器名 | 関連キャラ・テーマ | 収録・特集の狙い |
 | :---: | :--- | :--- | :--- |
-| ⬜ | **ルミドゥースの挽歌** ＆ **水仙十字の剣** | 水仙十字院の完結編（エミリエ餅武器 ほか） | 複数武器を跨いで完結する水仙十字院シリーズ。聖遺物『水仙の夢』との連動読解。 |
-| ⬜ | **静水流転の輝き** ＆ **久遠流転の大典** | フリーナ（エゲリア）・ヌヴィレット | 人気キャラのモチーフ武器。先代水神エゲリアの罪とヌヴィレットの視点を描く。 |
+| ✅ | **ルミドゥースの挽歌**（＋**サーンドルの渡し守**・**超越の鍵**） | 水仙十字院の完結・派生編（マルフィサ・エドワルド・アラン＆サンドローネ） | [`lumidouceelegy.json`](../../data/stories/weapon/lumidouceelegy.json) / [`fleuvecendreferryman.json`](../../data/stories/weapon/fleuvecendreferryman.json) / [`ateaspoonoftranscendence.json`](../../data/stories/weapon/ateaspoonoftranscendence.json) として第2バッチで収録済み（※『水仙十字の剣』は `genshin-db` 本文93文字のため代替・拡張収録）。 |
+| ✅ | **久遠流転の大典**（注：静水流転の輝きは本文なし） | 隠修会・先代水神エゲリア・メロピデ要塞以前 | [`tomeoftheeternalflow.json`](../../data/stories/weapon/tomeoftheeternalflow.json) として第2バッチで収録済み（※`genshin-db` 上で『静水流転の輝き』の `story` は0文字）。 |
 | ⬜ | **赤月のシルエット** | アルレッキーノ（召使） | 書籍『ペリンヘリ』と直接リンクする赤月王朝時代の祭具。書籍とのセット特集による回遊を狙う。 |
 | ⬜ | **冬極の白星** | タルタリヤ・スネージナヤ（氷の女皇） | 氷の女皇への忠誠とファデュイの思想が綴られた人気武器ストーリー。 |
 | ⬜ | **祭礼シリーズ**（剣・大剣・弓・法器） | モンド旧貴族と「時間の執政」 | 身近な星4武器に隠されたモンド古代史と「時間の風（イスタロト）」の伏線。 |
