@@ -1,4 +1,5 @@
 import { createReadingStateReader } from "../state/reading-state";
+import { parseIsoDateUtcMs } from "./text-parser";
 import type {
   EntityKind,
   LastSessionSnapshot,
@@ -103,23 +104,6 @@ function getLocalDateKey(now: Date = new Date()): string {
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
-}
-
-function parseIsoDateUtcMs(dateStr: unknown): number | null {
-  if (typeof dateStr !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return null;
-  }
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const utcMs = Date.UTC(y, m - 1, d);
-  const dt = new Date(utcMs);
-  if (
-    dt.getUTCFullYear() !== y ||
-    dt.getUTCMonth() !== m - 1 ||
-    dt.getUTCDate() !== d
-  ) {
-    return null;
-  }
-  return utcMs;
 }
 
 function hashDateSeed(dateKey: string): number {

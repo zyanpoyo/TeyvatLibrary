@@ -11,6 +11,7 @@ import {
   findSubtitleLinkErrors,
   resolveActualPlainText,
   resolveExpectedRawText,
+  sanitizeRawSourceText,
 } from "../scripts/lib/validator.mjs";
 
 const STORY_SCHEMA_SAMPLE = {
@@ -84,6 +85,19 @@ describe("validator text, corpus, and link checks", () => {
       "{{tag_one|第1段落}}です。\n改行続き。",
       "第2段落です。",
     ]);
+    expect(actual).toBe(expected);
+  });
+
+  it("sanitizes raw text directly and matches gender-placeholder inline tags 1:1", () => {
+    const rawText = "<color=#FFD780FF>導入。</color>\n\n第1段落です。<br/>{M#姫}{F#王子}は歩いた。\n\n第2段落。";
+    const expected = sanitizeRawSourceText(rawText, {
+      stripPrefix: "導入。\n\n",
+      paragraphSlice: [0, 1],
+    });
+    const actual = resolveActualPlainText([
+      "第1段落です。\n{{fl_twin|{M#姫}{F#王子}}}は{{act|歩いた}}。",
+    ]);
+    expect(expected).toBe("第1段落です。\n{M#姫}{F#王子}は歩いた。");
     expect(actual).toBe(expected);
   });
 

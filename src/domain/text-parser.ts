@@ -10,20 +10,27 @@ export type EvidenceToken =
   | { type: "text"; value: string }
   | { type: "link"; title: string; storyId: string };
 
+export interface InlineTagReference {
+  termId: string;
+  surface: string;
+  raw: string;
+}
+
+const INLINE_TAG_SOURCE = String.raw`\{\{([a-z0-9_]+)\|((?:[^}{]|\{[MF]#[^}]*\}|\{(?!\{|[MF]#))+)\}\}`;
+const GENDER_PLACEHOLDER_SOURCE = String.raw`\{M#([^}]*)\}\{F#([^}]*)\}|\{F#([^}]*)\}\{M#([^}]*)\}`;
+const CITED_TITLE_SOURCE = String.raw`『([^』]+)』`;
+
 export function formatRegion(region?: string | string[]): string {
   if (Array.isArray(region)) return region.join(" / ");
   return String(region ?? "");
 }
-
-const GENDER_PLACEHOLDER_PATTERN =
-  /\{M#([^}]*)\}\{F#([^}]*)\}|\{F#([^}]*)\}\{M#([^}]*)\}/g;
 
 /**
  * 原文に含まれるゲーム内性別分岐記法 {M#...}{F#...} を可読表記へ展開する。
  */
 export function formatGenderPlaceholders(text: string): string {
   return String(text ?? "").replace(
-    GENDER_PLACEHOLDER_PATTERN,
+    new RegExp(GENDER_PLACEHOLDER_SOURCE, "g"),
     (
       _match,
       m1: string | undefined,
@@ -36,6 +43,68 @@ export function formatGenderPlaceholders(text: string): string {
       return male === female ? male : `${male}／${female}`;
     }
   );
+}
+
+/**
+ * テキスト内のインライン注釈 {{termId|surface}} をすべて抽出する（{M#...}{F#...} 内包に対応）。
+ */
+export function extractInlineTagReferences(text: string): InlineTagReference[] {
+  const input = String(text ?? "");
+  const refs: InlineTagReference[] = [];
+  for (const match of input.matchAll(new RegExp(INLINE_TAG_SOURCE, "g"))) {
+    refs.push({
+      termId: match[1],
+      surface: match[2],
+      raw: match[0],
+    });
+  }
+  return refs;
+}
+
+/**
+ * インライン注釈 {{termId|surface}} のタグ記法を剥がし、表示対象文字列（surface）のみを復元する。
+ */
+export function stripInlineTags(text: string): string {
+  return String(text ?? "").replace(new RegExp(INLINE_TAG_SOURCE, "g"), "$2");
+}
+
+/**
+ * テキスト内の『タイトル』形式の引用名を出現順に抽出する。
+ */
+export function extractCitedTitles(text: string): string[] {
+  const input = String(text ?? "");
+  const titles: string[] = [];
+  for (const match of input.matchAll(new RegExp(CITED_TITLE_SOURCE, "g"))) {
+    titles.push(match[1]);
+  }
+  return titles;
+}
+
+/**
+ * YYYY-MM-DD 形式かつ実在するカレンダー日付であれば UTC 00:00:00 のミリ秒を返し、不正値なら null を返す。
+ */
+export function parseIsoDateUtcMs(dateStr: unknown): number | null {
+  if (typeof dateStr !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return null;
+  }
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const utcMs = Date.UTC(y, m - 1, d);
+  const dt = new Date(utcMs);
+  if (
+    dt.getUTCFullYear() !== y ||
+    dt.getUTCMonth() !== m - 1 ||
+    dt.getUTCDate() !== d
+  ) {
+    return null;
+  }
+  return utcMs;
+}
+
+/**
+ * YYYY-MM-DD 形式の実在日付文字列かを判定する。
+ */
+export function isValidIsoDateString(value: unknown): value is string {
+  return parseIsoDateUtcMs(value) !== null;
 }
 
 function appendTextToken(tokens: ParagraphToken[], value: string): void {
@@ -57,8 +126,10 @@ export function parseParagraphTokens(text: string): ParagraphToken[] {
   if (!input) return [];
 
   const tokens: ParagraphToken[] = [];
-  const pattern =
-    /【([^】]+)】\n?|\{\{([a-z0-9_]+)\|((?:[^}{]|\{[MF]#[^}]*\}|\{(?!\{|[MF]#))+)\}\}|\{M#([^}]*)\}\{F#([^}]*)\}|\{F#([^}]*)\}\{M#([^}]*)\}|\n/g;
+  const pattern = new RegExp(
+    String.raw`【([^】]+)】\n?|${INLINE_TAG_SOURCE}|${GENDER_PLACEHOLDER_SOURCE}|\n`,
+    "g"
+  );
   let cursor = 0;
   let match: RegExpExecArray | null;
 
@@ -149,7 +220,7 @@ export function parseEvidenceTokens(
   }
 
   const tokens: EvidenceToken[] = [];
-  const pattern = /『([^』]+)』/g;
+  const pattern = new RegExp(CITED_TITLE_SOURCE, "g");
   let cursor = 0;
   let match: RegExpExecArray | null;
 

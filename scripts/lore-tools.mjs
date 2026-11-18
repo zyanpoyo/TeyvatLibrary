@@ -2,14 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
-  SOURCE_TYPE_TO_DB_FOLDER,
+  findBookMeta,
   loadGenshinDataBooks,
   loadGenshinDbJapanese,
+  resolveDbSourceEntry,
 } from "./lib/genshin-sources.mjs";
 import {
   VALID_PIECES,
   createCorpusChecker,
-  resolveExpectedRawText,
+  sanitizeRawSourceText,
   splitIntoParagraphBlocks,
 } from "./lib/validator.mjs";
 
@@ -92,7 +93,7 @@ function inspectArtifactItem(rawId, entry, corpusChecker, extraCheckText) {
     const pieceData = entry[piece];
     if (!pieceData) continue;
     const rawText = typeof pieceData.story === "string"
-      ? resolveExpectedRawText(entry, { sourceType: "artifact", rawId, piece })
+      ? sanitizeRawSourceText(pieceData.story)
       : "";
     const paragraphs = rawText ? splitIntoParagraphBlocks(rawText) : [];
     totalRawCharCount += rawText.length;
@@ -132,7 +133,7 @@ function inspectSingleTextItem(sourceType, rawId, entry, corpusChecker, extraChe
   const field = sourceType === "material" ? "description" : "story";
   const rawFieldValue = entry[field];
   const rawText = typeof rawFieldValue === "string" && rawFieldValue.trim().length > 0
-    ? resolveExpectedRawText(entry, { sourceType, rawId, field })
+    ? sanitizeRawSourceText(rawFieldValue)
     : "";
   const paragraphs = rawText ? splitIntoParagraphBlocks(rawText) : [];
   const lengthWarning = summarizeLengthWarning(rawText.length);
@@ -163,7 +164,7 @@ function inspectSingleTextItem(sourceType, rawId, entry, corpusChecker, extraChe
 }
 
 function inspectBookItem(rawId, booksData, rawBookJson, corpusChecker, extraCheckText) {
-  const bookMeta = (booksData || []).find((b) => b.id === rawId || String(b._id) === rawId);
+  const bookMeta = findBookMeta(booksData, rawId);
   if (!bookMeta && !rawBookJson) {
     throw new Error(`Book '${rawId}' not found in genshin-data.`);
   }
@@ -175,8 +176,8 @@ function inspectBookItem(rawId, booksData, rawBookJson, corpusChecker, extraChec
   const volumes = (bookMeta?.volumes || sourceVolumes).map((vol) => {
     const volId = vol._id ?? vol.id;
     const rawVol = sourceVolumes.find((rv) => rv.id === volId || rv.name === vol.name);
-    const text = rawVol?.text
-      ? resolveExpectedRawText({ volumes: [rawVol] }, { sourceType: "book", rawId, volumeId: rawVol.id })
+    const text = typeof rawVol?.text === "string" && rawVol.text.length > 0
+      ? sanitizeRawSourceText(rawVol.text)
       : "";
     const paragraphs = text ? splitIntoParagraphBlocks(text) : [];
     totalRawCharCount += text.length;
@@ -238,15 +239,7 @@ export function buildInspectReport({
     return inspectBookItem(rawId, booksData, rawBookJson, corpusChecker, checkText);
   }
 
-  const dbFolder = SOURCE_TYPE_TO_DB_FOLDER[sourceType];
-  if (!dbFolder) {
-    throw new Error(`Unsupported sourceType '${sourceType}'. Allowed: artifact, weapon, material, windglider, book`);
-  }
-
-  const entry = dbJapanese?.[dbFolder]?.[rawId];
-  if (!entry) {
-    throw new Error(`Entry '${rawId}' not found in genshin-db (${dbFolder}).`);
-  }
+  const entry = resolveDbSourceEntry(dbJapanese, sourceType, rawId);
 
   if (sourceType === "artifact") {
     return inspectArtifactItem(rawId, entry, corpusChecker, checkText);

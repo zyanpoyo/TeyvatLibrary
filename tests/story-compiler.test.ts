@@ -52,6 +52,9 @@ const BASE_RAW_SNAPSHOTS: Record<string, unknown> = {
   "material/ashenheart": {
     description: "定型前置き文。\n真紅の灰が残された。",
   },
+  "windglider/wingsoffatescourseintertwined": {
+    story: "金髪の王は人混みを見た。{M#姫}{F#王子}は歩き出した。",
+  },
 };
 
 function createStubSnapshotReader(overrides: Record<string, unknown> = {}) {
@@ -460,5 +463,50 @@ describe("StoryCompiler (compileStories)", () => {
     expect(result.errors.some((e) => e.includes("[未定義用語タグ]") && e.includes("undefined_tag"))).toBe(true);
     expect(result.errors.some((e) => e.includes("[原文不一致]"))).toBe(true);
     expect(result.errors.some((e) => e.includes("[原典解決エラー]"))).toBe(true);
+  });
+
+  it("compiles stories containing inline tags that wrap {M#...}{F#...} gender placeholders without false mismatch or unused glossary errors", () => {
+    const result = compileStories(
+      createBaseInput({
+        stories: [
+          {
+            folderCategory: "attire",
+            fileSlug: "wings_of_fate",
+            story: createValidElegyStory({
+              id: "wings_of_fate",
+              title: "交錯する運命の翼",
+              shelfCategory: "attire",
+              categoryLabel: "風の翼",
+              tags: [],
+              glossary: {
+                wf_twin: {
+                  entityId: "rosalyne",
+                  term: "金髪の王",
+                },
+              },
+              chapters: [
+                {
+                  sourceRef: {
+                    package: "genshin-db",
+                    sourceType: "windglider",
+                    rawId: "wingsoffatescourseintertwined",
+                  },
+                  partLabel: "風の翼",
+                  heading: "交錯",
+                  epigraph: "",
+                  paragraphs: ["金髪の王は人混みを見た。{{wf_twin|{M#姫}{F#王子}}}は歩き出した。"],
+                },
+              ],
+            }),
+          },
+        ],
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(result.dist?.storiesById.wings_of_fate.charCount).toBe(
+      "金髪の王は人混みを見た。{M#姫}{F#王子}は歩き出した。".length
+    );
   });
 });

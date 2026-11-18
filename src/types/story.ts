@@ -1,8 +1,24 @@
 export type StoryCategoryId = "book" | "artifact" | "weapon" | "attire" | "chronicle";
 export type ShelfCategoryId = "all" | StoryCategoryId;
+export type SourcePackageId = "genshin-db" | "genshin-data" | "yatta";
+export type SourceTypeId = "artifact" | "weapon" | "windglider" | "book" | "material";
+export type ArtifactPieceId = "flower" | "plume" | "sands" | "goblet" | "circlet";
+export type SourceFieldId = "story" | "description" | "text";
+export type IdentityPrefix = "正体：" | "解説：" | "有力説：";
 export type EntityKind = "character" | "god" | "organization" | "concept" | "place";
 export type ReadingStatusFilter = "all" | "unread" | "read" | "bookmarked";
 export type SortMode = "recommended" | "newest" | "shortest";
+
+export interface ChapterSourceRef {
+  package: SourcePackageId;
+  sourceType: SourceTypeId;
+  rawId: string;
+  piece?: ArtifactPieceId;
+  volumeId?: number;
+  field?: SourceFieldId;
+  stripPrefix?: string;
+  paragraphSlice?: [number, number];
+}
 
 export type ThemeMode = "night" | "paper" | "sepia";
 export type FontSizeMode = "small" | "medium" | "large";
@@ -58,6 +74,7 @@ export interface StoryChapter {
   epigraph: string;
   paragraphs: string[];
   chapterNote?: string;
+  sourceRef?: ChapterSourceRef;
 }
 
 export interface ConnectedStoryLink {

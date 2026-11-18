@@ -1,19 +1,11 @@
 import type {
+  ChapterSourceRef,
   EvidenceLink,
   StoriesIndexData,
   StoryDetail,
 } from "../../src/types/story";
 
-export interface RawSourceRef {
-  package: string;
-  sourceType: string;
-  rawId: string;
-  piece?: string;
-  volumeId?: number;
-  field?: string;
-  stripPrefix?: string;
-  paragraphSlice?: [number, number];
-}
+export type RawSourceRef = ChapterSourceRef;
 
 export interface StoryInputEntry {
   folderCategory: string;

@@ -1,3 +1,5 @@
+import type { CorpusChecker } from "./lib/validator.mjs";
+
 export interface ParsedCliArgs {
   command: string | null;
   type: string | null;
@@ -9,7 +11,51 @@ export interface ParsedCliArgs {
   keyword: string | null;
 }
 
+export interface ArtifactInspectChapter {
+  piece: string;
+  name: string;
+  epigraph: string;
+  rawCharCount: number;
+  nonWhitespaceCharCount: number;
+  paragraphs: string[];
+}
+
+export interface BookInspectVolume {
+  volumeId: number;
+  name: string;
+  epigraph: string;
+  storyId: string;
+  rawCharCount: number;
+  paragraphs: string[];
+}
+
+export interface InspectReport {
+  sourceType: string;
+  rawId: string;
+  name: string;
+  rarityList?: number[];
+  effect2Pc?: string;
+  effect4Pc?: string;
+  rarity?: number | null;
+  weaponText?: string | null;
+  effectName?: string | null;
+  effectTemplateRaw?: string | null;
+  epigraph?: string;
+  totalRawCharCount: number;
+  nonWhitespaceCharCount?: number;
+  warnings: string[];
+  katakanaIssues: string[];
+  paragraphs?: string[];
+  chapters?: ArtifactInspectChapter[];
+  volumes?: BookInspectVolume[];
+}
+
 export function parseCliArgs(argv: string[]): ParsedCliArgs;
+
+export function collectKatakanaIssues(
+  labeledTexts: Array<{ label: string; text: string }>,
+  corpusChecker?: CorpusChecker | null
+): string[];
 
 export function buildInspectReport(params: {
   sourceType: string | null;
@@ -17,19 +63,9 @@ export function buildInspectReport(params: {
   dbJapanese: Record<string, Record<string, unknown>>;
   booksData?: Array<Record<string, unknown>>;
   rawBookJson?: Record<string, unknown> | null;
-  corpusChecker?: ((text: string, contextLabel: string, errors: string[]) => void) | null;
+  corpusChecker?: CorpusChecker | null;
   checkText?: string | null;
-}): {
-  sourceType: string;
-  rawId: string;
-  name: string;
-  totalRawCharCount: number;
-  warnings: string[];
-  katakanaIssues: string[];
-  paragraphs?: string[];
-  chapters?: Array<{ piece: string; name: string; rawCharCount: number; paragraphs: string[] }>;
-  volumes?: Array<{ volumeId: number; name: string; rawCharCount: number; paragraphs: string[] }>;
-};
+}): InspectReport;
 
 export function searchLoreEntries(params: {
   keyword: string;
