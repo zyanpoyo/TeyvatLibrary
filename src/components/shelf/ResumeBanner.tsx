@@ -35,6 +35,7 @@ export function ResumeBanner({
           data-story-id={story.id}
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+            e.preventDefault();
             onResumeClick(story.id, session.scrollRatio);
           }}
         >

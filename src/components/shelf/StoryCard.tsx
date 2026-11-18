@@ -12,7 +12,6 @@ export interface StoryCardProps {
   isRead: boolean;
   isNew: boolean;
   isBookmarked: boolean;
-  onBeforeOpenStory: (storyId: string) => void;
   onOpenStory: (storyId: string) => void;
   onToggleBookmark: (storyId: string) => void;
 }
@@ -27,7 +26,6 @@ export function StoryCard({
   isRead,
   isNew,
   isBookmarked,
-  onBeforeOpenStory,
   onOpenStory,
   onToggleBookmark,
 }: StoryCardProps) {
@@ -105,7 +103,8 @@ export function StoryCard({
             to={storyPath}
             onClick={(e) => {
               if (isModifiedClick(e)) return;
-              onBeforeOpenStory(story.id);
+              e.preventDefault();
+              onOpenStory(story.id);
             }}
           >
             {story.title}

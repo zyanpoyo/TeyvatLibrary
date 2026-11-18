@@ -1,6 +1,8 @@
+import { createReadingStateReader } from "../state/reading-state";
 import type {
   EntityKind,
   LastSessionSnapshot,
+  ReadingStateSnapshot,
   ShelfCategoryId,
   ShelfFilters,
   SortMode,
@@ -36,6 +38,16 @@ export interface ReadingStateReader {
   getLastSession?(validStoryIds?: ReadonlySet<string> | null): LastSessionSnapshot | null;
 }
 
+export type ReadingStateInput = ReadingStateReader | ReadingStateSnapshot | null;
+
+function resolveReadingStateReader(input: ReadingStateInput | undefined): ReadingStateReader | null {
+  if (!input) return null;
+  if ("isRead" in input && typeof input.isRead === "function") {
+    return input;
+  }
+  return createReadingStateReader(input as ReadingStateSnapshot);
+}
+
 export interface ShelfCategoryTab {
   id: ShelfCategoryId;
   label: string;
@@ -66,7 +78,7 @@ export interface ShelfResumeState {
 export interface DeriveShelfViewInput {
   indexData: StoriesIndexData | null;
   filters: Partial<ShelfFilters>;
-  readingState?: ReadingStateReader | null;
+  readingState?: ReadingStateInput;
   now?: Date;
 }
 
@@ -351,6 +363,7 @@ export function deriveShelfView({
   readingState = null,
   now = new Date(),
 }: DeriveShelfViewInput): ShelfViewModel {
+  const reader = resolveReadingStateReader(readingState);
   const normalizedFilters = normalizeFilters(filters);
   const isFiltered = isFilteredShelf(normalizedFilters);
   const isDefaultState = !isFiltered && normalizedFilters.sort === "recommended";
@@ -358,25 +371,25 @@ export function deriveShelfView({
   const stories = indexData?.stories ?? [];
   const validStoryIds = new Set(stories.map((s) => s.id));
   const totalCount = stories.length;
-  const readCount = deriveReadCount(validStoryIds, readingState);
+  const readCount = deriveReadCount(validStoryIds, reader);
   const allRead = totalCount > 0 && readCount >= totalCount;
 
-  const filtered = filterStories(stories, normalizedFilters, readingState);
+  const filtered = filterStories(stories, normalizedFilters, reader);
   const { ordered, featuredId } = arrangeShelfStories(
     filtered,
     stories,
     normalizedFilters.sort,
     isDefaultState,
-    readingState,
+    reader,
     now
   );
 
   const items: ShelfCardItem[] = ordered.map((story) => ({
     story,
     isFeatured: Boolean(featuredId && story.id === featuredId),
-    isRead: Boolean(readingState?.isRead(story.id)),
-    isNew: isNewStory(story, readingState, now),
-    isBookmarked: Boolean(readingState?.isBookmarked?.(story.id)),
+    isRead: Boolean(reader?.isRead(story.id)),
+    isNew: isNewStory(story, reader, now),
+    isBookmarked: Boolean(reader?.isBookmarked?.(story.id)),
   }));
 
   return {
@@ -392,7 +405,7 @@ export function deriveShelfView({
     totalCount,
     readCount,
     allRead,
-    resume: deriveResumeState(stories, validStoryIds, readingState),
+    resume: deriveResumeState(stories, validStoryIds, reader),
   };
 }
 
@@ -401,13 +414,14 @@ export function deriveShelfView({
  */
 export function pickRandomStory<T extends Pick<StoryIndexItem, "id" | "charCount">>(
   stories: ReadonlyArray<T> | null | undefined,
-  readingState: ReadingStateReader | null = null,
+  readingState: ReadingStateInput = null,
   excludeStoryId: string | null = null,
   rng: () => number = Math.random
 ): T | null {
+  const reader = resolveReadingStateReader(readingState);
   const list = stories || [];
   if (list.length === 0) return null;
-  const unread = list.filter((s) => !readingState?.isRead(s.id));
+  const unread = list.filter((s) => !reader?.isRead(s.id));
   const unreadShort = unread.filter(
     (s) => typeof s.charCount === "number" && s.charCount <= SHORT_STORY_MAX_CHARS
   );

@@ -56,6 +56,17 @@ test.describe("画面遷移・ルーティング・位置復元", () => {
     await expect(page.locator("body")).toHaveAttribute("data-view", "shelf");
     const restoredY = await page.evaluate(() => window.scrollY);
     expect(Math.abs(restoredY - savedY)).toBeLessThanOrEqual(10);
+
+    // ブラウザの「進む」でリーダーへ再遷移し、「戻る」で書架へ戻ってもスクロール位置とフォーカスが失われない
+    await page.goForward();
+    await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+    await page.goBack();
+    await expect(page.locator("body")).toHaveAttribute("data-view", "shelf");
+    const restoredAfterForwardBackY = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(restoredAfterForwardBackY - savedY)).toBeLessThanOrEqual(10);
+    await expect(targetLink).toBeFocused();
   });
 
   test("URLハッシュ直アクセスでリーダーが開き、無効IDは書架へフォールバックする", async ({ page }) => {

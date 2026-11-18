@@ -323,4 +323,29 @@ describe("catalog domain", () => {
     const picked = pickRandomStory(SAMPLE_STORIES, readingState, "crimson_witch", () => 0);
     expect(picked?.id).toBe("elegy");
   });
+
+  it("accepts ReadingStateSnapshot directly in deriveShelfView and pickRandomStory", () => {
+    const snapshot = {
+      readStories: { byakuyakoku: { readAt: "2026-11-15T00:00:00.000Z" } },
+      bookmarks: ["crimson_witch"],
+      lastSession: {
+        storyId: "elegy",
+        chapterIndex: 0,
+        scrollRatio: 0.4,
+        updatedAt: "2026-11-15T01:00:00.000Z",
+      },
+    };
+    const view = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState: snapshot,
+      now: new Date(2026, 10, 15),
+    });
+    expect(view.readCount).toBe(1);
+    expect(view.resume?.story.id).toBe("elegy");
+    expect(view.items.find((i) => i.story.id === "crimson_witch")?.isBookmarked).toBe(true);
+
+    const picked = pickRandomStory(SAMPLE_STORIES, snapshot, "crimson_witch", () => 0);
+    expect(picked?.id).toBe("elegy");
+  });
 });

@@ -3,90 +3,89 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
+  type Dispatch,
   type ReactNode,
+  type RefObject,
+  type SetStateAction,
 } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { fetchStoriesIndex } from "../api/stories";
 import { DEFAULT_SHELF_FILTERS } from "../domain/catalog";
-import { useDocumentThemeEffect } from "../hooks/useDocumentThemeEffect";
-import { createDisplayPrefsState, type DisplayPrefSetting, type DisplayPrefsStore } from "./prefs";
+import {
+  createDisplayPrefsState,
+  useDocumentThemeEffect,
+  type DisplayPrefSetting,
+} from "./prefs";
 import { createReadingState, type ReadingStateStore } from "./reading-state";
 import type {
   DisplayPrefs,
   ReadingStateSnapshot,
   ShelfFilters,
   StoriesIndexData,
+  StoryDetail,
 } from "../types/story";
 
 export { DEFAULT_SHELF_FILTERS };
 
-interface ReadingStateContextValue {
+const BASE_DOCUMENT_TITLE = "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー";
+
+function getHistoryIndex(): number | null {
+  if (typeof window === "undefined") return null;
+  const idx = (window.history.state as { idx?: unknown } | null)?.idx;
+  return typeof idx === "number" ? idx : null;
+}
+
+export interface ReadingStateContextValue {
   store: ReadingStateStore;
   snapshot: ReadingStateSnapshot;
 }
 
-interface DisplayPrefsContextValue {
+export interface DisplayPrefsContextValue {
   prefs: DisplayPrefs;
-  setPref: (setting: DisplayPrefSetting, value: string) => boolean;
+  setPref: <K extends DisplayPrefSetting>(
+    setting: K,
+    value: DisplayPrefs[K] | (string & {})
+  ) => boolean;
+  annotationsEnabled: boolean;
+  setAnnotationsEnabled: Dispatch<SetStateAction<boolean>>;
+  toggleAnnotations: () => void;
 }
 
-interface ShelfContextValue {
+export interface ShelfContextValue {
   indexData: StoriesIndexData | null;
   indexError: string | null;
   isLoadingIndex: boolean;
   validStoryIds: ReadonlySet<string>;
   filters: ShelfFilters;
-  setFilters: React.Dispatch<React.SetStateAction<ShelfFilters>>;
+  setFilters: Dispatch<SetStateAction<ShelfFilters>>;
   resetFilters: () => void;
+}
+
+interface TransitionSessionState {
+  hasVisitedShelf: boolean;
   shelfScrollY: number;
-  setShelfScrollY: (y: number) => void;
   lastOpenedStoryId: string | null;
-  setLastOpenedStoryId: (id: string | null) => void;
-  shouldRestoreShelfFocus: boolean;
-  setShouldRestoreShelfFocus: (flag: boolean) => void;
-  shouldRestoreShelfScroll: boolean;
-  setShouldRestoreShelfScroll: (flag: boolean) => void;
-  annotationsEnabled: boolean;
-  setAnnotationsEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  shouldRestoreFocus: boolean;
   shelfDepthInSession: number | null;
-  setShelfDepthInSession: (depth: number | null) => void;
 }
 
 const ReadingStateContext = createContext<ReadingStateContextValue | null>(null);
 const DisplayPrefsContext = createContext<DisplayPrefsContextValue | null>(null);
 const ShelfContext = createContext<ShelfContextValue | null>(null);
+const TransitionSessionContext = createContext<RefObject<TransitionSessionState> | null>(null);
 
 export interface AppProvidersProps {
   children: ReactNode;
-  initialIndexData?: StoriesIndexData | null;
-  readingStore?: ReadingStateStore;
-  prefsStore?: DisplayPrefsStore;
 }
 
-export function AppProviders({
-  children,
-  initialIndexData = null,
-  readingStore: externalReadingStore,
-  prefsStore: externalPrefsStore,
-}: AppProvidersProps) {
-  const readingStoreRef = useRef<ReadingStateStore | null>(externalReadingStore ?? null);
-  if (!readingStoreRef.current) {
-    const store = createReadingState();
-    store.load();
-    readingStoreRef.current = store;
-  }
-  const readingStore = readingStoreRef.current;
-
-  const prefsStoreRef = useRef<DisplayPrefsStore | null>(externalPrefsStore ?? null);
-  if (!prefsStoreRef.current) {
-    const store = createDisplayPrefsState();
-    store.load();
-    prefsStoreRef.current = store;
-  }
-  const prefsStore = prefsStoreRef.current;
+export function AppProviders({ children }: AppProvidersProps) {
+  const [readingStore] = useState<ReadingStateStore>(() => createReadingState());
+  const [prefsStore] = useState(() => createDisplayPrefsState());
 
   const readingSnapshot = useSyncExternalStore(
     readingStore.subscribe,
@@ -101,19 +100,21 @@ export function AppProviders({
 
   useDocumentThemeEffect(displayPrefs);
 
-  const [indexData, setIndexData] = useState<StoriesIndexData | null>(initialIndexData);
+  const [indexData, setIndexData] = useState<StoriesIndexData | null>(null);
   const [indexError, setIndexError] = useState<string | null>(null);
-  const [isLoadingIndex, setIsLoadingIndex] = useState<boolean>(!initialIndexData);
+  const [isLoadingIndex, setIsLoadingIndex] = useState<boolean>(true);
   const [filters, setFilters] = useState<ShelfFilters>(DEFAULT_SHELF_FILTERS);
-  const [shelfScrollY, setShelfScrollY] = useState<number>(0);
-  const [lastOpenedStoryId, setLastOpenedStoryId] = useState<string | null>(null);
-  const [shouldRestoreShelfFocus, setShouldRestoreShelfFocus] = useState<boolean>(false);
-  const [shouldRestoreShelfScroll, setShouldRestoreShelfScroll] = useState<boolean>(false);
   const [annotationsEnabled, setAnnotationsEnabled] = useState<boolean>(true);
-  const [shelfDepthInSession, setShelfDepthInSession] = useState<number | null>(null);
+
+  const transitionStateRef = useRef<TransitionSessionState>({
+    hasVisitedShelf: false,
+    shelfScrollY: 0,
+    lastOpenedStoryId: null,
+    shouldRestoreFocus: false,
+    shelfDepthInSession: null,
+  });
 
   useEffect(() => {
-    if (initialIndexData) return;
     let cancelled = false;
     setIsLoadingIndex(true);
     setIndexError(null);
@@ -136,7 +137,7 @@ export function AppProviders({
     return () => {
       cancelled = true;
     };
-  }, [initialIndexData]);
+  }, []);
 
   const validStoryIds = useMemo<ReadonlySet<string>>(
     () => new Set((indexData?.stories || []).map((s) => s.id)),
@@ -148,9 +149,14 @@ export function AppProviders({
   }, []);
 
   const setPref = useCallback(
-    (setting: DisplayPrefSetting, value: string) => prefsStore.set(setting, value),
+    <K extends DisplayPrefSetting>(setting: K, value: DisplayPrefs[K] | (string & {})) =>
+      prefsStore.set(setting, value),
     [prefsStore]
   );
+
+  const toggleAnnotations = useCallback(() => {
+    setAnnotationsEnabled((prev) => !prev);
+  }, []);
 
   const readingContextValue = useMemo<ReadingStateContextValue>(
     () => ({ store: readingStore, snapshot: readingSnapshot }),
@@ -158,8 +164,14 @@ export function AppProviders({
   );
 
   const prefsContextValue = useMemo<DisplayPrefsContextValue>(
-    () => ({ prefs: displayPrefs, setPref }),
-    [displayPrefs, setPref]
+    () => ({
+      prefs: displayPrefs,
+      setPref,
+      annotationsEnabled,
+      setAnnotationsEnabled,
+      toggleAnnotations,
+    }),
+    [displayPrefs, setPref, annotationsEnabled, toggleAnnotations]
   );
 
   const shelfContextValue = useMemo<ShelfContextValue>(
@@ -171,39 +183,18 @@ export function AppProviders({
       filters,
       setFilters,
       resetFilters,
-      shelfScrollY,
-      setShelfScrollY,
-      lastOpenedStoryId,
-      setLastOpenedStoryId,
-      shouldRestoreShelfFocus,
-      setShouldRestoreShelfFocus,
-      shouldRestoreShelfScroll,
-      setShouldRestoreShelfScroll,
-      annotationsEnabled,
-      setAnnotationsEnabled,
-      shelfDepthInSession,
-      setShelfDepthInSession,
     }),
-    [
-      indexData,
-      indexError,
-      isLoadingIndex,
-      validStoryIds,
-      filters,
-      resetFilters,
-      shelfScrollY,
-      lastOpenedStoryId,
-      shouldRestoreShelfFocus,
-      shouldRestoreShelfScroll,
-      annotationsEnabled,
-      shelfDepthInSession,
-    ]
+    [indexData, indexError, isLoadingIndex, validStoryIds, filters, resetFilters]
   );
 
   return (
     <ReadingStateContext.Provider value={readingContextValue}>
       <DisplayPrefsContext.Provider value={prefsContextValue}>
-        <ShelfContext.Provider value={shelfContextValue}>{children}</ShelfContext.Provider>
+        <ShelfContext.Provider value={shelfContextValue}>
+          <TransitionSessionContext.Provider value={transitionStateRef}>
+            {children}
+          </TransitionSessionContext.Provider>
+        </ShelfContext.Provider>
       </DisplayPrefsContext.Provider>
     </ReadingStateContext.Provider>
   );
@@ -225,4 +216,182 @@ export function useShelfContext(): ShelfContextValue {
   const ctx = useContext(ShelfContext);
   if (!ctx) throw new Error("useShelfContext must be used inside AppProviders");
   return ctx;
+}
+
+function useTransitionSessionRef(): RefObject<TransitionSessionState> {
+  const ref = useContext(TransitionSessionContext);
+  if (!ref) throw new Error("Transition hooks must be used inside AppProviders");
+  return ref;
+}
+
+export interface UseShelfTransitionResult {
+  lastOpenedStoryId: string | null;
+  openStory: (storyId: string, options?: { restoreScrollRatio?: number }) => void;
+}
+
+/**
+ * 書架画面の履歴インデックス記録・スクロール位置の追跡と復元・フォーカス復元・作品遷移を一元管理する。
+ */
+export function useShelfTransition(
+  shelfRef: RefObject<HTMLElement | null>
+): UseShelfTransitionResult {
+  const navigate = useNavigate();
+  const { indexData, validStoryIds } = useShelfContext();
+  const sessionRef = useTransitionSessionRef();
+  const hasRestoredThisMountRef = useRef(false);
+
+  // 書架マウント時の history.state.idx を記録し、リーダーからの「← 書架へ戻る」で一括バックできるようにする
+  useEffect(() => {
+    const idx = getHistoryIndex();
+    if (idx !== null) {
+      sessionRef.current.shelfDepthInSession = idx;
+    }
+  }, [sessionRef]);
+
+  // 書架データの準備完了時に1回だけスクロール位置とカードフォーカスを復元し、以後のスクロール位置を常時追跡する
+  useLayoutEffect(() => {
+    if (!indexData) return;
+    const session = sessionRef.current;
+
+    if (!hasRestoredThisMountRef.current) {
+      hasRestoredThisMountRef.current = true;
+      const targetY = session.hasVisitedShelf ? session.shelfScrollY : 0;
+      window.scrollTo({ top: targetY, behavior: "instant" as ScrollBehavior });
+      session.shelfScrollY = window.scrollY;
+      session.hasVisitedShelf = true;
+
+      if (session.shouldRestoreFocus) {
+        session.shouldRestoreFocus = false;
+        const targetLink = session.lastOpenedStoryId
+          ? shelfRef.current?.querySelector<HTMLElement>(
+              `.story-card[data-story-id="${CSS.escape(session.lastOpenedStoryId)}"] .card-primary-link`
+            )
+          : null;
+        if (targetLink) {
+          targetLink.focus({ preventScroll: true });
+        } else {
+          shelfRef.current?.focus({ preventScroll: true });
+        }
+      }
+    }
+
+    const handleScroll = () => {
+      session.shelfScrollY = window.scrollY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [indexData, sessionRef, shelfRef]);
+
+  const openStory = useCallback(
+    (storyId: string, options?: { restoreScrollRatio?: number }) => {
+      if (!validStoryIds.has(storyId)) return;
+      const session = sessionRef.current;
+      session.shelfScrollY = window.scrollY;
+      session.lastOpenedStoryId = storyId;
+      session.shouldRestoreFocus = true;
+      session.hasVisitedShelf = true;
+      const idx = getHistoryIndex();
+      if (idx !== null) {
+        session.shelfDepthInSession = idx;
+      }
+
+      navigate(`/story/${encodeURIComponent(storyId)}`, {
+        state:
+          options?.restoreScrollRatio !== undefined
+            ? { restoreScrollRatio: options.restoreScrollRatio }
+            : undefined,
+      });
+    },
+    [validStoryIds, sessionRef, navigate]
+  );
+
+  return {
+    lastOpenedStoryId: sessionRef.current.lastOpenedStoryId,
+    openStory,
+  };
+}
+
+export interface UseReaderTransitionOptions {
+  story: StoryDetail | null;
+  readerViewRef: RefObject<HTMLElement | null>;
+}
+
+export interface UseReaderTransitionResult {
+  explicitRestoreRatio: number | null;
+  allowStoredSessionRestore: boolean;
+  navigationKey: string;
+  backToShelf: () => void;
+}
+
+/**
+ * リーダー画面への遷移パラメータ解決・ドキュメントタイトル同期・フォーカス移動・書架への復帰遷移を一元管理する。
+ */
+export function useReaderTransition({
+  story,
+  readerViewRef,
+}: UseReaderTransitionOptions): UseReaderTransitionResult {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const sessionRef = useTransitionSessionRef();
+
+  const locationState = location.state as { restoreScrollRatio?: unknown } | null;
+  const explicitRestoreRatio =
+    typeof locationState?.restoreScrollRatio === "number"
+      ? locationState.restoreScrollRatio
+      : null;
+
+  const allowStoredSessionRestore = sessionRef.current.shelfDepthInSession === null;
+
+  // ブラウザの戻る・進む操作で書架訪問済みセッションからリーダーへ入った場合も、書架復帰時のフォーカス復元を有効化する
+  useEffect(() => {
+    const session = sessionRef.current;
+    const idx = getHistoryIndex();
+    if (idx !== null && session.shelfDepthInSession !== null && idx <= session.shelfDepthInSession) {
+      session.shelfDepthInSession = null;
+    }
+    if (session.hasVisitedShelf && session.lastOpenedStoryId) {
+      session.shouldRestoreFocus = true;
+    }
+  }, [location.key, sessionRef]);
+
+  // 作品データ取得完了時にタイトルを更新し、書架経由の遷移であればリーダー本文へフォーカスを移す
+  useEffect(() => {
+    if (!story) return;
+    document.title = `${story.title} | テイワット文庫`;
+    if (sessionRef.current.shelfDepthInSession !== null) {
+      readerViewRef.current?.focus({ preventScroll: true });
+    }
+  }, [story, readerViewRef, sessionRef]);
+
+  useEffect(() => {
+    return () => {
+      document.title = BASE_DOCUMENT_TITLE;
+    };
+  }, []);
+
+  const backToShelf = useCallback(() => {
+    const session = sessionRef.current;
+    session.shouldRestoreFocus = true;
+    const currentIdx = getHistoryIndex();
+    if (
+      session.shelfDepthInSession !== null &&
+      currentIdx !== null &&
+      currentIdx > session.shelfDepthInSession
+    ) {
+      navigate(session.shelfDepthInSession - currentIdx);
+      return;
+    }
+    session.hasVisitedShelf = false;
+    session.shelfScrollY = 0;
+    navigate("/");
+  }, [sessionRef, navigate]);
+
+  return {
+    explicitRestoreRatio,
+    allowStoredSessionRestore,
+    navigationKey: location.key,
+    backToShelf,
+  };
 }
