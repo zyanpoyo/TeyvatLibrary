@@ -39,12 +39,44 @@
 }
 
 .filterSearch {
-  flex: 1 1 12rem;
-  min-width: 10rem;
+  flex: 1 1 13rem;
+  min-width: 11rem;
 }
 
 .filterSearch::placeholder {
   color: var(--text-muted);
+}
+
+.truthToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-block-size: 2.35rem;
+  padding: 0.4rem 0.72rem;
+  border-radius: 0.45rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--control-bg);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.truthToggleBtn:hover,
+.truthToggleBtn:focus-visible {
+  border-color: var(--accent-gold);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.truthToggleBtn[aria-pressed="true"] {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold-bright);
+  font-weight: 600;
 }
 
 .shelfToolbarMeta {
@@ -117,7 +149,8 @@
   .shelfToolbar {
     padding: 0.65rem 0.75rem;
   }
-  .filterControl {
+  .filterControl,
+  .truthToggleBtn {
     width: 100%;
   }
   .shelfToolbarMeta {
@@ -131,6 +164,7 @@
 
 @media (pointer: coarse) {
   .filterControl,
+  .truthToggleBtn,
   .randomReadBtn {
     min-block-size: 44px;
   }

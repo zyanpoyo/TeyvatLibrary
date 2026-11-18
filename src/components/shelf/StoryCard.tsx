@@ -1,9 +1,12 @@
 import type { MouseEvent } from "react";
 import { Link } from "react-router";
+import type { StorySearchMatch } from "../../domain/search";
 import { formatRegion } from "../../domain/text-parser";
-import type { StoryIndexItem } from "../../types/story";
+import type { SearchJumpTarget, StoryIndexItem } from "../../types/story";
 import { CategoryEmblem } from "../common/CategoryEmblem";
+import { HighlightedText } from "../common/HighlightedText";
 import commonStyles from "../../styles/common.module.css";
+import { SearchSnippets } from "./SearchSnippets";
 import styles from "./StoryCard.module.css";
 
 export interface StoryCardProps {
@@ -12,7 +15,10 @@ export interface StoryCardProps {
   isRead: boolean;
   isNew: boolean;
   isBookmarked: boolean;
+  searchQuery?: string;
+  searchMatch?: StorySearchMatch | null;
   onOpenStory: (storyId: string) => void;
+  onOpenStoryWithTarget?: (storyId: string, target: SearchJumpTarget) => void;
   onToggleBookmark: (storyId: string) => void;
 }
 
@@ -26,7 +32,10 @@ export function StoryCard({
   isRead,
   isNew,
   isBookmarked,
+  searchQuery = "",
+  searchMatch = null,
   onOpenStory,
+  onOpenStoryWithTarget,
   onToggleBookmark,
 }: StoryCardProps) {
   const regionLabel = formatRegion(story.region);
@@ -34,10 +43,12 @@ export function StoryCard({
 
   const handleCardClick = (event: MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
-    if (target.closest('[data-action="toggle-bookmark"]')) {
-      return;
-    }
-    if (target.closest("a")) {
+    if (
+      target.closest('[data-action="toggle-bookmark"]') ||
+      target.closest('[data-search-snippets]') ||
+      target.closest("button") ||
+      target.closest("a")
+    ) {
       return;
     }
     if (isModifiedClick(event)) return;
@@ -107,16 +118,40 @@ export function StoryCard({
               onOpenStory(story.id);
             }}
           >
-            {story.title}
+            <HighlightedText
+              text={story.title}
+              query={searchQuery}
+              markClassName={styles.searchMark}
+            />
           </Link>
         </h2>
-        <p className={styles.cardHook}>{story.hook}</p>
+        <p className={styles.cardHook}>
+          <HighlightedText
+            text={story.hook}
+            query={searchQuery}
+            markClassName={styles.searchMark}
+          />
+        </p>
       </div>
+
+      {searchMatch && searchMatch.snippets.length > 0 && onOpenStoryWithTarget ? (
+        <SearchSnippets
+          storyId={story.id}
+          query={searchQuery}
+          match={searchMatch}
+          onSelectSnippet={onOpenStoryWithTarget}
+        />
+      ) : null}
 
       <div className={styles.cardTags}>
         {(story.tags || []).map((tag) => (
           <span key={tag} className={styles.tagChip}>
-            #{tag}
+            #
+            <HighlightedText
+              text={tag}
+              query={searchQuery}
+              markClassName={styles.searchMark}
+            />
           </span>
         ))}
       </div>

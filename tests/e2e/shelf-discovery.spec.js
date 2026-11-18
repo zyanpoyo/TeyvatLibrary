@@ -106,4 +106,56 @@ test.describe("書架の探索・フィルタリング・並び替え", () => {
     await page.goto("/");
     await expect(page.locator("#random-story-btn")).toContainText("おまかせで1篇読む");
   });
+
+  test("本文横断検索・動的タブ件数・真相メモトグル・スニペットからリーダー着地とURL同期ができる", async ({ page }) => {
+    // 1. 本文フレーズ＋クロスフィールドAND検索（タグ: ロザリン × 本文: 水時計）
+    await page.locator("#search-filter").fill("ろざりん 水時計");
+    await expect(page.locator("#story-grid .story-card")).toHaveCount(1);
+    await expect(page.locator("#story-grid .story-card").first()).toHaveAttribute("data-story-id", "mock_witch");
+    await expect(page).toHaveURL(/#\/\?q=/);
+
+    // 検索中はカテゴリータブ件数がヒット件数へ動的更新される
+    await expect(page.locator(".category-tab[data-filter='all'] .tab-count")).toHaveText("1");
+    await expect(page.locator(".category-tab[data-filter='artifact'] .tab-count")).toHaveText("1");
+    await expect(page.locator(".category-tab[data-filter='book'] .tab-count")).toHaveText("0");
+
+    // リロードしてもURLクエリから検索結果が復元される
+    await page.reload();
+    await expect(page.locator("#search-filter")).toHaveValue("ろざりん 水時計");
+    await expect(page.locator("#story-grid .story-card")).toHaveCount(1);
+
+    // 別カテゴリー選択時は他カテゴリー一致への誘導が出ること
+    await page.locator(".category-tab[data-filter='book']").click();
+    await expect(page.locator("#story-grid .story-card")).toHaveCount(0);
+    await page.locator('[data-action="switch-all-category"]').click();
+    await expect(page.locator("#story-grid .story-card")).toHaveCount(1);
+
+    // 2. スニペットクリックでリーダー該当箇所へ着地しハイライト＆自動読了しない
+    const chapterSnippet = page.locator(".search-snippet-btn").first();
+    await expect(chapterSnippet).toBeVisible();
+    await chapterSnippet.click();
+
+    await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
+    await expect(page).toHaveURL(/#\/story\/mock_witch\?q=/);
+    await expect(page.locator("#reader-view mark").first()).toBeVisible();
+    await expect(page.locator(".reader-read-btn").first()).toHaveAttribute("aria-pressed", "false");
+
+    // 「← 書架へ戻る」で検索結果状態へ復帰
+    await page.locator("#back-to-shelf-btn").click();
+    await expect(page.locator("body")).toHaveAttribute("data-view", "shelf");
+    await expect(page.locator("#search-filter")).toHaveValue("ろざりん 水時計");
+
+    // 3. 未読の真相メモ内語句はデフォルトOFFでは非ヒット、トグルONでヒット＆自動展開
+    await page.locator("#search-filter").fill("執行官第八位");
+    await expect(page.locator("#story-grid .story-card")).toHaveCount(0);
+
+    await page.locator("#truth-search-toggle").click();
+    await expect(page.locator("#truth-search-toggle")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#story-grid .story-card")).toHaveCount(1);
+
+    await page.locator(".search-snippet-btn[data-snippet-kind='truth']").click();
+    await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
+    await expect(page.locator("details.lore-details")).toHaveAttribute("open", "");
+    await expect(page.locator(".reader-read-btn").first()).toHaveAttribute("aria-pressed", "false");
+  });
 });

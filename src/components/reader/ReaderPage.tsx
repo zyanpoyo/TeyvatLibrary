@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Navigate, useParams } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useLocation, useParams } from "react-router";
 import { fetchStoryDetail } from "../../api/stories";
 import { useReaderSession } from "../../hooks/useReaderSession";
+import { useSearchHighlight } from "../../hooks/useSearchHighlight";
+import { parseReaderJumpParams } from "../../router/search-params";
 import {
   useDisplayPrefsStore,
   useReaderTransition,
@@ -27,6 +29,13 @@ export function ReaderPage() {
   const { indexData, validStoryIds } = useShelfContext();
 
   const readerViewRef = useRef<HTMLElement | null>(null);
+  const loreDetailsRef = useRef<HTMLDetailsElement | null>(null);
+  const isProgrammaticLoreOpenRef = useRef(false);
+  const location = useLocation();
+  const hasSearchTarget = useMemo(
+    () => Boolean(parseReaderJumpParams(location.search)),
+    [location.search]
+  );
 
   const [story, setStory] = useState<StoryDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +62,15 @@ export function ReaderPage() {
     validStoryIds,
     navigationKey: transition.navigationKey,
     keepNavVisible: isDisplayPopoverOpen,
+    hasSearchTarget,
+  });
+
+  const { highlightQuery } = useSearchHighlight({
+    story,
+    chaptersContainerRef: reader.chaptersContainerRef,
+    loreDetailsRef,
+    isProgrammaticLoreOpenRef,
+    onScrollSettled: reader.syncAfterExternalScroll,
   });
 
   // Fetch story detail when storyId or retryCount changes
@@ -169,6 +187,9 @@ export function ReaderPage() {
               isRead={reader.isRead}
               isBookmarked={reader.isBookmarked}
               chaptersContainerRef={reader.chaptersContainerRef}
+              loreDetailsRef={loreDetailsRef}
+              isProgrammaticLoreOpenRef={isProgrammaticLoreOpenRef}
+              highlightQuery={highlightQuery}
               onToggleBookmark={reader.toggleBookmark}
               onToggleRead={reader.toggleRead}
               onLoreOpened={reader.markLoreOpened}

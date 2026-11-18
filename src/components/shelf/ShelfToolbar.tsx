@@ -4,6 +4,8 @@ import styles from "./ShelfToolbar.module.css";
 
 export interface ShelfToolbarProps {
   hasIndexData: boolean;
+  hasSearchQuery?: boolean;
+  isLoadingSearchIndex?: boolean;
   filters: ShelfFilters;
   entities: ReadonlyArray<ShelfEntityOption>;
   regions: ReadonlyArray<string>;
@@ -13,11 +15,14 @@ export interface ShelfToolbarProps {
   readCount: number;
   allRead: boolean;
   onChangeFilters: (updater: (prev: ShelfFilters) => ShelfFilters) => void;
+  onSearchFocus?: () => void;
   onRandomPick: () => void;
 }
 
 export function ShelfToolbar({
   hasIndexData,
+  hasSearchQuery = false,
+  isLoadingSearchIndex = false,
   filters,
   entities,
   regions,
@@ -27,12 +32,14 @@ export function ShelfToolbar({
   readCount,
   allRead,
   onChangeFilters,
+  onSearchFocus,
   onRandomPick,
 }: ShelfToolbarProps) {
   const countText = isFiltered
     ? `${orderedCount} 件の作品が一致しました（全 ${totalCount} 作品）`
     : `全 ${orderedCount} 作品を表示中`;
   const progressText = `✦ 星図記録：${readCount} / ${totalCount} 篇 読了`;
+  const includeTruth = Boolean(filters.includeTruth);
 
   const randomLabel = allRead ? "おまかせで1篇読む" : "未読から1篇読む";
   const randomAriaLabel = allRead
@@ -98,13 +105,29 @@ export function ShelfToolbar({
           type="search"
           id="search-filter"
           className={`${styles.filterControl} ${styles.filterSearch}`}
-          placeholder="タイトル・キーワード・時代で検索…"
-          aria-label="タイトル・キーワード・時代で検索"
+          placeholder="タイトル・本文・人物・用語で横断検索…"
+          aria-label="タイトル・本文・人物・用語・時代で検索"
           value={filters.query}
+          onFocus={onSearchFocus}
           onChange={(e) =>
             onChangeFilters((prev) => ({ ...prev, query: e.target.value }))
           }
         />
+
+        <button
+          type="button"
+          id="truth-search-toggle"
+          className={styles.truthToggleBtn}
+          data-action="toggle-truth-search"
+          aria-pressed={includeTruth}
+          title="未読作品の真相・考察メモも横断検索の対象に含めます"
+          onClick={() =>
+            onChangeFilters((prev) => ({ ...prev, includeTruth: !prev.includeTruth }))
+          }
+        >
+          <span aria-hidden="true">🔍</span>
+          <span>真相メモも含める</span>
+        </button>
 
         <select
           id="sort-filter"
@@ -118,7 +141,9 @@ export function ShelfToolbar({
             }))
           }
         >
-          <option value="recommended">並び順：おすすめ順</option>
+          <option value="recommended">
+            {hasSearchQuery ? "並び順：関連度順" : "並び順：おすすめ順"}
+          </option>
           <option value="newest">並び順：新着順</option>
           <option value="shortest">並び順：短い順</option>
         </select>
@@ -129,6 +154,14 @@ export function ShelfToolbar({
           {hasIndexData ? (
             <>
               <span>{countText}</span>
+              {hasSearchQuery && isLoadingSearchIndex ? (
+                <>
+                  <span className={styles.summarySep} aria-hidden="true">
+                    ・
+                  </span>
+                  <span>全文索引を読み込み中…</span>
+                </>
+              ) : null}
               <span className={styles.summarySep} aria-hidden="true">
                 ・
               </span>

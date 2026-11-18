@@ -217,6 +217,15 @@
   border-radius: 0.25rem;
 }
 
+.searchMark {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+  border-bottom: 1.5px solid var(--accent-gold);
+  border-radius: 0.18em;
+  padding: 0 0.12em;
+  font-weight: 700;
+}
+
 @media (max-width: 599px) {
   .storyCard {
     padding: 1.35rem 1.25rem;

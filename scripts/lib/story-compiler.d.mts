@@ -1,6 +1,7 @@
 import type {
   ChapterSourceRef,
   EvidenceLink,
+  SearchIndexData,
   StoriesIndexData,
   StoryDetail,
 } from "../../src/types/story";
@@ -55,6 +56,7 @@ export interface CompileStoriesResult {
   warnings: string[];
   dist: {
     index: StoriesIndexData;
+    searchIndex: SearchIndexData;
     storiesById: Record<string, CompiledStoryDetail>;
   } | null;
   stats: {

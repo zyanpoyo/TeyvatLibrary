@@ -1,37 +1,65 @@
-import type { StoriesIndexData, StoryDetail } from "../types/story";
+import type { SearchIndexData, StoriesIndexData, StoryDetail } from "../types/story";
 
-let indexCache: { data: StoriesIndexData | null; promise: Promise<StoriesIndexData> | null } = {
-  data: null,
-  promise: null,
-};
+interface CachedEntry<T> {
+  data: T | null;
+  promise: Promise<T> | null;
+}
+
+function createSingletonFetcher<T>(url: string, errorLabel: string) {
+  const entry: CachedEntry<T> = { data: null, promise: null };
+
+  return {
+    fetch(): Promise<T> {
+      if (entry.data) return Promise.resolve(entry.data);
+      if (entry.promise) return entry.promise;
+
+      entry.promise = fetch(url)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`${errorLabel} (HTTP ${res.status})`);
+          }
+          return res.json() as Promise<T>;
+        })
+        .then((data) => {
+          entry.data = data;
+          return data;
+        })
+        .finally(() => {
+          entry.promise = null;
+        });
+
+      return entry.promise;
+    },
+    clear(): void {
+      entry.data = null;
+      entry.promise = null;
+    },
+  };
+}
+
+const storiesIndexFetcher = createSingletonFetcher<StoriesIndexData>(
+  "./data/stories-index.json",
+  "書架インデックスの読み込みに失敗しました"
+);
+const searchIndexFetcher = createSingletonFetcher<SearchIndexData>(
+  "./data/search-index.json",
+  "検索インデックスの読み込みに失敗しました"
+);
 const storyCache = new Map<string, StoryDetail>();
 
 /** テスト用のキャッシュ初期化ヘルパー */
 export function clearStoriesCache(): void {
-  indexCache = { data: null, promise: null };
+  storiesIndexFetcher.clear();
+  searchIndexFetcher.clear();
   storyCache.clear();
 }
 
-export async function fetchStoriesIndex(): Promise<StoriesIndexData> {
-  if (indexCache.data) return indexCache.data;
-  if (indexCache.promise) return indexCache.promise;
+export function fetchStoriesIndex(): Promise<StoriesIndexData> {
+  return storiesIndexFetcher.fetch();
+}
 
-  indexCache.promise = fetch("./data/stories-index.json")
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error(`書架インデックスの読み込みに失敗しました (HTTP ${res.status})`);
-      }
-      return res.json() as Promise<StoriesIndexData>;
-    })
-    .then((data) => {
-      indexCache.data = data;
-      return data;
-    })
-    .finally(() => {
-      indexCache.promise = null;
-    });
-
-  return indexCache.promise;
+export function fetchSearchIndex(): Promise<SearchIndexData> {
+  return searchIndexFetcher.fetch();
 }
 
 export async function fetchStoryDetail(storyId: string): Promise<StoryDetail> {

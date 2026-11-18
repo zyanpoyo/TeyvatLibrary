@@ -2,6 +2,7 @@ import { createHashRouter, Navigate, type RouteObject } from "react-router";
 import { AppShell } from "../components/layout/AppShell";
 import { ReaderPage } from "../components/reader/ReaderPage";
 import { ShelfPage } from "../components/shelf/ShelfPage";
+import { AppProviders } from "../state/AppProviders";
 
 export function getStoryHash(storyId: string): string {
   return `#/story/${encodeURIComponent(storyId)}`;
@@ -25,7 +26,11 @@ export function normalizeLegacyHash(): void {
 
 export const appRoutes: RouteObject[] = [
   {
-    element: <AppShell />,
+    element: (
+      <AppProviders>
+        <AppShell />
+      </AppProviders>
+    ),
     children: [
       {
         index: true,

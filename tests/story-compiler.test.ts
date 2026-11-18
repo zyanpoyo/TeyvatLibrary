@@ -225,6 +225,25 @@ describe("StoryCompiler (compileStories)", () => {
         desc: "『炎の魔女』——恋人への想いを胸に炎となった少女",
       },
     ]);
+
+    // 検索コーパス（タグ除去・用語位置解決・evidence/connected除外）検証
+    const searchDoc = result.dist.searchIndex.stories.crimson_witch;
+    expect(searchDoc).toBeDefined();
+    expect(searchDoc.entityNames).toEqual(["ロザリン（淑女）"]);
+    expect(searchDoc.chapters[0].paragraphs).toEqual([
+      "少女の頃の記憶。",
+      "炎に焼かれる前の約束。",
+    ]);
+    expect(searchDoc.glossary[0]).toEqual({
+      termId: "cw_girl",
+      term: "少女",
+      identity: "正体：炎の魔女「ロザリン」",
+      desc: "留学前の若き日のロザリン。",
+      firstChapterIndex: 0,
+      firstParagraphIndex: 0,
+    });
+    expect("evidence" in searchDoc.glossary[0]).toBe(false);
+    expect("connected" in searchDoc).toBe(false);
   });
 
   it("does not overwrite existing explicit reverse links and emits non-blocking entity hints", () => {
