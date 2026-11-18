@@ -1,61 +1,39 @@
-import { useMemo } from "react";
-import type {
-  ReadingStatusFilter,
-  ShelfFilters,
-  SortMode,
-  StoriesIndexData,
-} from "../../types/story";
+import type { ShelfEntityOption } from "../../domain/catalog";
+import type { ReadingStatusFilter, ShelfFilters, SortMode } from "../../types/story";
 import styles from "./ShelfToolbar.module.css";
 
 export interface ShelfToolbarProps {
-  indexData: StoriesIndexData | null;
+  hasIndexData: boolean;
   filters: ShelfFilters;
+  entities: ReadonlyArray<ShelfEntityOption>;
+  regions: ReadonlyArray<string>;
+  isFiltered: boolean;
   orderedCount: number;
   totalCount: number;
   readCount: number;
+  allRead: boolean;
   onChangeFilters: (updater: (prev: ShelfFilters) => ShelfFilters) => void;
   onRandomPick: () => void;
 }
 
 export function ShelfToolbar({
-  indexData,
+  hasIndexData,
   filters,
+  entities,
+  regions,
+  isFiltered,
   orderedCount,
   totalCount,
   readCount,
+  allRead,
   onChangeFilters,
   onRandomPick,
 }: ShelfToolbarProps) {
-  const entities = useMemo(() => {
-    if (!indexData?.entitiesIndex) return [];
-    return Object.entries(indexData.entitiesIndex).sort(
-      (a, b) => (b[1].storyIds?.length || 0) - (a[1].storyIds?.length || 0)
-    );
-  }, [indexData]);
-
-  const regions = useMemo(() => {
-    const regionSet = new Set<string>();
-    for (const story of indexData?.stories || []) {
-      for (const r of story.region || []) {
-        regionSet.add(r);
-      }
-    }
-    return [...regionSet];
-  }, [indexData]);
-
-  const hasSubFilter = Boolean(
-    (filters.status && filters.status !== "all") ||
-      filters.entityId ||
-      filters.region ||
-      (filters.query || "").trim()
-  );
-
-  const countText = hasSubFilter
+  const countText = isFiltered
     ? `${orderedCount} 件の作品が一致しました（全 ${totalCount} 作品）`
     : `全 ${orderedCount} 作品を表示中`;
   const progressText = `✦ 星図記録：${readCount} / ${totalCount} 篇 読了`;
 
-  const allRead = totalCount > 0 && readCount >= totalCount;
   const randomLabel = allRead ? "おまかせで1篇読む" : "未読から1篇読む";
   const randomAriaLabel = allRead
     ? "全作品からおまかせで1篇開く"
@@ -92,9 +70,9 @@ export function ShelfToolbar({
           }
         >
           <option value="">登場人物・用語：すべて</option>
-          {entities.map(([id, info]) => (
-            <option key={id} value={id}>
-              {info.name} ({info.storyIds?.length || 0})
+          {entities.map((entity) => (
+            <option key={entity.id} value={entity.id}>
+              {entity.name} ({entity.count})
             </option>
           ))}
         </select>
@@ -148,7 +126,7 @@ export function ShelfToolbar({
 
       <div className={styles.shelfToolbarMeta}>
         <p className={styles.filterSummary} id="filter-result-summary" aria-live="polite">
-          {indexData ? (
+          {hasIndexData ? (
             <>
               <span>{countText}</span>
               <span className={styles.summarySep} aria-hidden="true">
@@ -163,7 +141,7 @@ export function ShelfToolbar({
           type="button"
           id="random-story-btn"
           className={styles.randomReadBtn}
-          disabled={!indexData || totalCount === 0}
+          disabled={!hasIndexData || totalCount === 0}
           aria-label={randomAriaLabel}
           onClick={onRandomPick}
         >

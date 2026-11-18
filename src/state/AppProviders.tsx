@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { fetchStoriesIndex } from "../api/stories";
+import { DEFAULT_SHELF_FILTERS } from "../domain/catalog";
 import { useDocumentThemeEffect } from "../hooks/useDocumentThemeEffect";
 import { createDisplayPrefsState, type DisplayPrefSetting, type DisplayPrefsStore } from "./prefs";
 import { createReadingState, type ReadingStateStore } from "./reading-state";
@@ -20,14 +21,7 @@ import type {
   StoriesIndexData,
 } from "../types/story";
 
-export const DEFAULT_SHELF_FILTERS: ShelfFilters = {
-  category: "all",
-  status: "all",
-  entityId: "",
-  region: "",
-  query: "",
-  sort: "recommended",
-};
+export { DEFAULT_SHELF_FILTERS };
 
 interface ReadingStateContextValue {
   store: ReadingStateStore;

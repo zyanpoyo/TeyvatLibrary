@@ -1,6 +1,6 @@
-import { SHELF_CATEGORIES } from "../../domain/catalog";
+import type { ShelfCategoryTab } from "../../domain/catalog";
 import { useDisplayPrefsStore } from "../../state/AppProviders";
-import type { ShelfCategoryId, StoriesIndexData, ThemeMode } from "../../types/story";
+import type { ShelfCategoryId, ThemeMode } from "../../types/story";
 import commonStyles from "../../styles/common.module.css";
 import styles from "./ObservatoryHeader.module.css";
 
@@ -15,19 +15,17 @@ const THEME_OPTIONS: ReadonlyArray<{
 ];
 
 export interface ObservatoryHeaderProps {
-  indexData: StoriesIndexData | null;
-  activeCategory: ShelfCategoryId;
+  categories: ReadonlyArray<ShelfCategoryTab>;
+  showCounts: boolean;
   onSelectCategory: (category: ShelfCategoryId) => void;
 }
 
 export function ObservatoryHeader({
-  indexData,
-  activeCategory,
+  categories,
+  showCounts,
   onSelectCategory,
 }: ObservatoryHeaderProps) {
   const { prefs, setPref } = useDisplayPrefsStore();
-  const counts = indexData?.categoryCounts;
-  const totalCount = indexData?.totalCount ?? indexData?.stories?.length ?? 0;
 
   return (
     <header className={styles.observatoryHero}>
@@ -81,27 +79,23 @@ export function ObservatoryHeader({
       </div>
 
       <nav className={styles.categoryTabs} id="category-tabs" aria-label="カテゴリー絞り込み">
-        {SHELF_CATEGORIES.map((cat) => {
-          const count = cat.id === "all" ? totalCount : (counts?.[cat.id] ?? 0);
-          const pressed = cat.id === activeCategory;
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              className={`${styles.categoryTab} category-tab`}
-              data-filter={cat.id}
-              aria-pressed={pressed}
-              onClick={() => onSelectCategory(cat.id)}
-            >
-              <span>{cat.label}</span>
-              {indexData ? (
-                <span className={`${styles.tabCount} tab-count`} aria-label={`${count}件`}>
-                  {count}
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            className={`${styles.categoryTab} category-tab`}
+            data-filter={cat.id}
+            aria-pressed={cat.isActive}
+            onClick={() => onSelectCategory(cat.id)}
+          >
+            <span>{cat.label}</span>
+            {showCounts ? (
+              <span className={`${styles.tabCount} tab-count`} aria-label={`${cat.count}件`}>
+                {cat.count}
+              </span>
+            ) : null}
+          </button>
+        ))}
       </nav>
     </header>
   );

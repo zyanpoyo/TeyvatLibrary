@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router";
-import {
-  arrangeShelfStories,
-  filterStories,
-  isNewStory,
-  pickRandomStory,
-} from "../../domain/catalog";
+import { deriveShelfView, pickRandomStory } from "../../domain/catalog";
 import { useReadingStateStore, useShelfContext } from "../../state/AppProviders";
 import commonStyles from "../../styles/common.module.css";
 import { ObservatoryHeader } from "./ObservatoryHeader";
@@ -24,7 +19,8 @@ export function ShelfPage() {
   const navigate = useNavigate();
   const shelfRef = useRef<HTMLElement | null>(null);
   const hasInitializedScrollRef = useRef(false);
-  const { store: readingStore, snapshot: readingSnapshot } = useReadingStateStore();
+  const reading = useReadingStateStore();
+  const readingStore = reading.store;
   const {
     indexData,
     indexError,
@@ -87,28 +83,10 @@ export function ShelfPage() {
   ]);
 
   const stories = indexData?.stories ?? [];
-  const readCount = useMemo(
-    () => readingStore.getReadCount(validStoryIds),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readingStore, readingSnapshot, validStoryIds]
+  const shelfView = useMemo(
+    () => deriveShelfView({ indexData, filters, readingState: reading.store }),
+    [indexData, filters, reading]
   );
-
-  const lastSession = useMemo(
-    () => readingStore.getLastSession(validStoryIds),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readingStore, readingSnapshot, validStoryIds]
-  );
-
-  const resumeStory = useMemo(
-    () => (lastSession ? stories.find((s) => s.id === lastSession.storyId) ?? null : null),
-    [lastSession, stories]
-  );
-
-  const { ordered, featuredId } = useMemo(() => {
-    const filtered = filterStories(stories, filters, readingStore);
-    return arrangeShelfStories(filtered, stories, filters, readingStore);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stories, filters, readingStore, readingSnapshot]);
 
   const captureShelfStateBeforeLeave = useCallback(
     (storyId: string) => {
@@ -146,24 +124,28 @@ export function ShelfPage() {
   return (
     <section id="shelf-view" ref={shelfRef} className={styles.shelfView} tabIndex={-1}>
       <ObservatoryHeader
-        indexData={indexData}
-        activeCategory={filters.category}
+        categories={shelfView.categories}
+        showCounts={shelfView.hasIndexData}
         onSelectCategory={(category) => setFilters((prev) => ({ ...prev, category }))}
       />
 
       <ResumeBanner
-        session={lastSession}
-        story={resumeStory}
+        session={shelfView.resume?.session ?? null}
+        story={shelfView.resume?.story ?? null}
         onResumeClick={(storyId) => captureShelfStateBeforeLeave(storyId)}
         onDismiss={() => readingStore.clearLastSession()}
       />
 
       <ShelfToolbar
-        indexData={indexData}
+        hasIndexData={shelfView.hasIndexData}
         filters={filters}
-        orderedCount={ordered.length}
-        totalCount={stories.length}
-        readCount={readCount}
+        entities={shelfView.entities}
+        regions={shelfView.regions}
+        isFiltered={shelfView.isFiltered}
+        orderedCount={shelfView.orderedCount}
+        totalCount={shelfView.totalCount}
+        readCount={shelfView.readCount}
+        allRead={shelfView.allRead}
         onChangeFilters={setFilters}
         onRandomPick={handleRandomPick}
       />
@@ -178,7 +160,7 @@ export function ShelfPage() {
             </p>
             <p className={`${commonStyles.emptyDesc} shelf-empty-desc`}>{indexError}</p>
           </div>
-        ) : ordered.length === 0 ? (
+        ) : shelfView.items.length === 0 ? (
           <div className={commonStyles.emptyState}>
             <p className={`${commonStyles.emptyTitle} shelf-empty-title`}>
               ✦ 条件に一致する物語が見つかりません
@@ -196,14 +178,14 @@ export function ShelfPage() {
             </button>
           </div>
         ) : (
-          ordered.map((story) => (
+          shelfView.items.map((item) => (
             <StoryCard
-              key={story.id}
-              story={story}
-              isFeatured={Boolean(featuredId && story.id === featuredId)}
-              isRead={readingStore.isRead(story.id)}
-              isNew={isNewStory(story, readingStore)}
-              isBookmarked={readingStore.isBookmarked(story.id)}
+              key={item.story.id}
+              story={item.story}
+              isFeatured={item.isFeatured}
+              isRead={item.isRead}
+              isNew={item.isNew}
+              isBookmarked={item.isBookmarked}
               onBeforeOpenStory={captureShelfStateBeforeLeave}
               onOpenStory={(id) => handleOpenStory(id)}
               onToggleBookmark={(id) => readingStore.toggleBookmark(id)}
