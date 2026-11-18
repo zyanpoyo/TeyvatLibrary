@@ -157,6 +157,9 @@ function Harness(props: {
       <button type="button" onClick={session.markLoreOpened}>
         open-lore
       </button>
+      <button type="button" onClick={session.syncAfterExternalScroll}>
+        sync-external
+      </button>
       <button type="button" onClick={() => session.leave(onAfterLeave)}>
         leave
       </button>
@@ -605,5 +608,38 @@ describe("useReaderSession deepened module", () => {
       />
     );
     expect(freshViewport.scrollY).toBe(0);
+  });
+
+  it("skips lastSession restore and prevents auto-read on external search jump", () => {
+    const searchStore = createReadingState();
+    searchStore.load();
+    searchStore.updateLastSession({ storyId: "search_target", chapterIndex: 0, scrollRatio: 0.4 });
+    const searchViewport = createViewportController({
+      scrollY: 1950,
+      scrollHeight: 2500,
+      innerHeight: 500,
+    });
+    installViewportStub(searchViewport);
+    render(
+      <Harness
+        viewport={searchViewport}
+        options={{
+          storyId: "search_target",
+          story: makeStory("search_target", 3),
+          readingState: searchStore,
+          displayPrefs: DEFAULT_PREFS,
+          hasSearchTarget: true,
+          navigationKey: "k_search",
+        }}
+      />
+    );
+    // hasSearchTarget=true なので lastSession(0.4 -> 800px) や top=0 で上書きされない
+    expect(searchViewport.scrollY).toBe(1950);
+
+    act(() => {
+      screen.getByRole("button", { name: "sync-external" }).click();
+    });
+    expect(searchStore.isRead("search_target")).toBe(false);
+    expect(searchStore.getSnapshot().lastSession?.scrollRatio).toBe(0.4);
   });
 });

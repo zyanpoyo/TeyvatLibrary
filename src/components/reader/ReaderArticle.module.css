@@ -388,3 +388,17 @@
     justify-content: center;
   }
 }
+
+.searchMark {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+  border-bottom: 2px solid var(--accent-gold);
+  border-radius: 0.18em;
+  padding: 0 0.14em;
+}
+
+:global([data-search-focus="true"]) {
+  border-radius: 0.35rem;
+  box-shadow: 0 0 0 2px var(--accent-gold), 0 0 18px var(--accent-gold-soft);
+  transition: box-shadow 0.4s ease;
+}

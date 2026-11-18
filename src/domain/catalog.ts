@@ -1,9 +1,11 @@
 import { createReadingStateReader } from "../state/reading-state";
+import { evaluateCatalogSearch, type StorySearchMatch } from "./search";
 import { parseIsoDateUtcMs } from "./text-parser";
 import type {
   EntityKind,
   LastSessionSnapshot,
   ReadingStateSnapshot,
+  SearchIndexData,
   ShelfCategoryId,
   ShelfFilters,
   SortMode,
@@ -21,6 +23,7 @@ export const DEFAULT_SHELF_FILTERS: ShelfFilters = {
   entityId: "",
   region: "",
   query: "",
+  includeTruth: false,
   sort: "recommended",
 };
 
@@ -69,6 +72,7 @@ export interface ShelfCardItem {
   isRead: boolean;
   isNew: boolean;
   isBookmarked: boolean;
+  searchMatch: StorySearchMatch | null;
 }
 
 export interface ShelfResumeState {
@@ -78,6 +82,7 @@ export interface ShelfResumeState {
 
 export interface DeriveShelfViewInput {
   indexData: StoriesIndexData | null;
+  searchIndex?: SearchIndexData | null;
   filters: Partial<ShelfFilters>;
   readingState?: ReadingStateInput;
   now?: Date;
@@ -85,6 +90,7 @@ export interface DeriveShelfViewInput {
 
 export interface ShelfViewModel {
   hasIndexData: boolean;
+  hasSearchQuery: boolean;
   isFiltered: boolean;
   isDefaultState: boolean;
   categories: ShelfCategoryTab[];
@@ -135,6 +141,7 @@ function normalizeFilters(filters: Partial<ShelfFilters>): ShelfFilters {
     entityId: filters.entityId ?? DEFAULT_SHELF_FILTERS.entityId,
     region: filters.region ?? DEFAULT_SHELF_FILTERS.region,
     query: filters.query ?? DEFAULT_SHELF_FILTERS.query,
+    includeTruth: Boolean(filters.includeTruth),
     sort: filters.sort || DEFAULT_SHELF_FILTERS.sort,
   };
 }
@@ -163,9 +170,10 @@ function selectFeaturedStoryId(
   return pool[seed % pool.length].id;
 }
 
-function sortStories<T extends Pick<StoryIndexItem, "addedAt" | "charCount">>(
+function sortStories<T extends Pick<StoryIndexItem, "id" | "addedAt" | "charCount">>(
   stories: ReadonlyArray<T>,
-  sortMode: SortMode
+  sortMode: SortMode,
+  matchesByStoryId: ReadonlyMap<string, StorySearchMatch> | null
 ): T[] {
   const list = stories.slice();
   if (sortMode === "newest") {
@@ -185,49 +193,37 @@ function sortStories<T extends Pick<StoryIndexItem, "addedAt" | "charCount">>(
       return aCount - bCount;
     });
   }
+  if (matchesByStoryId) {
+    return list.sort((a, b) => {
+      const aScore = matchesByStoryId.get(a.id)?.score ?? 0;
+      const bScore = matchesByStoryId.get(b.id)?.score ?? 0;
+      return bScore - aScore;
+    });
+  }
   return list;
 }
 
-function filterStories<T extends StoryIndexItem>(
-  stories: ReadonlyArray<T>,
+function matchesNonCategoryFacets(
+  story: StoryIndexItem,
   filters: ShelfFilters,
   readingState: ReadingStateReader | null
-): T[] {
-  const query = filters.query.trim().toLowerCase();
-  return stories.filter((story) => {
-    if (filters.category !== "all" && story.shelfCategory !== filters.category) {
-      return false;
-    }
-    if (filters.status === "unread" && readingState?.isRead(story.id)) {
-      return false;
-    }
-    if (filters.status === "read" && !readingState?.isRead(story.id)) {
-      return false;
-    }
-    if (filters.status === "bookmarked" && !readingState?.isBookmarked?.(story.id)) {
-      return false;
-    }
-    if (filters.entityId && !(story.entityIds || []).includes(filters.entityId)) {
-      return false;
-    }
-    if (filters.region && !(story.region || []).includes(filters.region)) {
-      return false;
-    }
-    if (query) {
-      const haystack = [
-        story.title,
-        story.hook,
-        story.era,
-        story.categoryLabel,
-        ...(story.region || []),
-        ...(story.tags || []),
-      ]
-        .join(" ")
-        .toLowerCase();
-      if (!haystack.includes(query)) return false;
-    }
-    return true;
-  });
+): boolean {
+  if (filters.status === "unread" && readingState?.isRead(story.id)) {
+    return false;
+  }
+  if (filters.status === "read" && !readingState?.isRead(story.id)) {
+    return false;
+  }
+  if (filters.status === "bookmarked" && !readingState?.isBookmarked?.(story.id)) {
+    return false;
+  }
+  if (filters.entityId && !(story.entityIds || []).includes(filters.entityId)) {
+    return false;
+  }
+  if (filters.region && !(story.region || []).includes(filters.region)) {
+    return false;
+  }
+  return true;
 }
 
 function arrangeShelfStories<T extends StoryIndexItem>(
@@ -235,10 +231,11 @@ function arrangeShelfStories<T extends StoryIndexItem>(
   allStories: ReadonlyArray<T>,
   sortMode: SortMode,
   isDefaultState: boolean,
+  matchesByStoryId: ReadonlyMap<string, StorySearchMatch> | null,
   readingState: ReadingStateReader | null,
   now: Date
 ): { ordered: T[]; featuredId: string | null } {
-  const sorted = sortStories(filteredStories, sortMode);
+  const sorted = sortStories(filteredStories, sortMode, matchesByStoryId);
   if (!isDefaultState || sorted.length === 0) {
     return { ordered: sorted, featuredId: null };
   }
@@ -261,7 +258,8 @@ function arrangeShelfStories<T extends StoryIndexItem>(
 function deriveCategoryTabs(
   stories: ReadonlyArray<StoryIndexItem>,
   indexData: StoriesIndexData | null,
-  activeCategory: ShelfCategoryId
+  activeCategory: ShelfCategoryId,
+  useComputedCounts: boolean
 ): ShelfCategoryTab[] {
   const countedByCategory: Record<StoryCategoryId, number> = {
     book: 0,
@@ -280,7 +278,9 @@ function deriveCategoryTabs(
     const count =
       cat.id === "all"
         ? totalCount
-        : (indexData?.categoryCounts?.[cat.id] ?? countedByCategory[cat.id]);
+        : useComputedCounts
+          ? countedByCategory[cat.id]
+          : (indexData?.categoryCounts?.[cat.id] ?? countedByCategory[cat.id]);
     return {
       id: cat.id,
       label: cat.label,
@@ -343,6 +343,7 @@ function deriveResumeState(
  */
 export function deriveShelfView({
   indexData,
+  searchIndex = null,
   filters,
   readingState = null,
   now = new Date(),
@@ -358,12 +359,31 @@ export function deriveShelfView({
   const readCount = deriveReadCount(validStoryIds, reader);
   const allRead = totalCount > 0 && readCount >= totalCount;
 
-  const filtered = filterStories(stories, normalizedFilters, reader);
+  const searchResult = evaluateCatalogSearch({
+    indexData,
+    searchIndex,
+    query: normalizedFilters.query,
+    includeTruth: normalizedFilters.includeTruth,
+    isStoryRead: (id) => Boolean(reader?.isRead(id)),
+  });
+
+  const matchedWithoutCategory = stories.filter(
+    (story) =>
+      matchesNonCategoryFacets(story, normalizedFilters, reader) &&
+      (!searchResult.hasQuery || searchResult.matchesByStoryId.has(story.id))
+  );
+
+  const filtered =
+    normalizedFilters.category === "all"
+      ? matchedWithoutCategory
+      : matchedWithoutCategory.filter((s) => s.shelfCategory === normalizedFilters.category);
+
   const { ordered, featuredId } = arrangeShelfStories(
     filtered,
     stories,
     normalizedFilters.sort,
     isDefaultState,
+    searchResult.hasQuery ? searchResult.matchesByStoryId : null,
     reader,
     now
   );
@@ -374,13 +394,24 @@ export function deriveShelfView({
     isRead: Boolean(reader?.isRead(story.id)),
     isNew: isNewStory(story, reader, now),
     isBookmarked: Boolean(reader?.isBookmarked?.(story.id)),
+    searchMatch: searchResult.hasQuery
+      ? (searchResult.matchesByStoryId.get(story.id) ?? null)
+      : null,
   }));
+
+  const tabSourceStories = searchResult.hasQuery ? matchedWithoutCategory : stories;
 
   return {
     hasIndexData: Boolean(indexData),
+    hasSearchQuery: searchResult.hasQuery,
     isFiltered,
     isDefaultState,
-    categories: deriveCategoryTabs(stories, indexData, normalizedFilters.category),
+    categories: deriveCategoryTabs(
+      tabSourceStories,
+      indexData,
+      normalizedFilters.category,
+      searchResult.hasQuery
+    ),
     entities: deriveEntities(indexData),
     regions: deriveRegions(stories),
     items,

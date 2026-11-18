@@ -348,4 +348,24 @@ describe("catalog domain", () => {
     const picked = pickRandomStory(SAMPLE_STORIES, snapshot, "crimson_witch", () => 0);
     expect(picked?.id).toBe("elegy");
   });
+
+  it("dynamically updates category counts during active search while preserving total counts when query is empty", () => {
+    const readingState = createStubReadingState();
+    const searchView = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, category: "weapon", query: "ルースタン" },
+      readingState,
+    });
+
+    expect(searchView.hasSearchQuery).toBe(true);
+    expect(searchView.items.map((i) => i.story.id)).toEqual(["elegy"]);
+    expect(searchView.categories.map((c) => [c.id, c.count])).toEqual([
+      ["all", 2],
+      ["book", 0],
+      ["artifact", 1],
+      ["weapon", 1],
+      ["attire", 0],
+      ["chronicle", 0],
+    ]);
+  });
 });

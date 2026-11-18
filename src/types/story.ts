@@ -100,7 +100,65 @@ export interface ShelfFilters {
   entityId: string;
   region: string;
   query: string;
+  includeTruth?: boolean;
   sort: SortMode;
+}
+
+export interface SearchChapterEntry {
+  chapterIndex: number;
+  partLabel: string;
+  heading: string;
+  epigraph: string;
+  paragraphs: string[];
+  chapterNote?: string;
+}
+
+export interface SearchGlossaryEntry {
+  termId: string;
+  term: string;
+  identity: string;
+  desc: string;
+  firstChapterIndex: number;
+  firstParagraphIndex: number;
+}
+
+export interface SearchStoryDocument {
+  id: string;
+  title: string;
+  hook: string;
+  categoryLabel: string;
+  era: string;
+  region: string[];
+  tags: string[];
+  entityNames: string[];
+  preGuide: string[];
+  chapters: SearchChapterEntry[];
+  glossary: SearchGlossaryEntry[];
+  truth: {
+    overallTruth: string;
+    gameEffect: string;
+  };
+}
+
+export interface SearchIndexData {
+  generatedAt: string;
+  stories: Record<string, SearchStoryDocument>;
+}
+
+export type SearchMatchKind =
+  | "title"
+  | "meta"
+  | "chapter"
+  | "preGuide"
+  | "glossary"
+  | "truth";
+
+export interface SearchJumpTarget {
+  query: string;
+  kind: SearchMatchKind;
+  chapterIndex?: number;
+  paragraphIndex?: number;
+  termId?: string;
 }
 
 export interface LastSessionSnapshot {

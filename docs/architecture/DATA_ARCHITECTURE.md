@@ -74,6 +74,7 @@ flowchart TD
 
     subgraph Layer3["③ 配信層 (public/data/) — フロントエンド配信用 (ビルド生成物)"]
         INDEX["stories-index.json<br/>(書架5分類・検索・人物/時代フィルタ用 軽量インデックス)"]
+        SEARCH["search-index.json<br/>(横断全文検索用・タグ除去＆性別展開済み遅延取得コーパス)"]
         DETAIL["stories/<id>.json<br/>(リーダー画面用・マスタ/逆リンク完全解決済みデータ)"]
     end
 
@@ -90,6 +91,7 @@ flowchart TD
     CORPUS --> VAL
     VAL -->|"検証パス (Exit 0)"| BUILD
     BUILD --> INDEX
+    BUILD --> SEARCH
     BUILD --> DETAIL
 ```
 
@@ -143,6 +145,7 @@ genshin-books/
 └── public/
     └── data/                             # 【③ 配信層】ビルド出力（フロントエンドが fetch する静的JSON）
         ├── stories-index.json            # 書架一覧・フィルタ用（本文なし・軽量）
+        ├── search-index.json             # 横断全文検索用コーパス（フォーカス/検索時に遅延取得）
         └── stories/
             ├── byakuyakoku.json          # リーダー画面用（すべて解決済み）
             └── ...
@@ -454,7 +457,7 @@ function resolveActualPlainText(paragraphs) {
 
 ## 6. 配信層（Layer 3）の分割出力と自動解決ロジック
 
-ビルド時の **Story Compiler (`scripts/lib/story-compiler.mjs`)** は、編集層（Layer 2）を検証した上で以下の4つの自動解決処理を行い、`public/data/` に2種類の配信用JSONを生成する。
+ビルド時の **Story Compiler (`scripts/lib/story-compiler.mjs`)** は、編集層（Layer 2）を検証した上で以下の自動解決処理を行い、`public/data/` に 3 種類の配信用JSONを生成する。
 
 ### 6.1 Story Compiler による4つの自動解決処理
 
@@ -510,6 +513,11 @@ function resolveActualPlainText(paragraphs) {
 
 ### 6.3 配信ファイル②：リーダー画面用・解決済み個別データ（`public/data/stories/<id>.json`）
 ユーザーが書架でカードを選択した際に読み込む単一作品の完全データ。マスタ結合・逆リンク・出典リンクがすべて解決済みのため、フロントエンドはそのままDOMに描画するだけで動作する。
+
+### 6.4 配信ファイル③：横断全文検索用コーパス（`public/data/search-index.json`）
+書架の検索欄フォーカスまたは検索語入力時に 1 回だけ遅延取得する全文検索専用データ。初期表示用の `stories-index.json` を肥大化させずに本文・用語解説・真相メモを横断検索でき、検索対象外の出典（`evidence`）や関連リンク（`connected`）による連鎖誤ヒットを除外している。
+- 本文・見出し・注釈・前提ガイド・真相メモは `stripInlineTags` および `formatGenderPlaceholders` を適用した可読テキストとして格納する。
+- `glossary[]` には `term`, `identity`, `desc` とともに、本文中で最初に参照される `firstChapterIndex` / `firstParagraphIndex` を付与し、スニペットクリック時に該当位置へ直接スクロールできるようにする。
 
 ---
 

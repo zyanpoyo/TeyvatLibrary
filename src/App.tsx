@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { RouterProvider } from "react-router";
 import { createAppRouter, normalizeLegacyHash } from "./router/routes";
-import { AppProviders } from "./state/AppProviders";
 
 export function App() {
   const router = useMemo(() => createAppRouter(), []);
@@ -14,9 +13,5 @@ export function App() {
     };
   }, []);
 
-  return (
-    <AppProviders>
-      <RouterProvider router={router} />
-    </AppProviders>
-  );
+  return <RouterProvider router={router} />;
 }

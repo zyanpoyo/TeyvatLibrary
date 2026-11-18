@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { formatRegion, parseParagraphTokens } from "../../domain/text-parser";
 import commonStyles from "../../styles/common.module.css";
 import type { StoryDetail } from "../../types/story";
+import { HighlightedText } from "../common/HighlightedText";
 import styles from "./ReaderArticle.module.css";
 
 function getReadButtonLabel(isRead: boolean, isCompletionBtn: boolean): string {
@@ -14,14 +15,20 @@ function getReadButtonLabel(isRead: boolean, isCompletionBtn: boolean): string {
 
 function ParagraphBlock({
   text,
+  chapterIndex,
+  paragraphIndex,
+  highlightQuery,
   onSelectTerm,
 }: {
   text: string;
+  chapterIndex: number;
+  paragraphIndex: number;
+  highlightQuery?: string;
   onSelectTerm: (termId: string) => void;
 }) {
   const tokens = parseParagraphTokens(text);
   return (
-    <p>
+    <p data-chapter-index={chapterIndex} data-paragraph-index={paragraphIndex}>
       {tokens.map((token, idx) => {
         if (token.type === "br") {
           return <br key={`br-${idx}`} />;
@@ -29,7 +36,13 @@ function ParagraphBlock({
         if (token.type === "subhead") {
           return (
             <span key={`sub-${idx}`} className={`${styles.proseSubhead} prose-subhead`}>
-              【{token.label}】
+              【
+              <HighlightedText
+                text={token.label}
+                query={highlightQuery}
+                markClassName={styles.searchMark}
+              />
+              】
             </span>
           );
         }
@@ -39,16 +52,29 @@ function ParagraphBlock({
               key={`term-${idx}-${token.termId}`}
               type="button"
               className={`${styles.glossaryTerm} glossary-term`}
+              data-term-id={token.termId}
               onClick={() => onSelectTerm(token.termId)}
             >
-              {token.surface}
+              <HighlightedText
+                text={token.surface}
+                query={highlightQuery}
+                markClassName={styles.searchMark}
+              />
               <span className={`${styles.glossaryBadge} glossary-badge`} aria-hidden="true">
                 ?
               </span>
             </button>
           );
         }
-        return <Fragment key={`txt-${idx}`}>{token.value}</Fragment>;
+        return (
+          <Fragment key={`txt-${idx}`}>
+            <HighlightedText
+              text={token.value}
+              query={highlightQuery}
+              markClassName={styles.searchMark}
+            />
+          </Fragment>
+        );
       })}
     </p>
   );
@@ -59,6 +85,9 @@ export interface ReaderArticleProps {
   isRead: boolean;
   isBookmarked: boolean;
   chaptersContainerRef: RefObject<HTMLDivElement | null>;
+  loreDetailsRef?: RefObject<HTMLDetailsElement | null>;
+  isProgrammaticLoreOpenRef?: RefObject<boolean>;
+  highlightQuery?: string;
   onToggleBookmark: () => void;
   onToggleRead: () => void;
   onLoreOpened: () => void;
@@ -70,6 +99,9 @@ export function ReaderArticle({
   isRead,
   isBookmarked,
   chaptersContainerRef,
+  loreDetailsRef,
+  isProgrammaticLoreOpenRef,
+  highlightQuery,
   onToggleBookmark,
   onToggleRead,
   onLoreOpened,
@@ -108,8 +140,20 @@ export function ReaderArticle({
           {story.era ? <span>時代：{story.era}</span> : null}
         </div>
 
-        <h1 className={`${styles.readerTitle} reader-title`}>{story.title}</h1>
-        <p className={styles.readerHook}>{story.hook}</p>
+        <h1 className={`${styles.readerTitle} reader-title`}>
+          <HighlightedText
+            text={story.title}
+            query={highlightQuery}
+            markClassName={styles.searchMark}
+          />
+        </h1>
+        <p className={styles.readerHook}>
+          <HighlightedText
+            text={story.hook}
+            query={highlightQuery}
+            markClassName={styles.searchMark}
+          />
+        </p>
 
         <div className={`${styles.readerStateBar} reader-state-bar`}>
           <button
@@ -136,11 +180,17 @@ export function ReaderArticle({
           </button>
         </div>
 
-        <div className={styles.preGuide}>
+        <div className={styles.preGuide} id="reader-pre-guide">
           <p className={styles.preGuideTitle}>✦ 読む前の前提ガイド（ネタバレなし）</p>
           <ul className={`${styles.preGuideList} pre-guide-list`}>
             {(story.preGuide || []).map((item, idx) => (
-              <li key={idx}>{item}</li>
+              <li key={idx}>
+                <HighlightedText
+                  text={item}
+                  query={highlightQuery}
+                  markClassName={styles.searchMark}
+                />
+              </li>
             ))}
           </ul>
         </div>
@@ -177,17 +227,47 @@ export function ReaderArticle({
             id={`chapter-${idx + 1}`}
             data-chapter-index={idx}
           >
-            <p className={styles.chapterLabel}>{ch.partLabel}</p>
-            <h2 className={styles.chapterHeading}>{ch.heading}</h2>
-            <p className={styles.chapterEpigraph}>{ch.epigraph}</p>
+            <p className={styles.chapterLabel}>
+              <HighlightedText
+                text={ch.partLabel}
+                query={highlightQuery}
+                markClassName={styles.searchMark}
+              />
+            </p>
+            <h2 className={styles.chapterHeading}>
+              <HighlightedText
+                text={ch.heading}
+                query={highlightQuery}
+                markClassName={styles.searchMark}
+              />
+            </h2>
+            <p className={styles.chapterEpigraph}>
+              <HighlightedText
+                text={ch.epigraph}
+                query={highlightQuery}
+                markClassName={styles.searchMark}
+              />
+            </p>
             <div className={`${styles.novelProse} novel-prose`}>
               {(ch.paragraphs || []).map((p, pIdx) => (
-                <ParagraphBlock key={pIdx} text={p} onSelectTerm={onSelectTerm} />
+                <ParagraphBlock
+                  key={pIdx}
+                  text={p}
+                  chapterIndex={idx}
+                  paragraphIndex={pIdx}
+                  highlightQuery={highlightQuery}
+                  onSelectTerm={onSelectTerm}
+                />
               ))}
             </div>
             {ch.chapterNote ? (
               <aside className={`${styles.chapterNoteBox} chapter-note-box`}>
-                💡 {ch.chapterNote}
+                💡{" "}
+                <HighlightedText
+                  text={ch.chapterNote}
+                  query={highlightQuery}
+                  markClassName={styles.searchMark}
+                />
               </aside>
             ) : null}
           </section>
@@ -195,18 +275,33 @@ export function ReaderArticle({
 
         <details
           key={`lore-${story.id}`}
+          ref={loreDetailsRef}
           className={`${styles.loreDetails} lore-details`}
           onToggle={(e) => {
-            if (e.currentTarget.open) {
-              onLoreOpened();
+            if (!e.currentTarget.open) return;
+            if (isProgrammaticLoreOpenRef?.current) {
+              isProgrammaticLoreOpenRef.current = false;
+              return;
             }
+            onLoreOpened();
           }}
         >
           <summary>🔍 読了後の真相・考察メモ（誰の物語だったのか？）</summary>
           <div className={`${styles.loreDetailsBody} lore-details-body`}>
-            <p>{story.overallTruth}</p>
+            <p>
+              <HighlightedText
+                text={story.overallTruth}
+                query={highlightQuery}
+                markClassName={styles.searchMark}
+              />
+            </p>
             <p className={`${styles.loreGameEffect} lore-game-effect`}>
-              【ゲーム内データ】{story.gameEffect}
+              【ゲーム内データ】
+              <HighlightedText
+                text={story.gameEffect}
+                query={highlightQuery}
+                markClassName={styles.searchMark}
+              />
             </p>
           </div>
         </details>

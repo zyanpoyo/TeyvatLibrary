@@ -11,6 +11,79 @@ function makeParagraphs(prefix, count) {
   );
 }
 
+function toPlainMockText(text) {
+  return String(text ?? "")
+    .replace(/\{\{[a-z0-9_]+\|((?:[^}{]|\{[MF]#[^}]*\}|\{(?!\{|[MF]#))+)\}\}/g, "$1")
+    .replace(/\{M#([^}]*)\}\{F#([^}]*)\}|\{F#([^}]*)\}\{M#([^}]*)\}/g, (_m, m1, f1, f2, m2) => {
+      const male = m1 ?? m2 ?? "";
+      const female = f1 ?? f2 ?? "";
+      return male === female ? male : `${male}／${female}`;
+    });
+}
+
+function buildMockSearchIndex(storiesIndex, storyDetails) {
+  const stories = {};
+  for (const [storyId, detail] of Object.entries(storyDetails)) {
+    const termLocs = new Map();
+    const chapters = (detail.chapters || []).map((ch, chapterIndex) => {
+      const paragraphs = (ch.paragraphs || []).map((p, paragraphIndex) => {
+        for (const match of String(p).matchAll(/\{\{([a-z0-9_]+)\|[^}]+\}\}/g)) {
+          if (!termLocs.has(match[1])) {
+            termLocs.set(match[1], { chapterIndex, paragraphIndex });
+          }
+        }
+        return toPlainMockText(p);
+      });
+      return {
+        chapterIndex,
+        partLabel: toPlainMockText(ch.partLabel),
+        heading: toPlainMockText(ch.heading),
+        epigraph: toPlainMockText(ch.epigraph),
+        paragraphs,
+        ...(ch.chapterNote ? { chapterNote: toPlainMockText(ch.chapterNote) } : {}),
+      };
+    });
+
+    const glossary = Object.entries(detail.glossary || {}).map(([termId, entry]) => {
+      const loc = termLocs.get(termId) || { chapterIndex: 0, paragraphIndex: 0 };
+      return {
+        termId,
+        term: toPlainMockText(entry.term),
+        identity: toPlainMockText(entry.identity),
+        desc: toPlainMockText(entry.desc),
+        firstChapterIndex: loc.chapterIndex,
+        firstParagraphIndex: loc.paragraphIndex,
+      };
+    });
+
+    const entityNames = (detail.entityIds || [])
+      .map((eid) => storiesIndex.entitiesIndex?.[eid]?.name || "")
+      .filter(Boolean);
+
+    stories[storyId] = {
+      id: storyId,
+      title: detail.title,
+      hook: detail.hook,
+      categoryLabel: detail.categoryLabel,
+      era: detail.era,
+      region: detail.region || [],
+      tags: detail.tags || [],
+      entityNames,
+      preGuide: (detail.preGuide || []).map((line) => toPlainMockText(line)),
+      chapters,
+      glossary,
+      truth: {
+        overallTruth: toPlainMockText(detail.overallTruth),
+        gameEffect: toPlainMockText(detail.gameEffect),
+      },
+    };
+  }
+  return {
+    generatedAt: storiesIndex.generatedAt,
+    stories,
+  };
+}
+
 export function createMockDataset(now = new Date()) {
   const todayStr = formatLocalIsoDate(now);
 
@@ -263,7 +336,9 @@ export function createMockDataset(now = new Date()) {
     },
   };
 
-  return { storiesIndex, storyDetails };
+  const searchIndex = buildMockSearchIndex(storiesIndex, storyDetails);
+
+  return { storiesIndex, searchIndex, storyDetails };
 }
 
 export async function setupMockApi(page, options = {}) {
@@ -280,6 +355,14 @@ export async function setupMockApi(page, options = {}) {
       status: 200,
       contentType: "application/json; charset=utf-8",
       body: JSON.stringify(dataset.storiesIndex),
+    });
+  });
+
+  await page.route("**/data/search-index.json", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json; charset=utf-8",
+      body: JSON.stringify(dataset.searchIndex),
     });
   });
 

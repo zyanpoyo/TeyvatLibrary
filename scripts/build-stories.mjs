@@ -66,6 +66,14 @@ function writeDistOutput(distDir, dist) {
     JSON.stringify(dist.index, null, 2) + "\n",
     "utf8"
   );
+
+  if (dist.searchIndex) {
+    fs.writeFileSync(
+      path.join(distDir, "search-index.json"),
+      JSON.stringify(dist.searchIndex) + "\n",
+      "utf8"
+    );
+  }
 }
 
 function main() {
@@ -103,7 +111,7 @@ function main() {
 
   writeDistOutput(DIST_DIR, result.dist);
   console.log(
-    `✅ ビルド＆検証成功: 全 ${result.dist.index.totalCount} 作品を検証し、public/data/ (stories-index.json + stories/*.json) を生成しました。`
+    `✅ ビルド＆検証成功: 全 ${result.dist.index.totalCount} 作品を検証し、public/data/ (stories-index.json + search-index.json + stories/*.json) を生成しました。`
   );
 }
 

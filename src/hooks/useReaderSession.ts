@@ -223,6 +223,8 @@ export interface UseReaderSessionOptions {
   navigationKey?: string;
   /** 表示設定ポップオーバー等が展開中で操作バーを強制表示すべきとき true。 */
   keepNavVisible?: boolean;
+  /** 検索スニペット等からの位置指定ジャンプ遷移のとき true（途中しおり復元と自動スクロール競合を抑止）。 */
+  hasSearchTarget?: boolean;
 }
 
 export interface UseReaderSessionResult {
@@ -248,6 +250,8 @@ export interface UseReaderSessionResult {
   toggleRead: () => void;
   /** 真相・考察メモ展開時の自動読了。手動未読抑止中はスキップする。 */
   markLoreOpened: () => void;
+  /** 検索ジャンプ等によるプログラム的スクロール直後に進捗・基準位置を同期し、誤読了を防ぐ。 */
+  syncAfterExternalScroll: () => void;
   /** 保留中しおりを同期フラッシュして記録を停止し、離脱ナビゲーションを実行する。 */
   leave: (afterLeave?: () => void) => void;
 }
@@ -266,6 +270,7 @@ export function useReaderSession({
   validStoryIds = null,
   navigationKey = "",
   keepNavVisible = false,
+  hasSearchTarget = false,
 }: UseReaderSessionOptions): UseReaderSessionResult {
   const activeStory = story && story.id === storyId ? story : null;
   const activeStoryId = activeStory?.id ?? null;
@@ -469,8 +474,8 @@ export function useReaderSession({
     }
 
     const isInitialEntry = capturedRestoreRef.current === null;
-    let ratio = resolveValidRestoreRatio(explicitRestoreRatio);
-    if (ratio === null && isInitialEntry && allowStoredSessionRestore) {
+    let ratio = hasSearchTarget ? null : resolveValidRestoreRatio(explicitRestoreRatio);
+    if (ratio === null && !hasSearchTarget && isInitialEntry && allowStoredSessionRestore) {
       const allowedIds = validStoryIds && validStoryIds.size > 0 ? validStoryIds : null;
       const session = readingState.getLastSession(allowedIds);
       if (session && session.storyId === storyId) {
@@ -486,7 +491,9 @@ export function useReaderSession({
       currentIndexRef.current = 0;
       setCurrentChapterIndex(0);
       setProgressExactPercent(0);
-      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      if (!hasSearchTarget) {
+        window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      }
     } finally {
       isInEffectRef.current = false;
     }
@@ -495,6 +502,7 @@ export function useReaderSession({
     storyId,
     explicitRestoreRatio,
     allowStoredSessionRestore,
+    hasSearchTarget,
     validStoryIds,
     readingState,
   ]);
@@ -527,13 +535,17 @@ export function useReaderSession({
 
     isInEffectRef.current = true;
     try {
-      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      if (!hasSearchTarget) {
+        window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      }
       initialMountedScrollYRef.current = window.scrollY;
       navStateRef.current = createRestoredNavState(window.scrollY);
       setIsNavHidden(false);
 
       const restoreRatio =
-        capturedRestoreRef.current?.entryKey === entryKey ? capturedRestoreRef.current.ratio : null;
+        !hasSearchTarget && capturedRestoreRef.current?.entryKey === entryKey
+          ? capturedRestoreRef.current.ratio
+          : null;
 
       if (restoreRatio !== null) {
         const applyRestoredScroll = () => {
@@ -621,6 +633,7 @@ export function useReaderSession({
   }, [
     activeStory,
     entryKey,
+    hasSearchTarget,
     flushPendingBookmark,
     resolveActiveChapter,
     syncProgressAndSession,
@@ -654,6 +667,16 @@ export function useReaderSession({
     readingState.markRead(activeStory.id);
   }, [activeStory, readingState, clearPendingBookmark]);
 
+  const syncAfterExternalScroll = useCallback(() => {
+    if (!activeStory || !isSessionActiveRef.current) return;
+    suppressUntilRef.current = performance.now() + MOUNT_SUPPRESS_MS;
+    initialMountedScrollYRef.current = window.scrollY;
+    hasUserScrolledDownRef.current = false;
+    navStateRef.current = createRestoredNavState(window.scrollY);
+    setIsNavHidden(false);
+    syncProgressAndSession(activeStory, false);
+  }, [activeStory, syncProgressAndSession]);
+
   const leave = useCallback(
     (afterLeave?: () => void) => {
       flushPendingBookmark();
@@ -677,6 +700,7 @@ export function useReaderSession({
     toggleBookmark,
     toggleRead,
     markLoreOpened,
+    syncAfterExternalScroll,
     leave,
   };
 }

@@ -1,0 +1,120 @@
+.snippetsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.snippetsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.snippetRow {
+  margin: 0;
+}
+
+.snippetBtn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  padding: 0.48rem 0.68rem;
+  border-radius: 0.42rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--pill-bg);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.snippetBtn:hover,
+.snippetBtn:focus-visible {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-soft);
+  outline: none;
+}
+
+.snippetBtn:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+.snippetLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--border-gold);
+  border-radius: 0.3rem;
+  padding: 0.08rem 0.42rem;
+  white-space: nowrap;
+}
+
+.snippetText {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.snippetArrow {
+  color: var(--accent-gold);
+  font-size: 0.78rem;
+  align-self: center;
+}
+
+.searchMark {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+  border-bottom: 1.5px solid var(--accent-gold);
+  border-radius: 0.18em;
+  padding: 0 0.14em;
+  font-weight: 700;
+}
+
+.expandBtn {
+  align-self: flex-start;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-gold);
+  background: transparent;
+  color: var(--accent-gold-bright);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.expandBtn:hover,
+.expandBtn:focus-visible {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  outline: none;
+}
+
+@media (max-width: 599px) {
+  .snippetBtn {
+    grid-template-columns: 1fr auto;
+  }
+  .snippetLabel {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (pointer: coarse) {
+  .snippetBtn,
+  .expandBtn {
+    min-block-size: 44px;
+  }
+}

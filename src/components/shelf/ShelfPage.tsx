@@ -19,6 +19,9 @@ export function ShelfPage() {
     indexData,
     indexError,
     isLoadingIndex,
+    searchIndex,
+    isLoadingSearchIndex,
+    ensureSearchIndex,
     filters,
     setFilters,
     resetFilters,
@@ -27,9 +30,23 @@ export function ShelfPage() {
 
   const stories = indexData?.stories ?? [];
   const shelfView = useMemo(
-    () => deriveShelfView({ indexData, filters, readingState: readingSnapshot }),
-    [indexData, filters, readingSnapshot]
+    () =>
+      deriveShelfView({
+        indexData,
+        searchIndex,
+        filters,
+        readingState: readingSnapshot,
+      }),
+    [indexData, searchIndex, filters, readingSnapshot]
   );
+
+  const allCategoryHitCount =
+    shelfView.categories.find((c) => c.id === "all")?.count ?? 0;
+  const hasOtherCategoryHits =
+    shelfView.hasSearchQuery &&
+    filters.category !== "all" &&
+    shelfView.items.length === 0 &&
+    allCategoryHitCount > 0;
 
   const handleRandomPick = useCallback(() => {
     const picked = pickRandomStory(stories, readingSnapshot, lastOpenedStoryId);
@@ -57,6 +74,8 @@ export function ShelfPage() {
 
       <ShelfToolbar
         hasIndexData={shelfView.hasIndexData}
+        hasSearchQuery={shelfView.hasSearchQuery}
+        isLoadingSearchIndex={isLoadingSearchIndex}
         filters={filters}
         entities={shelfView.entities}
         regions={shelfView.regions}
@@ -66,6 +85,7 @@ export function ShelfPage() {
         readCount={shelfView.readCount}
         allRead={shelfView.allRead}
         onChangeFilters={setFilters}
+        onSearchFocus={ensureSearchIndex}
         onRandomPick={handleRandomPick}
       />
 
@@ -85,8 +105,20 @@ export function ShelfPage() {
               ✦ 条件に一致する物語が見つかりません
             </p>
             <p className={`${commonStyles.emptyDesc} shelf-empty-desc`}>
-              カテゴリーや読書状態・登場人物・用語・地域・検索語句の条件を変更してお試しください。
+              {hasOtherCategoryHits
+                ? `選択中のカテゴリーでは一致しませんでしたが、他のカテゴリーに ${allCategoryHitCount} 件の一致があります。`
+                : "カテゴリーや読書状態・登場人物・用語・地域・検索語句の条件を変更してお試しください。"}
             </p>
+            {hasOtherCategoryHits ? (
+              <button
+                type="button"
+                className={commonStyles.controlPill}
+                data-action="switch-all-category"
+                onClick={() => setFilters((prev) => ({ ...prev, category: "all" }))}
+              >
+                「すべて」タブで {allCategoryHitCount} 件を表示
+              </button>
+            ) : null}
             <button
               type="button"
               className={commonStyles.controlPill}
@@ -105,7 +137,12 @@ export function ShelfPage() {
               isRead={item.isRead}
               isNew={item.isNew}
               isBookmarked={item.isBookmarked}
+              searchQuery={filters.query}
+              searchMatch={item.searchMatch}
               onOpenStory={openStory}
+              onOpenStoryWithTarget={(storyId, searchTarget) =>
+                openStory(storyId, { searchTarget })
+              }
               onToggleBookmark={(id) => readingStore.toggleBookmark(id)}
             />
           ))

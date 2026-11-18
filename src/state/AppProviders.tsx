@@ -16,6 +16,12 @@ import {
 import { useLocation, useNavigate } from "react-router";
 import { fetchStoriesIndex } from "../api/stories";
 import { DEFAULT_SHELF_FILTERS } from "../domain/catalog";
+import { useSearchIndex } from "../hooks/useSearchIndex";
+import {
+  buildReaderJumpParams,
+  buildShelfSearchParams,
+  parseShelfSearchParams,
+} from "../router/search-params";
 import {
   createDisplayPrefsState,
   useDocumentThemeEffect,
@@ -25,6 +31,8 @@ import { createReadingState, type ReadingStateStore } from "./reading-state";
 import type {
   DisplayPrefs,
   ReadingStateSnapshot,
+  SearchIndexData,
+  SearchJumpTarget,
   ShelfFilters,
   StoriesIndexData,
   StoryDetail,
@@ -60,6 +68,9 @@ export interface ShelfContextValue {
   indexData: StoriesIndexData | null;
   indexError: string | null;
   isLoadingIndex: boolean;
+  searchIndex: SearchIndexData | null;
+  isLoadingSearchIndex: boolean;
+  ensureSearchIndex: () => void;
   validStoryIds: ReadonlySet<string>;
   filters: ShelfFilters;
   setFilters: Dispatch<SetStateAction<ShelfFilters>>;
@@ -84,6 +95,8 @@ export interface AppProvidersProps {
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [readingStore] = useState<ReadingStateStore>(() => createReadingState());
   const [prefsStore] = useState(() => createDisplayPrefsState());
 
@@ -103,8 +116,32 @@ export function AppProviders({ children }: AppProvidersProps) {
   const [indexData, setIndexData] = useState<StoriesIndexData | null>(null);
   const [indexError, setIndexError] = useState<string | null>(null);
   const [isLoadingIndex, setIsLoadingIndex] = useState<boolean>(true);
-  const [filters, setFilters] = useState<ShelfFilters>(DEFAULT_SHELF_FILTERS);
+  const [filters, setFilters] = useState<ShelfFilters>(() => {
+    if (location.pathname !== "/") return DEFAULT_SHELF_FILTERS;
+    const parsed = parseShelfSearchParams(location.search);
+    if (!parsed.query && !parsed.includeTruth) return DEFAULT_SHELF_FILTERS;
+    return {
+      ...DEFAULT_SHELF_FILTERS,
+      query: parsed.query,
+      includeTruth: parsed.includeTruth,
+    };
+  });
   const [annotationsEnabled, setAnnotationsEnabled] = useState<boolean>(true);
+  const { searchIndex, isLoadingSearchIndex, ensureSearchIndex } = useSearchIndex(
+    filters.query
+  );
+
+  useEffect(() => {
+    if (location.pathname !== "/") return;
+    const nextQuery = buildShelfSearchParams(
+      filters.query,
+      Boolean(filters.includeTruth)
+    );
+    const expectedSearch = nextQuery ? `?${nextQuery}` : "";
+    if (location.search !== expectedSearch) {
+      navigate({ pathname: "/", search: expectedSearch }, { replace: true });
+    }
+  }, [location.pathname, location.search, filters.query, filters.includeTruth, navigate]);
 
   const transitionStateRef = useRef<TransitionSessionState>({
     hasVisitedShelf: false,
@@ -179,12 +216,25 @@ export function AppProviders({ children }: AppProvidersProps) {
       indexData,
       indexError,
       isLoadingIndex,
+      searchIndex,
+      isLoadingSearchIndex,
+      ensureSearchIndex,
       validStoryIds,
       filters,
       setFilters,
       resetFilters,
     }),
-    [indexData, indexError, isLoadingIndex, validStoryIds, filters, resetFilters]
+    [
+      indexData,
+      indexError,
+      isLoadingIndex,
+      searchIndex,
+      isLoadingSearchIndex,
+      ensureSearchIndex,
+      validStoryIds,
+      filters,
+      resetFilters,
+    ]
   );
 
   return (
@@ -226,7 +276,10 @@ function useTransitionSessionRef(): RefObject<TransitionSessionState> {
 
 export interface UseShelfTransitionResult {
   lastOpenedStoryId: string | null;
-  openStory: (storyId: string, options?: { restoreScrollRatio?: number }) => void;
+  openStory: (
+    storyId: string,
+    options?: { restoreScrollRatio?: number; searchTarget?: SearchJumpTarget }
+  ) => void;
 }
 
 /**
@@ -285,7 +338,10 @@ export function useShelfTransition(
   }, [indexData, sessionRef, shelfRef]);
 
   const openStory = useCallback(
-    (storyId: string, options?: { restoreScrollRatio?: number }) => {
+    (
+      storyId: string,
+      options?: { restoreScrollRatio?: number; searchTarget?: SearchJumpTarget }
+    ) => {
       if (!validStoryIds.has(storyId)) return;
       const session = sessionRef.current;
       session.shelfScrollY = window.scrollY;
@@ -297,12 +353,19 @@ export function useShelfTransition(
         session.shelfDepthInSession = idx;
       }
 
-      navigate(`/story/${encodeURIComponent(storyId)}`, {
-        state:
-          options?.restoreScrollRatio !== undefined
-            ? { restoreScrollRatio: options.restoreScrollRatio }
-            : undefined,
-      });
+      const jumpSearch = buildReaderJumpParams(options?.searchTarget);
+      navigate(
+        {
+          pathname: `/story/${encodeURIComponent(storyId)}`,
+          search: jumpSearch ? `?${jumpSearch}` : "",
+        },
+        {
+          state:
+            options?.restoreScrollRatio !== undefined
+              ? { restoreScrollRatio: options.restoreScrollRatio }
+              : undefined,
+        }
+      );
     },
     [validStoryIds, sessionRef, navigate]
   );

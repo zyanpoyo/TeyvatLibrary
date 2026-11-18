@@ -1,5 +1,6 @@
 import {
   extractInlineTagReferences,
+  formatGenderPlaceholders,
   isValidIsoDateString,
   stripInlineTags,
 } from "../../src/domain/text-parser.ts";
@@ -418,6 +419,76 @@ function buildIndexPayload(compiledMap, entities) {
   };
 }
 
+function toPlainSearchText(text) {
+  return formatGenderPlaceholders(stripInlineTags(text));
+}
+
+function buildSearchIndexPayload(compiledMap, entities, generatedAt) {
+  const stories = {};
+
+  for (const compiled of compiledMap.values()) {
+    const termFirstLocation = new Map();
+    const chapters = (compiled.chapters || []).map((ch, chapterIndex) => {
+      const paragraphs = (ch.paragraphs || []).map((p, paragraphIndex) => {
+        for (const ref of extractInlineTagReferences(p)) {
+          if (!termFirstLocation.has(ref.termId)) {
+            termFirstLocation.set(ref.termId, { chapterIndex, paragraphIndex });
+          }
+        }
+        return toPlainSearchText(p);
+      });
+
+      return {
+        chapterIndex,
+        partLabel: toPlainSearchText(ch.partLabel),
+        heading: toPlainSearchText(ch.heading),
+        epigraph: toPlainSearchText(ch.epigraph),
+        paragraphs,
+        ...(ch.chapterNote ? { chapterNote: toPlainSearchText(ch.chapterNote) } : {}),
+      };
+    });
+
+    const glossary = Object.entries(compiled.glossary || {}).map(([termId, entry]) => {
+      const loc = termFirstLocation.get(termId) || { chapterIndex: 0, paragraphIndex: 0 };
+      return {
+        termId,
+        term: toPlainSearchText(entry.term),
+        identity: toPlainSearchText(entry.identity),
+        desc: toPlainSearchText(entry.desc),
+        firstChapterIndex: loc.chapterIndex,
+        firstParagraphIndex: loc.paragraphIndex,
+      };
+    });
+
+    const entityNames = (compiled.entityIds || [])
+      .map((eid) => entities[eid]?.name || "")
+      .filter(Boolean);
+
+    stories[compiled.id] = {
+      id: compiled.id,
+      title: compiled.title,
+      hook: compiled.hook,
+      categoryLabel: compiled.categoryLabel,
+      era: compiled.era,
+      region: compiled.region || [],
+      tags: compiled.tags || [],
+      entityNames,
+      preGuide: (compiled.preGuide || []).map((line) => toPlainSearchText(line)),
+      chapters,
+      glossary,
+      truth: {
+        overallTruth: toPlainSearchText(compiled.overallTruth),
+        gameEffect: toPlainSearchText(compiled.gameEffect),
+      },
+    };
+  }
+
+  return {
+    generatedAt,
+    stories,
+  };
+}
+
 /**
  * 編集層ストーリー・マスタ・原典スナップショット読取ポートを受け取り、
  * スキーマゲート → Entity解決＆原文一致＆コーパス検証 → 双方向リンク展開＆配信データ構築を実行して値で返す。
@@ -501,6 +572,7 @@ export function compileStories({
   // Stage 3: 双方向 connected 展開 + 配信データ構築
   expandBidirectionalConnections(rawStories, compiledMap);
   const index = buildIndexPayload(compiledMap, entities);
+  const searchIndex = buildSearchIndexPayload(compiledMap, entities, index.generatedAt);
   const storiesById = Object.fromEntries(compiledMap);
 
   return {
@@ -509,6 +581,7 @@ export function compileStories({
     warnings,
     dist: {
       index,
+      searchIndex,
       storiesById,
     },
     stats,
