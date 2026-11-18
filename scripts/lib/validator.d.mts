@@ -1,13 +1,11 @@
 export const VALID_SHELF_CATEGORIES: string[];
-export const VALID_ENTITY_KINDS: string[];
 export const VALID_IDENTITY_PREFIXES: string[];
-export const VALID_SOURCE_TYPES: string[];
-export const VALID_PACKAGES: string[];
 export const VALID_PIECES: string[];
 
 export function stripInlineTags(text: string): string;
 export function normalizeWhitespaceForComparison(text: string): string;
 export function splitIntoParagraphBlocks(rawText: string): string[];
+export function extractTargetField(rawJson: unknown, sourceRef: Record<string, unknown>): string;
 export function resolveExpectedRawText(rawJson: unknown, sourceRef: Record<string, unknown>): string;
 export function resolveActualPlainText(paragraphs: string[]): string;
 export function findFirstDiffContext(
@@ -15,7 +13,7 @@ export function findFirstDiffContext(
   actual: string
 ): { index: number; expectedSnippet: string; actualSnippet: string } | null;
 
-export type CorpusChecker = (text: string, contextLabel: string, errors: string[]) => void;
+export type CorpusChecker = (text: string, contextLabel: string, errors?: string[]) => string[];
 
 export function createCorpusChecker(
   officialEntities: {
@@ -53,16 +51,3 @@ export function findEntityLinkHints(
   entities: Record<string, { name?: string }>,
   usedEntityIds?: Set<string> | string[]
 ): string[];
-
-export function validateStoryJsonSchema(
-  story: unknown,
-  storySchema: Record<string, unknown>,
-  fileSlug: string,
-  errors: string[]
-): void;
-
-export function validateEntitiesJsonSchema(
-  entities: unknown,
-  entitiesSchema: Record<string, unknown>,
-  errors: string[]
-): void;

@@ -1,12 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import { validateAgainstJsonSchema } from "./json-schema.mjs";
-
 export const VALID_SHELF_CATEGORIES = ["book", "artifact", "weapon", "attire", "chronicle"];
-export const VALID_ENTITY_KINDS = ["character", "god", "organization", "concept", "place"];
 export const VALID_IDENTITY_PREFIXES = ["正体：", "解説：", "有力説："];
-export const VALID_SOURCE_TYPES = ["artifact", "weapon", "windglider", "book", "material"];
-export const VALID_PACKAGES = ["genshin-db", "genshin-data", "yatta"];
 export const VALID_PIECES = ["flower", "plume", "sands", "goblet", "circlet"];
 
 export function stripInlineTags(text) {
@@ -226,8 +219,8 @@ export function createCorpusChecker(officialEntities, officialCorpus) {
       .map(([term]) => `「${term}」`);
   }
 
-  return function checkText(text, contextLabel, errors) {
-    if (!text) return;
+  return function checkText(text, contextLabel, errors = []) {
+    if (!text) return errors;
     for (const [ng, right] of Object.entries(ngMap)) {
       if (text.includes(ng)) {
         errors.push(`[NG固有名詞検出] ${contextLabel}: 「${ng}」が含まれています -> 公式表記「${right}」に修正してください。`);
@@ -245,43 +238,9 @@ export function createCorpusChecker(officialEntities, officialCorpus) {
         errors.push(`[公式コーパス未登録カタカナ] ${contextLabel}: 「${word}」は公式データ内に存在しません。${hint}`);
       }
     }
-  };
-}
 
-export function validateEntitiesMaster(entities, errors, checkText, titleLookup = null) {
-  const validKinds = new Set(VALID_ENTITY_KINDS);
-  for (const [entityId, entity] of Object.entries(entities)) {
-    const label = `entities.${entityId}`;
-    if (!/^[a-z0-9_]+$/.test(entityId)) {
-      errors.push(`[マスタID不正] ${label}: entityId は半角英小文字・数字・アンダースコアのみ使用可能です。`);
-    }
-    if (!entity || typeof entity !== "object") {
-      errors.push(`[マスタ型不正] ${label}: オブジェクトである必要があります。`);
-      continue;
-    }
-    if (!entity.name || typeof entity.name !== "string") {
-      errors.push(`[マスタ欠落] ${label}.name が未設定です。`);
-    }
-    if (!validKinds.has(entity.kind)) {
-      errors.push(`[マスタ種別不正] ${label}.kind ('${entity.kind}') は ${[...validKinds].join("/")} のいずれかにしてください。`);
-    }
-    if (!VALID_IDENTITY_PREFIXES.some((p) => (entity.defaultIdentity || "").startsWith(p))) {
-      errors.push(`[確度区分欠落] ${label}.defaultIdentity は ${VALID_IDENTITY_PREFIXES.join(" / ")} のいずれかで始めてください。`);
-    }
-    if (!entity.defaultDesc || typeof entity.defaultDesc !== "string") {
-      errors.push(`[マスタ欠落] ${label}.defaultDesc が未設定です。`);
-    }
-    if (!entity.defaultEvidence || typeof entity.defaultEvidence !== "string") {
-      errors.push(`[マスタ欠落] ${label}.defaultEvidence が未設定です。`);
-    }
-    checkText(entity.name, `${label}.name`, errors);
-    checkText(entity.defaultIdentity, `${label}.defaultIdentity`, errors);
-    checkText(entity.defaultDesc, `${label}.defaultDesc`, errors);
-    checkText(entity.defaultEvidence, `${label}.defaultEvidence`, errors);
-    if (titleLookup) {
-      findSubtitleLinkErrors(entity.defaultEvidence, `${label}.defaultEvidence`, titleLookup, null, errors);
-    }
-  }
+    return errors;
+  };
 }
 
 export function findSubtitleLinkErrors(evidence, contextLabel, titleLookup, selfId = null, errors = []) {
@@ -359,70 +318,4 @@ export function buildTitleLookup(rawStories) {
   }
   for (const amb of ambiguousTitles) titleLookup.delete(amb);
   return titleLookup;
-}
-
-export function validateStoryJsonSchema(story, storySchema, fileSlug, errors) {
-  validateAgainstJsonSchema(story, storySchema, story?.id || fileSlug || "story", errors);
-}
-
-export function validateEntitiesJsonSchema(entities, entitiesSchema, errors) {
-  validateAgainstJsonSchema(entities, entitiesSchema, "entities", errors);
-}
-
-export function isValidIsoDateString(value) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-  const [y, m, d] = value.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return (
-    dt.getUTCFullYear() === y &&
-    dt.getUTCMonth() === m - 1 &&
-    dt.getUTCDate() === d
-  );
-}
-
-export function validateStoryStructure(story, folderCategory, fileSlug, errors) {
-  const sid = story.id || fileSlug;
-  if (!story.id || !/^[a-z0-9_]+$/.test(story.id)) {
-    errors.push(`[スキーマ] ${sid}: id が不正です。`);
-  }
-  if (story.id !== fileSlug) {
-    errors.push(`[スキーマ] ${sid}: ファイル名 (${fileSlug}.json) と story.id (${story.id}) が一致しません。`);
-  }
-  if (!VALID_SHELF_CATEGORIES.includes(story.shelfCategory)) {
-    errors.push(`[スキーマ] ${sid}: shelfCategory ('${story.shelfCategory}') が無効です。`);
-  }
-  if (story.shelfCategory !== folderCategory) {
-    errors.push(`[スキーマ] ${sid}: 配置フォルダ (${folderCategory}/) と shelfCategory (${story.shelfCategory}) が一致しません。`);
-  }
-  if (story.addedAt !== undefined && !isValidIsoDateString(story.addedAt)) {
-    errors.push(`[スキーマ] ${sid}.addedAt: YYYY-MM-DD 形式の有効な日付を指定してください。`);
-  }
-  const requiredStr = ["title", "categoryLabel", "era", "hook", "overallTruth", "gameEffect"];
-  for (const key of requiredStr) {
-    if (typeof story[key] !== "string" || story[key].trim().length === 0) {
-      errors.push(`[スキーマ] ${sid}.${key}: 空でない文字列が必要です。`);
-    }
-  }
-  if (!Array.isArray(story.region) || story.region.length === 0) {
-    errors.push(`[スキーマ] ${sid}.region: 1つ以上の地域を含む配列が必要です。`);
-  }
-  if (!Array.isArray(story.tags)) {
-    errors.push(`[スキーマ] ${sid}.tags: 配列が必要です。`);
-  }
-  if (!Array.isArray(story.preGuide) || story.preGuide.length === 0) {
-    errors.push(`[スキーマ] ${sid}.preGuide: 1行以上の配列が必要です。`);
-  }
-  if (!Array.isArray(story.chapters) || story.chapters.length === 0) {
-    errors.push(`[スキーマ] ${sid}.chapters: 1章以上の配列が必要です。`);
-  }
-}
-
-export function loadRawJson(rawDir, sourceRef) {
-  const rawPath = path.join(rawDir, sourceRef.sourceType, `${sourceRef.rawId}.json`);
-  if (!fs.existsSync(rawPath)) {
-    throw new Error(`Raw snapshot not found: ${path.relative(process.cwd(), rawPath)}`);
-  }
-  return JSON.parse(fs.readFileSync(rawPath, "utf8"));
 }

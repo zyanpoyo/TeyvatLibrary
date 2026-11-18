@@ -2,6 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "テイワット文庫 共通人物・用語マスタ (entities.json)",
   "type": "object",
+  "propertyNames": {
+    "type": "string",
+    "pattern": "^[a-z0-9_]+$"
+  },
   "additionalProperties": {
     "type": "object",
     "required": ["name", "kind", "defaultIdentity", "defaultDesc", "defaultEvidence"],

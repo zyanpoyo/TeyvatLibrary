@@ -16,8 +16,14 @@ function matchesSchemaType(value, expectedType) {
 
 function validateObjectSchema(value, schema, label, errors) {
   for (const key of schema.required || []) {
-    if (!(key in value)) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) {
       errors.push(`[JSONスキーマ] ${label}: 必須フィールド '${key}' が欠落しています。`);
+    }
+  }
+
+  if (schema.propertyNames && typeof schema.propertyNames === "object") {
+    for (const key of Object.keys(value)) {
+      collectSchemaErrors(key, schema.propertyNames, `${label} のキー '${key}'`, errors);
     }
   }
 
@@ -25,14 +31,14 @@ function validateObjectSchema(value, schema, label, errors) {
   for (const [key, propValue] of Object.entries(value)) {
     const childLabel = `${label}.${key}`;
     if (Object.prototype.hasOwnProperty.call(properties, key)) {
-      validateAgainstJsonSchema(propValue, properties[key], childLabel, errors);
+      collectSchemaErrors(propValue, properties[key], childLabel, errors);
       continue;
     }
 
     if (schema.additionalProperties === false) {
       errors.push(`[JSONスキーマ] ${label}: スキーマ未定義のプロパティ '${key}' は許可されていません。`);
     } else if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
-      validateAgainstJsonSchema(propValue, schema.additionalProperties, childLabel, errors);
+      collectSchemaErrors(propValue, schema.additionalProperties, childLabel, errors);
     }
   }
 }
@@ -46,7 +52,7 @@ function validateArraySchema(value, schema, label, errors) {
   }
   if (schema.items) {
     value.forEach((item, index) => {
-      validateAgainstJsonSchema(item, schema.items, `${label}[${index}]`, errors);
+      collectSchemaErrors(item, schema.items, `${label}[${index}]`, errors);
     });
   }
 }
@@ -75,10 +81,7 @@ function validateNumberSchema(value, schema, label, errors) {
   }
 }
 
-/**
- * 依存パッケージを使わずに data/schemas/*.schema.json の主要制約を検証する軽量 JSON Schema バリデータ。
- */
-export function validateAgainstJsonSchema(value, schema, label, errors) {
+function collectSchemaErrors(value, schema, label, errors) {
   if (!schema || typeof schema !== "object") return;
 
   if (schema.type && !matchesSchemaType(value, schema.type)) {
@@ -101,4 +104,13 @@ export function validateAgainstJsonSchema(value, schema, label, errors) {
   } else if (schema.type === "integer" || schema.type === "number") {
     validateNumberSchema(value, schema, label, errors);
   }
+}
+
+/**
+ * 依存パッケージを使わずに data/schemas/*.schema.json の主要制約を検証し、エラー一覧を値で返す軽量 JSON Schema バリデータ。
+ */
+export function validateAgainstJsonSchema(value, schema, label = "value") {
+  const errors = [];
+  collectSchemaErrors(value, schema, label, errors);
+  return errors;
 }
