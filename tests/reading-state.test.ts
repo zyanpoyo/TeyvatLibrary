@@ -3,6 +3,11 @@ import {
   AUTO_READ_THRESHOLD,
   BOOKMARK_THRESHOLD_MIN,
   createReadingState,
+  createReadingStateReader,
+  getSnapshotLastSession,
+  getSnapshotReadCount,
+  isStoryBookmarked,
+  isStoryRead,
   READING_STATE_KEY,
   roundScrollRatio,
 } from "../src/state/reading-state";
@@ -182,5 +187,40 @@ describe("reading-state store", () => {
     expect(state.clearLastSession()).toBe(true);
     expect(state.getLastSession()).toBeNull();
     expect(state.clearLastSession()).toBe(false);
+  });
+
+  it("loads initial snapshot on creation and supports pure snapshot selectors", () => {
+    installMockLocalStorage({
+      [READING_STATE_KEY]: JSON.stringify({
+        readStories: {
+          crimson_witch: { readAt: "2026-11-15T00:00:00.000Z" },
+          removed_id: { readAt: "2026-11-15T00:00:00.000Z" },
+        },
+        bookmarks: ["elegy"],
+        lastSession: {
+          storyId: "byakuyakoku",
+          chapterIndex: 1,
+          scrollRatio: 0.35,
+          updatedAt: "2026-11-15T01:00:00.000Z",
+        },
+      }),
+    });
+
+    const state = createReadingState();
+    const snapshot = state.getSnapshot();
+    const validIds = new Set(["crimson_witch", "elegy", "byakuyakoku"]);
+
+    expect(isStoryRead(snapshot, "crimson_witch")).toBe(true);
+    expect(isStoryRead(snapshot, "elegy")).toBe(false);
+    expect(isStoryBookmarked(snapshot, "elegy")).toBe(true);
+    expect(getSnapshotReadCount(snapshot)).toBe(2);
+    expect(getSnapshotReadCount(snapshot, validIds)).toBe(1);
+    expect(getSnapshotLastSession(snapshot, validIds)?.storyId).toBe("byakuyakoku");
+
+    const reader = createReadingStateReader(snapshot);
+    expect(reader.isRead("crimson_witch")).toBe(true);
+    expect(reader.isBookmarked("elegy")).toBe(true);
+    expect(reader.getReadCount(validIds)).toBe(1);
+    expect(reader.getLastSession(validIds)?.scrollRatio).toBe(0.35);
   });
 });

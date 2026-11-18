@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Navigate, useLocation, useNavigate, useParams } from "react-router";
+import { Navigate, useParams } from "react-router";
 import { fetchStoryDetail } from "../../api/stories";
 import { useReaderSession } from "../../hooks/useReaderSession";
 import {
   useDisplayPrefsStore,
+  useReaderTransition,
   useReadingStateStore,
   useShelfContext,
 } from "../../state/AppProviders";
@@ -14,46 +15,30 @@ import { ReaderArticle } from "./ReaderArticle";
 import { ReaderNavBar } from "./ReaderNavBar";
 import styles from "./ReaderPage.module.css";
 
-const BASE_TITLE = "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー";
-
-function getHistoryIndex(): number | null {
-  if (typeof window === "undefined") return null;
-  const idx = (window.history.state as { idx?: unknown } | null)?.idx;
-  return typeof idx === "number" ? idx : null;
-}
-
-export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail | null }) {
+export function ReaderPage() {
   const { storyId = "" } = useParams<{ storyId: string }>();
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const { store: readingStore } = useReadingStateStore();
-  const { prefs: displayPrefs } = useDisplayPrefsStore();
   const {
-    indexData,
-    validStoryIds,
+    prefs: displayPrefs,
     annotationsEnabled,
-    setAnnotationsEnabled,
-    shelfDepthInSession,
-    setShelfDepthInSession,
-    setShouldRestoreShelfFocus,
-    setShouldRestoreShelfScroll,
-  } = useShelfContext();
+    toggleAnnotations,
+  } = useDisplayPrefsStore();
+  const { indexData, validStoryIds } = useShelfContext();
 
   const readerViewRef = useRef<HTMLElement | null>(null);
 
-  const [story, setStory] = useState<StoryDetail | null>(initialStory);
+  const [story, setStory] = useState<StoryDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(!initialStory);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState(0);
   const [activeTermId, setActiveTermId] = useState<string | null>(null);
   const [isDisplayPopoverOpen, setIsDisplayPopoverOpen] = useState(false);
 
-  const locationState = location.state as { restoreScrollRatio?: unknown } | null;
-  const explicitRestoreRatio =
-    typeof locationState?.restoreScrollRatio === "number"
-      ? locationState.restoreScrollRatio
-      : null;
+  const transition = useReaderTransition({
+    story,
+    readerViewRef,
+  });
 
   const isInvalidStoryId =
     Boolean(indexData) && validStoryIds.size > 0 && !validStoryIds.has(storyId);
@@ -63,30 +48,16 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
     story,
     readingState: readingStore,
     displayPrefs,
-    explicitRestoreRatio,
-    allowStoredSessionRestore: shelfDepthInSession === null,
+    explicitRestoreRatio: transition.explicitRestoreRatio,
+    allowStoredSessionRestore: transition.allowStoredSessionRestore,
     validStoryIds,
-    navigationKey: location.key,
+    navigationKey: transition.navigationKey,
     keepNavVisible: isDisplayPopoverOpen,
   });
-
-  // If browser navigated back prior to shelfDepthInSession, invalidate shelf depth
-  useEffect(() => {
-    const idx = getHistoryIndex();
-    if (idx !== null && shelfDepthInSession !== null && idx <= shelfDepthInSession) {
-      setShelfDepthInSession(null);
-    }
-  }, [location.key, shelfDepthInSession, setShelfDepthInSession]);
 
   // Fetch story detail when storyId or retryCount changes
   useEffect(() => {
     if (!storyId || isInvalidStoryId) return;
-    if (initialStory && initialStory.id === storyId && retryCount === 0) {
-      setStory(initialStory);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
 
     let cancelled = false;
     setStory(null);
@@ -112,45 +83,15 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
     return () => {
       cancelled = true;
     };
-  }, [storyId, isInvalidStoryId, retryCount, initialStory]);
-
-  // Document title sync & focus management on route transition
-  useEffect(() => {
-    if (!story) return;
-    document.title = `${story.title} | テイワット文庫`;
-    if (shelfDepthInSession !== null) {
-      readerViewRef.current?.focus({ preventScroll: true });
-    }
-  }, [story, shelfDepthInSession]);
-
-  useEffect(() => {
-    return () => {
-      document.title = BASE_TITLE;
-    };
-  }, []);
+  }, [storyId, isInvalidStoryId, retryCount]);
 
   const handleBackToShelf = useCallback(() => {
     reader.leave(() => {
       setActiveTermId(null);
       setIsDisplayPopoverOpen(false);
-      const currentIdx = getHistoryIndex();
-      if (shelfDepthInSession !== null && currentIdx !== null && currentIdx > shelfDepthInSession) {
-        setShouldRestoreShelfFocus(true);
-        setShouldRestoreShelfScroll(true);
-        navigate(shelfDepthInSession - currentIdx);
-        return;
-      }
-      setShouldRestoreShelfFocus(true);
-      setShouldRestoreShelfScroll(false);
-      navigate("/");
+      transition.backToShelf();
     });
-  }, [
-    reader.leave,
-    shelfDepthInSession,
-    navigate,
-    setShouldRestoreShelfFocus,
-    setShouldRestoreShelfScroll,
-  ]);
+  }, [reader.leave, transition]);
 
   if (isInvalidStoryId) {
     return <Navigate to="/" replace />;
@@ -195,7 +136,7 @@ export function ReaderPage({ initialStory = null }: { initialStory?: StoryDetail
           annotationsEnabled={annotationsEnabled}
           isDisplayPopoverOpen={isDisplayPopoverOpen}
           onBackToShelf={handleBackToShelf}
-          onToggleAnnotations={() => setAnnotationsEnabled((prev) => !prev)}
+          onToggleAnnotations={toggleAnnotations}
           onDisplayPopoverOpenChange={setIsDisplayPopoverOpen}
         />
 

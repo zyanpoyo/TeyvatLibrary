@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import type { DisplayPrefs, FontFamilyMode, FontSizeMode, ThemeMode } from "../types/story";
+import { createPersistedStore } from "./persisted-store";
 
 export const DISPLAY_PREFS_KEY = "genshin-books-display-prefs-v1";
 
@@ -23,103 +25,97 @@ export const DEFAULT_PREFS: DisplayPrefs = {
 
 export type DisplayPrefSetting = keyof DisplayPrefs;
 
+function normalizeDisplayPrefs(raw: unknown): DisplayPrefs {
+  const next: DisplayPrefs = { ...DEFAULT_PREFS };
+  if (!raw || typeof raw !== "object") return next;
+  const parsed = raw as Partial<Record<DisplayPrefSetting, unknown>>;
+  if (typeof parsed.fontSize === "string" && parsed.fontSize in FONT_SIZE_MAP) {
+    next.fontSize = parsed.fontSize as FontSizeMode;
+  }
+  if (typeof parsed.fontFamily === "string" && parsed.fontFamily in FONT_FAMILY_MAP) {
+    next.fontFamily = parsed.fontFamily as FontFamilyMode;
+  }
+  if (typeof parsed.theme === "string" && VALID_THEMES.has(parsed.theme as ThemeMode)) {
+    next.theme = parsed.theme as ThemeMode;
+  }
+  return next;
+}
+
+/**
+ * 表示設定（テーマ・文字サイズ・書体）を html/body 属性と CSS カスタムプロパティへ反映する。
+ */
+export function applyDisplayPrefsToDocument(prefs: DisplayPrefs): void {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.style.setProperty("--reader-font-size", FONT_SIZE_MAP[prefs.fontSize]);
+  root.style.setProperty("--reader-prose-font", FONT_FAMILY_MAP[prefs.fontFamily]);
+  root.dataset.theme = prefs.theme;
+  if (document.body) {
+    document.body.dataset.theme = prefs.theme;
+  }
+
+  const scheme = prefs.theme === "night" ? "dark" : "light";
+  root.style.colorScheme = scheme;
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
+  if (meta && meta.content !== scheme) {
+    meta.content = scheme;
+  }
+}
+
+/**
+ * 表示設定スナップショットの変化を監視して DOM のテーマ属性と CSS カスタムプロパティへ同期する。
+ */
+export function useDocumentThemeEffect(prefs: DisplayPrefs): void {
+  useEffect(() => {
+    applyDisplayPrefsToDocument(prefs);
+  }, [prefs]);
+}
+
 export interface DisplayPrefsStore {
   load(): void;
-  save(): void;
-  set(setting: DisplayPrefSetting, value: string): boolean;
+  set<K extends DisplayPrefSetting>(setting: K, value: DisplayPrefs[K] | (string & {})): boolean;
   getSnapshot(): DisplayPrefs;
   subscribe(listener: () => void): () => void;
 }
 
 export function createDisplayPrefsState(): DisplayPrefsStore {
-  let prefs: DisplayPrefs = { ...DEFAULT_PREFS };
-  const listeners = new Set<() => void>();
-
-  function emit(): void {
-    for (const listener of listeners) {
-      listener();
-    }
-  }
+  const core = createPersistedStore<DisplayPrefs>({
+    key: DISPLAY_PREFS_KEY,
+    createDefault: () => ({ ...DEFAULT_PREFS }),
+    deserialize: normalizeDisplayPrefs,
+  });
 
   function load(): void {
-    const next: DisplayPrefs = { ...DEFAULT_PREFS };
-    try {
-      const raw = localStorage.getItem(DISPLAY_PREFS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Record<DisplayPrefSetting, unknown>>;
-        if (parsed && typeof parsed.fontSize === "string" && parsed.fontSize in FONT_SIZE_MAP) {
-          next.fontSize = parsed.fontSize as FontSizeMode;
-        }
-        if (parsed && typeof parsed.fontFamily === "string" && parsed.fontFamily in FONT_FAMILY_MAP) {
-          next.fontFamily = parsed.fontFamily as FontFamilyMode;
-        }
-        if (parsed && typeof parsed.theme === "string" && VALID_THEMES.has(parsed.theme as ThemeMode)) {
-          next.theme = parsed.theme as ThemeMode;
-        }
-      }
-    } catch {
-      // Ignore storage errors in restricted environments
-    }
-    prefs = next;
-    emit();
+    core.load();
   }
 
-  function save(): void {
-    try {
-      localStorage.setItem(DISPLAY_PREFS_KEY, JSON.stringify(prefs));
-    } catch {
-      // Ignore storage errors in restricted environments
-    }
-  }
-
-  function set(setting: DisplayPrefSetting, value: string): boolean {
+  function set<K extends DisplayPrefSetting>(
+    setting: K,
+    value: DisplayPrefs[K] | (string & {})
+  ): boolean {
+    const prefs = core.getSnapshot();
     if (setting === "fontSize" && value in FONT_SIZE_MAP) {
       if (prefs.fontSize === value) return true;
-      prefs = { ...prefs, fontSize: value as FontSizeMode };
-      save();
-      emit();
+      core.commit({ ...prefs, fontSize: value as FontSizeMode });
       return true;
     }
     if (setting === "fontFamily" && value in FONT_FAMILY_MAP) {
       if (prefs.fontFamily === value) return true;
-      prefs = { ...prefs, fontFamily: value as FontFamilyMode };
-      save();
-      emit();
+      core.commit({ ...prefs, fontFamily: value as FontFamilyMode });
       return true;
     }
     if (setting === "theme" && VALID_THEMES.has(value as ThemeMode)) {
       if (prefs.theme === value) return true;
-      prefs = { ...prefs, theme: value as ThemeMode };
-      save();
-      emit();
+      core.commit({ ...prefs, theme: value as ThemeMode });
       return true;
     }
     return false;
   }
 
-  function getSnapshot(): DisplayPrefs {
-    return prefs;
-  }
-
-  function handleStorageEvent(event: StorageEvent): void {
-    if (event.key === DISPLAY_PREFS_KEY || event.key === null) {
-      load();
-    }
-  }
-
-  function subscribe(listener: () => void): () => void {
-    const wasEmpty = listeners.size === 0;
-    listeners.add(listener);
-    if (wasEmpty && typeof window !== "undefined") {
-      window.addEventListener("storage", handleStorageEvent);
-    }
-    return () => {
-      listeners.delete(listener);
-      if (listeners.size === 0 && typeof window !== "undefined") {
-        window.removeEventListener("storage", handleStorageEvent);
-      }
-    };
-  }
-
-  return { load, save, set, getSnapshot, subscribe };
+  return {
+    load,
+    set,
+    getSnapshot: core.getSnapshot,
+    subscribe: core.subscribe,
+  };
 }
