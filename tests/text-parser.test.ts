@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  extractCitedTitles,
+  extractInlineTagReferences,
   formatGenderPlaceholders,
   formatRegion,
+  isValidIsoDateString,
   parseEvidenceTokens,
+  parseIsoDateUtcMs,
   parseParagraphTokens,
+  stripInlineTags,
 } from "../src/domain/text-parser";
 
 describe("text-parser", () => {
@@ -78,5 +83,26 @@ describe("text-parser", () => {
       { type: "link", title: "終焉を嘆く詩", storyId: "elegy" },
       { type: "text", value: "および未収録『幻の書』の記述より" },
     ]);
+  });
+
+  it("extractInlineTagReferences and stripInlineTags preserve nested gender placeholders", () => {
+    const line = "{{wf_twin|{M#姫}{F#王子}}}は{{wf_knight|若い騎士}}と出会った。";
+    expect(extractInlineTagReferences(line)).toEqual([
+      { termId: "wf_twin", surface: "{M#姫}{F#王子}", raw: "{{wf_twin|{M#姫}{F#王子}}}" },
+      { termId: "wf_knight", surface: "若い騎士", raw: "{{wf_knight|若い騎士}}" },
+    ]);
+    expect(stripInlineTags(line)).toBe("{M#姫}{F#王子}は若い騎士と出会った。");
+  });
+
+  it("extractCitedTitles and ISO date utilities handle cited titles and calendar validation", () => {
+    expect(extractCitedTitles("『蒼白の炎』と『白夜国館蔵』（巻二）を参照。")).toEqual([
+      "蒼白の炎",
+      "白夜国館蔵",
+    ]);
+    expect(parseIsoDateUtcMs("2024-02-29")).toBe(Date.UTC(2024, 1, 29));
+    expect(isValidIsoDateString("2024-02-29")).toBe(true);
+    expect(isValidIsoDateString("2026-02-29")).toBe(false);
+    expect(isValidIsoDateString("2026-02-30")).toBe(false);
+    expect(isValidIsoDateString("2026/11/18")).toBe(false);
   });
 });

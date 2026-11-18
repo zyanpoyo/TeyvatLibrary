@@ -1,12 +1,35 @@
-export const VALID_SHELF_CATEGORIES: string[];
-export const VALID_IDENTITY_PREFIXES: string[];
-export const VALID_PIECES: string[];
+import type { InlineTagReference } from "../../src/domain/text-parser";
+import type {
+  ArtifactPieceId,
+  ChapterSourceRef,
+  EvidenceLink,
+  IdentityPrefix,
+  StoryCategoryId,
+} from "../../src/types/story";
 
-export function stripInlineTags(text: string): string;
+export const VALID_SHELF_CATEGORIES: StoryCategoryId[];
+export const VALID_IDENTITY_PREFIXES: IdentityPrefix[];
+export const VALID_PIECES: ArtifactPieceId[];
+
+export { extractInlineTagReferences, stripInlineTags, type InlineTagReference };
+
 export function normalizeWhitespaceForComparison(text: string): string;
 export function splitIntoParagraphBlocks(rawText: string): string[];
-export function extractTargetField(rawJson: unknown, sourceRef: Record<string, unknown>): string;
-export function resolveExpectedRawText(rawJson: unknown, sourceRef: Record<string, unknown>): string;
+export function extractTargetField(
+  rawJson: unknown,
+  sourceRef: Partial<ChapterSourceRef> & { sourceType: string }
+): string;
+export function sanitizeRawSourceText(
+  rawText: string,
+  options?: {
+    stripPrefix?: string;
+    paragraphSlice?: [number, number];
+  }
+): string;
+export function resolveExpectedRawText(
+  rawJson: unknown,
+  sourceRef: Partial<ChapterSourceRef> & { sourceType: string }
+): string;
 export function resolveActualPlainText(paragraphs: string[]): string;
 export function findFirstDiffContext(
   expected: string,
@@ -28,7 +51,7 @@ export function extractEvidenceLinks(
   evidence: string,
   titleLookup: Map<string, string>,
   selfId?: string | null
-): Array<{ title: string; storyId: string }>;
+): EvidenceLink[];
 
 export function buildTitleLookup(
   rawStories: Array<{ id: string; title: string }>

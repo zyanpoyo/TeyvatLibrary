@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import {
+  buildOfficialCorpus,
+  createYattaBookFetcher,
+  extractRawSourceSnapshot,
+} from "../scripts/lib/genshin-sources.mjs";
 import { createCorpusChecker } from "../scripts/lib/validator.mjs";
 import { buildInspectReport, parseCliArgs, searchLoreEntries } from "../scripts/lore-tools.mjs";
 
@@ -111,5 +116,120 @@ describe("lore-tools", () => {
     });
     expect(limited).toHaveLength(1);
     expect(limited[0].collection).toBe("weapons");
+  });
+
+  it("inspects extracted raw book volumes via sanitizeRawSourceText without synthetic volume wrappers", () => {
+    const report = buildInspectReport({
+      sourceType: "book",
+      rawId: "sample_book",
+      dbJapanese: MOCK_DB,
+      booksData: [
+        {
+          _id: 1001,
+          id: "sample_book",
+          name: "白夜国館蔵",
+          rarity: 4,
+          volumes: [{ _id: 1, name: "第一巻", description: "要約", storyId: "201" }],
+        },
+      ],
+      rawBookJson: {
+        id: "sample_book",
+        volumes: [
+          { id: 1, name: "第一巻", text: "<color=#FFF>第一章</color><br/>本文テキストです。" },
+        ],
+      },
+    });
+
+    expect(report.volumes).toHaveLength(1);
+    expect(report.volumes?.[0].paragraphs).toEqual(["第一章\n本文テキストです。"]);
+  });
+
+  it("extracts raw snapshots via genshin-sources and injectable Yatta HTTP adapter", async () => {
+    const dbSnapshot = await extractRawSourceSnapshot({
+      sourceType: "weapon",
+      rawId: "ateaspoonoftranscendence",
+      dbJapanese: MOCK_DB,
+    });
+    expect(dbSnapshot.sourceType).toBe("weapon");
+    expect(dbSnapshot.rawId).toBe("ateaspoonoftranscendence");
+    expect(dbSnapshot.data.name).toBe("超越の鍵");
+
+    const requestedUrls: string[] = [];
+    const mockFetch = async (url: string) => {
+      requestedUrls.push(url);
+      if (url.endsWith("/book/1001")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ data: { volume: [{ id: 1, name: "第一巻", storyId: 901 }] } }),
+        };
+      }
+      if (url.endsWith("/readable/Book901")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ data: "白夜国の記録。" }),
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
+
+    const bookSnapshot = await extractRawSourceSnapshot({
+      sourceType: "book",
+      rawId: "1001",
+      booksData: [
+        {
+          _id: 1001,
+          id: "byakuya_book",
+          name: "白夜国館蔵",
+          rarity: 4,
+          volumes: [{ _id: 1, name: "第一巻", description: "要約", storyId: "201" }],
+        },
+      ],
+      fetchBookRaw: createYattaBookFetcher(mockFetch, "https://mock.yatta/api/v2/jp"),
+    });
+
+    expect(requestedUrls).toEqual([
+      "https://mock.yatta/api/v2/jp/book/1001",
+      "https://mock.yatta/api/v2/jp/readable/Book901",
+    ]);
+    expect(bookSnapshot.rawId).toBe("byakuya_book");
+    expect(bookSnapshot.data.volumes).toEqual([
+      {
+        id: 1,
+        name: "第一巻",
+        description: "要約",
+        storyId: "901",
+        text: "白夜国の記録。",
+      },
+    ]);
+
+    await expect(
+      extractRawSourceSnapshot({
+        sourceType: "unknown",
+        rawId: "x",
+        dbJapanese: MOCK_DB,
+      })
+    ).rejects.toThrow("Unsupported sourceType");
+  });
+
+  it("builds official corpus with title/name weighting and without dead customLoreTerms", () => {
+    const corpus = buildOfficialCorpus({
+      dataModules: [{ file: "data_japanese_books.cjs", data: [{ title: "ファデュイ", body: "モラ" }] }],
+      jpDb: { weapons: { test: { name: "ロザリン", story: "モラとファデュイ" } } },
+      rawSnapshots: [{ text: "モラは大切" }],
+      genshinDataVersion: "0.65.1",
+      genshinDbVersion: "5.2.15",
+      updatedAt: "2026-11-18T00:00:00.000Z",
+    });
+
+    expect("customLoreTerms" in corpus).toBe(false);
+    expect(corpus.meta.termCount).toBe(3);
+    expect(corpus.meta.rawFileCount).toBe(1);
+    expect(corpus.terms).toEqual({
+      ファデュイ: 6,
+      ロザリン: 5,
+      モラ: 3,
+    });
   });
 });

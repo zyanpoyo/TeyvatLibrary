@@ -1,10 +1,14 @@
+import {
+  extractCitedTitles,
+  extractInlineTagReferences,
+  stripInlineTags,
+} from "../../src/domain/text-parser.ts";
+
+export { extractInlineTagReferences, stripInlineTags };
+
 export const VALID_SHELF_CATEGORIES = ["book", "artifact", "weapon", "attire", "chronicle"];
 export const VALID_IDENTITY_PREFIXES = ["正体：", "解説：", "有力説："];
 export const VALID_PIECES = ["flower", "plume", "sands", "goblet", "circlet"];
-
-export function stripInlineTags(text) {
-  return String(text || "").replace(/\{\{([a-z0-9_]+)\|([^}]+)\}\}/g, "$2");
-}
 
 export function normalizeWhitespaceForComparison(text) {
   return String(text || "")
@@ -73,11 +77,14 @@ export function extractTargetField(rawJson, sourceRef) {
   throw new Error(`Unsupported sourceType: ${sourceType}`);
 }
 
-export function resolveExpectedRawText(rawJson, sourceRef) {
-  let rawText = extractTargetField(rawJson, sourceRef);
+/**
+ * 原典の生文字列から標準装飾タグを除去し、必要に応じて stripPrefix / paragraphSlice を適用して正規化する。
+ */
+export function sanitizeRawSourceText(rawText, options = {}) {
+  const { stripPrefix, paragraphSlice } = options || {};
 
   // Step A: 標準装飾タグのサニタイズ（文字自体は変更しない）
-  rawText = rawText
+  let text = String(rawText ?? "")
     .replace(/\r\n/g, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/?color[^>]*>/gi, "")
@@ -85,36 +92,44 @@ export function resolveExpectedRawText(rawJson, sourceRef) {
     .trim();
 
   // Step B: 宣言されたシステム定型プレフィックスの除去
-  if (sourceRef.stripPrefix) {
-    if (!rawText.startsWith(sourceRef.stripPrefix)) {
+  if (stripPrefix) {
+    if (!text.startsWith(stripPrefix)) {
       throw new Error(
-        `stripPrefix ${JSON.stringify(sourceRef.stripPrefix)} does not match start of raw text: ${JSON.stringify(rawText.slice(0, 40))}`
+        `stripPrefix ${JSON.stringify(stripPrefix)} does not match start of raw text: ${JSON.stringify(text.slice(0, 40))}`
       );
     }
-    rawText = rawText.slice(sourceRef.stripPrefix.length).trim();
+    text = text.slice(stripPrefix.length).trim();
   }
 
   // Step C: 段落スライス
-  if (sourceRef.paragraphSlice) {
+  if (paragraphSlice) {
     if (
-      !Array.isArray(sourceRef.paragraphSlice) ||
-      sourceRef.paragraphSlice.length !== 2 ||
-      !Number.isInteger(sourceRef.paragraphSlice[0]) ||
-      !Number.isInteger(sourceRef.paragraphSlice[1])
+      !Array.isArray(paragraphSlice) ||
+      paragraphSlice.length !== 2 ||
+      !Number.isInteger(paragraphSlice[0]) ||
+      !Number.isInteger(paragraphSlice[1])
     ) {
-      throw new Error(`Invalid paragraphSlice: ${JSON.stringify(sourceRef.paragraphSlice)}`);
+      throw new Error(`Invalid paragraphSlice: ${JSON.stringify(paragraphSlice)}`);
     }
-    const [start, end] = sourceRef.paragraphSlice;
-    const blocks = splitIntoParagraphBlocks(rawText);
+    const [start, end] = paragraphSlice;
+    const blocks = splitIntoParagraphBlocks(text);
     if (start < 0 || end > blocks.length || start >= end) {
       throw new Error(
         `paragraphSlice [${start}, ${end}] out of bounds (total blocks: ${blocks.length})`
       );
     }
-    rawText = blocks.slice(start, end).join("\n\n");
+    text = blocks.slice(start, end).join("\n\n");
   }
 
-  return normalizeWhitespaceForComparison(rawText);
+  return normalizeWhitespaceForComparison(text);
+}
+
+export function resolveExpectedRawText(rawJson, sourceRef) {
+  const rawText = extractTargetField(rawJson, sourceRef);
+  return sanitizeRawSourceText(rawText, {
+    stripPrefix: sourceRef.stripPrefix,
+    paragraphSlice: sourceRef.paragraphSlice,
+  });
 }
 
 export function resolveActualPlainText(paragraphs) {
@@ -245,8 +260,7 @@ export function createCorpusChecker(officialEntities, officialCorpus) {
 
 export function findSubtitleLinkErrors(evidence, contextLabel, titleLookup, selfId = null, errors = []) {
   if (!evidence || !titleLookup) return errors;
-  for (const match of String(evidence).matchAll(/『([^』]+)』/g)) {
-    const citedTitle = match[1];
+  for (const citedTitle of extractCitedTitles(evidence)) {
     if (titleLookup.has(citedTitle)) continue;
 
     const baseTitle = citedTitle.replace(/（[^）]+）$/, "").trim();
@@ -288,9 +302,7 @@ export function extractEvidenceLinks(evidence, titleLookup, selfId = null) {
   if (!evidence) return [];
   const links = [];
   const seenIds = new Set();
-  const matches = String(evidence).matchAll(/『([^』]+)』/g);
-  for (const m of matches) {
-    const citedTitle = m[1];
+  for (const citedTitle of extractCitedTitles(evidence)) {
     const targetId = titleLookup.get(citedTitle);
     if (targetId && targetId !== selfId && !seenIds.has(targetId)) {
       seenIds.add(targetId);

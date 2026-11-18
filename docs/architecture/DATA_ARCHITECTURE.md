@@ -387,13 +387,11 @@ interface ChapterSourceRef {
 ```javascript
 /**
  * 1. data/raw/<sourceType>/<rawId>.json から生テキストを取り出し、
- *    標準サニタイズと sourceRef の宣言的スライスを適用した「期待される原文」を生成する
+ *    標準サニタイズ (sanitizeRawSourceText) と sourceRef の宣言的スライスを適用した「期待される原文」を生成する
  */
-function resolveExpectedRawText(rawJson, sourceRef) {
-  let rawText = extractTargetField(rawJson, sourceRef);
-
+function sanitizeRawSourceText(rawText, { stripPrefix, paragraphSlice } = {}) {
   // Step A: 標準装飾タグのサニタイズ（文字自体は一切変更しない）
-  rawText = rawText
+  let text = String(rawText ?? "")
     .replace(/\r\n/g, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/?color[^>]*>/gi, "")
@@ -401,29 +399,38 @@ function resolveExpectedRawText(rawJson, sourceRef) {
     .trim();
 
   // Step B: 宣言されたシステム定型プレフィックスの除去（例: "武器に突破の力を付与する材料。\n"）
-  if (sourceRef.stripPrefix) {
-    if (!rawText.startsWith(sourceRef.stripPrefix)) {
-      throw new Error(`stripPrefix "${sourceRef.stripPrefix}" does not match start of raw text`);
+  if (stripPrefix) {
+    if (!text.startsWith(stripPrefix)) {
+      throw new Error(`stripPrefix "${stripPrefix}" does not match start of raw text`);
     }
-    rawText = rawText.slice(sourceRef.stripPrefix.length).trim();
+    text = text.slice(stripPrefix.length).trim();
   }
 
   // Step C: 段落スライス（長大な書籍1巻を前半・後半の章に分割した場合など）
-  if (sourceRef.paragraphSlice) {
-    const [start, end] = sourceRef.paragraphSlice;
-    const blocks = splitIntoParagraphBlocks(rawText);
-    rawText = blocks.slice(start, end).join("\n\n");
+  if (paragraphSlice) {
+    const [start, end] = paragraphSlice;
+    const blocks = splitIntoParagraphBlocks(text);
+    text = blocks.slice(start, end).join("\n\n");
   }
 
-  return normalizeWhitespaceForComparison(rawText);
+  return normalizeWhitespaceForComparison(text);
+}
+
+function resolveExpectedRawText(rawJson, sourceRef) {
+  const rawText = extractTargetField(rawJson, sourceRef);
+  return sanitizeRawSourceText(rawText, {
+    stripPrefix: sourceRef.stripPrefix,
+    paragraphSlice: sourceRef.paragraphSlice,
+  });
 }
 
 /**
  * 2. ストーリーJSONの chapters[].paragraphs から {{term_id|表示文字列}} タグを剥がした「実際の本文」を復元する
+ *    (src/domain/text-parser.ts と共有する stripInlineTags を使用し、{M#...}{F#...} を内包するタグにも対応)
  */
 function resolveActualPlainText(paragraphs) {
   const joined = paragraphs
-    .map(p => p.replace(/\{\{[a-z0-9_]+\|([^}]+)\}\}/g, "$1"))
+    .map(p => stripInlineTags(p))
     .join("\n\n");
   return normalizeWhitespaceForComparison(joined);
 }
@@ -435,7 +442,7 @@ function resolveActualPlainText(paragraphs) {
 
 ### 5.3 性別分岐テンプレート記法（`{M#...}{F#...}`）の表示層展開
 - 風の翼『交錯する運命の翼』など、原典テキスト内にゲーム内の主人公性別分岐記法（`{M#彼女}{F#彼}` 等）が含まれる場合、編集層（`data/stories/`）の `paragraphs` では**原文1文字一致の原則に従って記法を無改変のまま保持**する。
-- フロントエンドのテキストパーサ（`src/domain/text-parser.ts` の `parseParagraphTokens` / `formatGenderPlaceholders`）が描画時に `彼女／彼` のような可読表記へ透過的に展開する（前後の文字列や `{{term_id|...}}` 用語タグ内であっても安全に展開される）。
+- インラインタグ構文（`stripInlineTags` / `extractInlineTagReferences`）は `src/domain/text-parser.ts` とビルド検証パイプライン（`scripts/lib/validator.mjs` / `story-compiler.mjs`）間で共有されており、`{{term_id|{M#...}{F#...}}}` のように用語タグ内に性別分岐記法を含めた場合も、検証（1文字一致・`glossary` 参照チェック）と描画時展開（`彼女／彼` 形式）が一貫して動作する。
 
 ### 5.4 JSON スキーマ・確度区分・出典リンク整合性・エンティティ候補チェック
 - **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json` と `story.schema.json` の必須項目・正規表現パターン・列挙値・キー名制約（`propertyNames`）・未定義プロパティ禁止（`additionalProperties: false`）を厳密に検査する。スキーマゲートを通過したデータのみが後段の `StoryCompiler`（`scripts/lib/story-compiler.mjs`）による解決・検証工程へ進む。

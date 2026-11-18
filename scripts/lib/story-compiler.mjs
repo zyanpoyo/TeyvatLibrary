@@ -1,3 +1,8 @@
+import {
+  extractInlineTagReferences,
+  isValidIsoDateString,
+  stripInlineTags,
+} from "../../src/domain/text-parser.ts";
 import { validateAgainstJsonSchema } from "./json-schema.mjs";
 import {
   VALID_IDENTITY_PREFIXES,
@@ -10,7 +15,6 @@ import {
   findSubtitleLinkErrors,
   resolveActualPlainText,
   resolveExpectedRawText,
-  stripInlineTags,
 } from "./validator.mjs";
 
 const STORY_REQUIRED_TEXT_FIELDS = [
@@ -23,19 +27,6 @@ const STORY_REQUIRED_TEXT_FIELDS = [
 ];
 
 const STORY_REQUIRED_ARRAY_TEXT_FIELDS = ["region", "tags", "preGuide"];
-
-function isValidIsoDateString(value) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-  const [y, m, d] = value.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return (
-    dt.getUTCFullYear() === y &&
-    dt.getUTCMonth() === m - 1 &&
-    dt.getUTCDate() === d
-  );
-}
 
 function hasValidIdentity(identity) {
   if (typeof identity !== "string") return false;
@@ -309,11 +300,7 @@ function compileAndValidateStory(
     ch.paragraphs.forEach((p, pIdx) => {
       errors.push(...checkText(p, `${cLabel}.paragraphs[${pIdx}]`));
       totalCharCount += stripInlineTags(p).replace(/\s+/g, "").length;
-      const tagRegex = /\{\{([a-z0-9_]+)\|([^}]+)\}\}/g;
-      let m;
-      while ((m = tagRegex.exec(p)) !== null) {
-        const tId = m[1];
-        const surface = m[2];
+      for (const { termId: tId, surface } of extractInlineTagReferences(p)) {
         usedTerms.add(tId);
         if (!glossaryKeys.has(tId)) {
           errors.push(
