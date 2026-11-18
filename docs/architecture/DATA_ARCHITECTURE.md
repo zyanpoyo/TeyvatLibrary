@@ -438,8 +438,8 @@ function resolveActualPlainText(paragraphs) {
 - フロントエンドのテキストパーサ（`src/domain/text-parser.ts` の `parseParagraphTokens` / `formatGenderPlaceholders`）が描画時に `彼女／彼` のような可読表記へ透過的に展開する（前後の文字列や `{{term_id|...}}` 用語タグ内であっても安全に展開される）。
 
 ### 5.4 JSON スキーマ・確度区分・出典リンク整合性・エンティティ候補チェック
-- **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json` と `story.schema.json` の必須項目・正規表現パターン・列挙値・未定義プロパティ禁止（`additionalProperties: false`）を厳密に検査する。
-- **確度区分チェック (`VALID_IDENTITY_PREFIXES`)**: `glossary` の `identity` / `identityOverride` および `entities.json` の `defaultIdentity` は、情報の性質・確度を表す 3 種プレフィックス（**`正体：` / `解説：` / `有力説：`**）のいずれかで始まることを強制する。
+- **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json` と `story.schema.json` の必須項目・正規表現パターン・列挙値・キー名制約（`propertyNames`）・未定義プロパティ禁止（`additionalProperties: false`）を厳密に検査する。スキーマゲートを通過したデータのみが後段の `StoryCompiler`（`scripts/lib/story-compiler.mjs`）による解決・検証工程へ進む。
+- **確度区分・用語必須チェック (`VALID_IDENTITY_PREFIXES` / `StoryCompiler`)**: `glossary` の `identity` / `identityOverride` および `entities.json` の `defaultIdentity` は、情報の性質・確度を表す 3 種プレフィックス（**`正体：` / `解説：` / `有力説：`**）のいずれかで始まることを強制し、マスタ解決後の `term` / `desc` / `evidence` が空でないこともあわせて検証する。
 - **出典リンク表記チェック (`findSubtitleLinkErrors`)**: `evidence` / `evidenceOverride` / `defaultEvidence` に収録済み他作品のタイトルが含まれるにもかかわらず `『作品名（補足）』` のように括弧を内側へ含めたため `evidenceLinks` が不発になっている記述をエラーとして検出する（部位・巻の補足は必ず `『作品名』（補足）` のように外へ配置する）。
 - **未連携エンティティ候補ヒント (`findEntityLinkHints`)**: 本文または `overallTruth` に `entities.json` 登録済み人物・概念名が登場しているにもかかわらず `entityId` 連携に含まれていない場合、非ブロッキングな注意喚起（`⚠️ ヒント`）を出力して見落としを防ぐ。
 
@@ -447,7 +447,7 @@ function resolveActualPlainText(paragraphs) {
 
 ## 6. 配信層（Layer 3）の分割出力と自動解決ロジック
 
-ビルド時の **Story Compiler** は、編集層（Layer 2）を検証した上で以下の4つの自動解決処理を行い、`public/data/` に2種類の配信用JSONを生成する。
+ビルド時の **Story Compiler (`scripts/lib/story-compiler.mjs`)** は、編集層（Layer 2）を検証した上で以下の4つの自動解決処理を行い、`public/data/` に2種類の配信用JSONを生成する。
 
 ### 6.1 Story Compiler による4つの自動解決処理
 

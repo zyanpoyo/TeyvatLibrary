@@ -69,6 +69,10 @@
     },
     "glossary": {
       "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$"
+      },
       "additionalProperties": {
         "type": "object",
         "required": ["term"],

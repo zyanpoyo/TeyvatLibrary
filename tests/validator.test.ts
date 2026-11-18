@@ -51,8 +51,7 @@ describe("validateAgainstJsonSchema", () => {
       title: "蒼白の炎",
       chapters: [{ sourceRef: { package: "genshin-db", sourceType: "artifact", rawId: "paleflame" } }],
     };
-    const okErrors: string[] = [];
-    validateAgainstJsonSchema(valid, STORY_SCHEMA_SAMPLE, "pale_flame", okErrors);
+    const okErrors = validateAgainstJsonSchema(valid, STORY_SCHEMA_SAMPLE, "pale_flame");
     expect(okErrors).toEqual([]);
 
     const invalid = {
@@ -60,8 +59,7 @@ describe("validateAgainstJsonSchema", () => {
       extraTopKey: true,
       chapters: [{ sourceRef: { package: "unknown", sourceType: "artifact", rawId: "x", unexpected: 1 } }],
     };
-    const badErrors: string[] = [];
-    validateAgainstJsonSchema(invalid, STORY_SCHEMA_SAMPLE, "invalid_story", badErrors);
+    const badErrors = validateAgainstJsonSchema(invalid, STORY_SCHEMA_SAMPLE, "invalid_story");
 
     expect(badErrors.some((e) => e.includes("必須フィールド 'title'"))).toBe(true);
     expect(badErrors.some((e) => e.includes("パターン"))).toBe(true);
@@ -161,8 +159,7 @@ describe("validator text, corpus, and link checks", () => {
   it("enforces the 3 purified identity prefixes across validator and JSON schemas", () => {
     expect(VALID_IDENTITY_PREFIXES).toEqual(["正体：", "解説：", "有力説："]);
 
-    const validEntityErrors: string[] = [];
-    validateAgainstJsonSchema(
+    const validEntityErrors = validateAgainstJsonSchema(
       {
         test_a: {
           name: "テストA",
@@ -187,15 +184,13 @@ describe("validator text, corpus, and link checks", () => {
         },
       },
       entitiesSchema,
-      "entities",
-      validEntityErrors
+      "entities"
     );
     expect(validEntityErrors).toEqual([]);
 
-    const invalidEntityErrors: string[] = [];
-    validateAgainstJsonSchema(
+    const invalidEntityErrors = validateAgainstJsonSchema(
       {
-        legacy_a: {
+        "Invalid-Entity": {
           name: "テストD",
           kind: "character",
           defaultIdentity: "鳴神名：テスト",
@@ -211,13 +206,11 @@ describe("validator text, corpus, and link checks", () => {
         },
       },
       entitiesSchema,
-      "entities",
-      invalidEntityErrors
+      "entities"
     );
-    expect(invalidEntityErrors.filter((e) => e.includes("パターン"))).toHaveLength(2);
+    expect(invalidEntityErrors.filter((e) => e.includes("パターン"))).toHaveLength(3);
 
-    const storyWithLegacyIdentityErrors: string[] = [];
-    validateAgainstJsonSchema(
+    const storyWithLegacyIdentityErrors = validateAgainstJsonSchema(
       {
         id: "sample_story",
         title: "サンプル",
@@ -231,7 +224,7 @@ describe("validator text, corpus, and link checks", () => {
         overallTruth: "真相",
         gameEffect: "効果",
         glossary: {
-          term_one: {
+          "Bad-Key": {
             term: "語句",
             identity: "鳴神名：テスト",
           },
@@ -247,9 +240,9 @@ describe("validator text, corpus, and link checks", () => {
         ],
       },
       storySchema,
-      "sample_story",
-      storyWithLegacyIdentityErrors
+      "sample_story"
     );
-    expect(storyWithLegacyIdentityErrors.some((e) => e.includes("glossary.term_one.identity"))).toBe(true);
+    expect(storyWithLegacyIdentityErrors.some((e) => e.includes("Bad-Key"))).toBe(true);
+    expect(storyWithLegacyIdentityErrors.some((e) => e.includes("glossary.Bad-Key.identity"))).toBe(true);
   });
 });
