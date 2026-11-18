@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  arrangeShelfStories,
-  filterStories,
-  isNewStory,
+  DEFAULT_SHELF_FILTERS,
+  deriveShelfView,
   pickRandomStory,
-  selectFeaturedStoryId,
-  sortStories,
   type ReadingStateReader,
 } from "../src/domain/catalog";
-import type { ShelfFilters, StoryIndexItem } from "../src/types/story";
+import type { LastSessionSnapshot, StoriesIndexData, StoryIndexItem } from "../src/types/story";
 
 const SAMPLE_STORIES: StoryIndexItem[] = [
   {
@@ -55,94 +52,270 @@ const SAMPLE_STORIES: StoryIndexItem[] = [
   },
 ];
 
+const SAMPLE_INDEX: StoriesIndexData = {
+  generatedAt: "2026-11-15T00:00:00.000Z",
+  totalCount: 3,
+  categoryCounts: {
+    book: 1,
+    artifact: 1,
+    weapon: 1,
+    attire: 0,
+    chronicle: 0,
+  },
+  entitiesIndex: {
+    orobashi: {
+      name: "オロバシ",
+      kind: "god",
+      storyIds: ["byakuyakoku"],
+    },
+    rustan: {
+      name: "ルースタン",
+      kind: "character",
+      storyIds: ["crimson_witch", "elegy"],
+    },
+    rosalyne: {
+      name: "ロザリン",
+      kind: "character",
+      storyIds: ["crimson_witch"],
+    },
+  },
+  stories: SAMPLE_STORIES,
+};
+
 function createStubReadingState({
   readIds = [],
   bookmarkedIds = [],
+  lastSession = null,
 }: {
   readIds?: string[];
   bookmarkedIds?: string[];
+  lastSession?: LastSessionSnapshot | null;
 } = {}): ReadingStateReader {
   const readSet = new Set(readIds);
   const bookmarkSet = new Set(bookmarkedIds);
   return {
     isRead: (id) => readSet.has(id),
     isBookmarked: (id) => bookmarkSet.has(id),
+    getLastSession: (validStoryIds) => {
+      if (!lastSession) return null;
+      if (validStoryIds && !validStoryIds.has(lastSession.storyId)) return null;
+      return lastSession;
+    },
   };
 }
 
 describe("catalog domain", () => {
-  it("filterStories filters by category, status, entityId, region, and query", () => {
+  it("handles null indexData safely", () => {
+    const view = deriveShelfView({
+      indexData: null,
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState: createStubReadingState({ readIds: ["byakuyakoku"] }),
+    });
+
+    expect(view.hasIndexData).toBe(false);
+    expect(view.isFiltered).toBe(false);
+    expect(view.isDefaultState).toBe(true);
+    expect(view.items).toEqual([]);
+    expect(view.orderedCount).toBe(0);
+    expect(view.totalCount).toBe(0);
+    expect(view.readCount).toBe(0);
+    expect(view.allRead).toBe(false);
+    expect(view.resume).toBeNull();
+    expect(view.categories.every((c) => c.count === 0)).toBe(true);
+  });
+
+  it("filters by category, status, entityId, region, and query and tracks isFiltered consistently", () => {
+    const now = new Date(2026, 10, 15);
     const readingState = createStubReadingState({
       readIds: ["byakuyakoku"],
       bookmarkedIds: ["elegy"],
     });
 
-    const unreadOnly = filterStories(
-      SAMPLE_STORIES,
-      { category: "all", status: "unread", entityId: "", region: "", query: "" },
-      readingState
-    );
-    expect(unreadOnly.map((s) => s.id)).toEqual(["crimson_witch", "elegy"]);
+    const byCategory = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, category: "artifact" },
+      readingState,
+      now,
+    });
+    expect(byCategory.isFiltered).toBe(true);
+    expect(byCategory.isDefaultState).toBe(false);
+    expect(byCategory.featuredId).toBeNull();
+    expect(byCategory.items.map((item) => item.story.id)).toEqual(["crimson_witch"]);
+    expect(byCategory.categories.find((c) => c.id === "artifact")?.isActive).toBe(true);
 
-    const bookmarkedOnly = filterStories(
-      SAMPLE_STORIES,
-      { category: "all", status: "bookmarked", entityId: "", region: "", query: "" },
-      readingState
-    );
-    expect(bookmarkedOnly.map((s) => s.id)).toEqual(["elegy"]);
+    const unreadOnly = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, status: "unread" },
+      readingState,
+      now,
+    });
+    expect(unreadOnly.isFiltered).toBe(true);
+    expect(unreadOnly.items.map((item) => item.story.id)).toEqual(["crimson_witch", "elegy"]);
 
-    const byEntityAndRegion = filterStories(
-      SAMPLE_STORIES,
-      { category: "all", status: "all", entityId: "rustan", region: "スメール", query: "" },
-      readingState
-    );
-    expect(byEntityAndRegion.map((s) => s.id)).toEqual(["crimson_witch"]);
+    const bookmarkedOnly = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, status: "bookmarked" },
+      readingState,
+      now,
+    });
+    expect(bookmarkedOnly.items.map((item) => item.story.id)).toEqual(["elegy"]);
+    expect(bookmarkedOnly.items[0].isBookmarked).toBe(true);
 
-    const byQuery = filterStories(
-      SAMPLE_STORIES,
-      { category: "all", status: "all", entityId: "", region: "", query: "白蛇" },
-      readingState
-    );
-    expect(byQuery.map((s) => s.id)).toEqual(["byakuyakoku"]);
+    const byEntityAndRegion = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, entityId: "rustan", region: "スメール" },
+      readingState,
+      now,
+    });
+    expect(byEntityAndRegion.isFiltered).toBe(true);
+    expect(byEntityAndRegion.items.map((item) => item.story.id)).toEqual(["crimson_witch"]);
+
+    const byQuery = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, query: "白蛇" },
+      readingState,
+      now,
+    });
+    expect(byQuery.isFiltered).toBe(true);
+    expect(byQuery.items.map((item) => item.story.id)).toEqual(["byakuyakoku"]);
+
+    const whitespaceQuery = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, query: "   " },
+      readingState,
+      now,
+    });
+    expect(whitespaceQuery.isFiltered).toBe(false);
+    expect(whitespaceQuery.isDefaultState).toBe(true);
   });
 
-  it("sortStories sorts by newest and shortest", () => {
-    const newest = sortStories(SAMPLE_STORIES, "newest");
-    expect(newest.map((s) => s.id)).toEqual(["crimson_witch", "byakuyakoku", "elegy"]);
-
-    const shortest = sortStories(SAMPLE_STORIES, "shortest");
-    expect(shortest.map((s) => s.id)).toEqual(["elegy", "crimson_witch", "byakuyakoku"]);
-  });
-
-  it("isNewStory checks 14-day window and excludes read stories", () => {
+  it("sorts by newest and shortest without marking as filtered and suppresses featured pickup", () => {
     const now = new Date(2026, 10, 15);
-    const unreadState = createStubReadingState();
-    const readState = createStubReadingState({ readIds: ["crimson_witch"] });
+    const readingState = createStubReadingState();
 
-    expect(isNewStory(SAMPLE_STORIES[0], unreadState, now)).toBe(true);
-    expect(isNewStory(SAMPLE_STORIES[1], unreadState, now)).toBe(true);
-    expect(isNewStory(SAMPLE_STORIES[2], unreadState, now)).toBe(false);
-    expect(isNewStory(SAMPLE_STORIES[1], readState, now)).toBe(false);
+    const newest = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, sort: "newest" },
+      readingState,
+      now,
+    });
+    expect(newest.isFiltered).toBe(false);
+    expect(newest.isDefaultState).toBe(false);
+    expect(newest.featuredId).toBeNull();
+    expect(newest.items.every((item) => !item.isFeatured)).toBe(true);
+    expect(newest.items.map((item) => item.story.id)).toEqual([
+      "crimson_witch",
+      "byakuyakoku",
+      "elegy",
+    ]);
+
+    const shortest = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: { ...DEFAULT_SHELF_FILTERS, sort: "shortest" },
+      readingState,
+      now,
+    });
+    expect(shortest.isFiltered).toBe(false);
+    expect(shortest.featuredId).toBeNull();
+    expect(shortest.items.map((item) => item.story.id)).toEqual([
+      "elegy",
+      "crimson_witch",
+      "byakuyakoku",
+    ]);
   });
 
-  it("selectFeaturedStoryId and arrangeShelfStories promote daily unread featured story", () => {
+  it("derives card flags (isNew 14-day window, isRead, isFeatured) and promotes daily unread pickup", () => {
     const now = new Date(2026, 10, 15);
-    const readingState = createStubReadingState({ readIds: ["byakuyakoku", "crimson_witch"] });
+    const readingState = createStubReadingState({
+      readIds: ["byakuyakoku", "crimson_witch"],
+      bookmarkedIds: ["crimson_witch"],
+    });
 
-    const featuredId = selectFeaturedStoryId(SAMPLE_STORIES, readingState, now);
-    expect(featuredId).toBe("elegy");
+    const view = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState,
+      now,
+    });
 
-    const defaultFilters: ShelfFilters = {
-      category: "all",
-      status: "all",
-      entityId: "",
-      region: "",
-      query: "",
-      sort: "recommended",
-    };
-    const arranged = arrangeShelfStories(SAMPLE_STORIES, SAMPLE_STORIES, defaultFilters, readingState, now);
-    expect(arranged.featuredId).toBe("elegy");
-    expect(arranged.ordered[0].id).toBe("elegy");
+    expect(view.isFiltered).toBe(false);
+    expect(view.isDefaultState).toBe(true);
+    expect(view.featuredId).toBe("elegy");
+    expect(view.items[0].story.id).toBe("elegy");
+    expect(view.items[0].isFeatured).toBe(true);
+    expect(view.items[0].isRead).toBe(false);
+    expect(view.items[0].isNew).toBe(false);
+
+    const witchItem = view.items.find((item) => item.story.id === "crimson_witch");
+    expect(witchItem?.isRead).toBe(true);
+    expect(witchItem?.isNew).toBe(false);
+    expect(witchItem?.isBookmarked).toBe(true);
+
+    // Unread story added within 14 days gets NEW badge
+    const unreadView = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState: createStubReadingState(),
+      now,
+    });
+    const unreadByakuya = unreadView.items.find((item) => item.story.id === "byakuyakoku");
+    const unreadWitch = unreadView.items.find((item) => item.story.id === "crimson_witch");
+    const unreadElegy = unreadView.items.find((item) => item.story.id === "elegy");
+    expect(unreadByakuya?.isNew).toBe(true);
+    expect(unreadWitch?.isNew).toBe(true);
+    expect(unreadElegy?.isNew).toBe(false);
+  });
+
+  it("derives sorted entities, deduplicated regions, category counts, read progress, and resume story", () => {
+    const now = new Date(2026, 10, 15);
+    const readingState = createStubReadingState({
+      readIds: ["byakuyakoku", "crimson_witch", "stale_removed_story"],
+      lastSession: {
+        storyId: "elegy",
+        chapterIndex: 0,
+        scrollRatio: 0.45,
+        updatedAt: "2026-11-15T09:00:00.000Z",
+      },
+    });
+
+    const view = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState,
+      now,
+    });
+
+    expect(view.entities.map((e) => [e.id, e.count])).toEqual([
+      ["rustan", 2],
+      ["orobashi", 1],
+      ["rosalyne", 1],
+    ]);
+    expect(view.regions).toEqual(["淵下宮", "海祇島", "モンド", "スメール"]);
+    expect(view.categories.map((c) => [c.id, c.count, c.isActive])).toEqual([
+      ["all", 3, true],
+      ["book", 1, false],
+      ["artifact", 1, false],
+      ["weapon", 1, false],
+      ["attire", 0, false],
+      ["chronicle", 0, false],
+    ]);
+    expect(view.totalCount).toBe(3);
+    expect(view.readCount).toBe(2);
+    expect(view.allRead).toBe(false);
+    expect(view.resume?.story.id).toBe("elegy");
+    expect(view.resume?.session.scrollRatio).toBe(0.45);
+
+    const allReadView = deriveShelfView({
+      indexData: SAMPLE_INDEX,
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState: createStubReadingState({
+        readIds: ["byakuyakoku", "crimson_witch", "elegy"],
+      }),
+      now,
+    });
+    expect(allReadView.readCount).toBe(3);
+    expect(allReadView.allRead).toBe(true);
+    expect(allReadView.featuredId).not.toBeNull();
   });
 
   it("pickRandomStory prioritizes unread short stories and excludes current story", () => {

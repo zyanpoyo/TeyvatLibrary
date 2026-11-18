@@ -1,7 +1,25 @@
-import type { ShelfCategoryId, ShelfFilters, SortMode, StoryIndexItem } from "../types/story";
+import type {
+  EntityKind,
+  LastSessionSnapshot,
+  ShelfCategoryId,
+  ShelfFilters,
+  SortMode,
+  StoriesIndexData,
+  StoryCategoryId,
+  StoryIndexItem,
+} from "../types/story";
 
 export const SHORT_STORY_MAX_CHARS = 1800;
 export const NEW_BADGE_DAYS = 14;
+
+export const DEFAULT_SHELF_FILTERS: ShelfFilters = {
+  category: "all",
+  status: "all",
+  entityId: "",
+  region: "",
+  query: "",
+  sort: "recommended",
+};
 
 export const SHELF_CATEGORIES: ReadonlyArray<{ id: ShelfCategoryId; label: string }> = [
   { id: "all", label: "すべて" },
@@ -15,16 +33,67 @@ export const SHELF_CATEGORIES: ReadonlyArray<{ id: ShelfCategoryId; label: strin
 export interface ReadingStateReader {
   isRead(storyId: string): boolean;
   isBookmarked?(storyId: string): boolean;
+  getLastSession?(validStoryIds?: ReadonlySet<string> | null): LastSessionSnapshot | null;
 }
 
-export function getLocalDateKey(now: Date = new Date()): string {
+export interface ShelfCategoryTab {
+  id: ShelfCategoryId;
+  label: string;
+  count: number;
+  isActive: boolean;
+}
+
+export interface ShelfEntityOption {
+  id: string;
+  name: string;
+  kind: EntityKind;
+  count: number;
+}
+
+export interface ShelfCardItem {
+  story: StoryIndexItem;
+  isFeatured: boolean;
+  isRead: boolean;
+  isNew: boolean;
+  isBookmarked: boolean;
+}
+
+export interface ShelfResumeState {
+  session: LastSessionSnapshot;
+  story: StoryIndexItem;
+}
+
+export interface DeriveShelfViewInput {
+  indexData: StoriesIndexData | null;
+  filters: Partial<ShelfFilters>;
+  readingState?: ReadingStateReader | null;
+  now?: Date;
+}
+
+export interface ShelfViewModel {
+  hasIndexData: boolean;
+  isFiltered: boolean;
+  isDefaultState: boolean;
+  categories: ShelfCategoryTab[];
+  entities: ShelfEntityOption[];
+  regions: string[];
+  items: ShelfCardItem[];
+  featuredId: string | null;
+  orderedCount: number;
+  totalCount: number;
+  readCount: number;
+  allRead: boolean;
+  resume: ShelfResumeState | null;
+}
+
+function getLocalDateKey(now: Date = new Date()): string {
   const y = String(now.getFullYear());
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 
-export function parseIsoDateUtcMs(dateStr: unknown): number | null {
+function parseIsoDateUtcMs(dateStr: unknown): number | null {
   if (typeof dateStr !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     return null;
   }
@@ -41,7 +110,7 @@ export function parseIsoDateUtcMs(dateStr: unknown): number | null {
   return utcMs;
 }
 
-export function hashDateSeed(dateKey: string): number {
+function hashDateSeed(dateKey: string): number {
   let hash = 2166136261;
   for (let i = 0; i < dateKey.length; i += 1) {
     hash ^= dateKey.charCodeAt(i);
@@ -50,10 +119,10 @@ export function hashDateSeed(dateKey: string): number {
   return hash >>> 0;
 }
 
-export function isNewStory(
+function isNewStory(
   story: Pick<StoryIndexItem, "id" | "addedAt"> | null | undefined,
-  readingState: ReadingStateReader | null = null,
-  now: Date = new Date()
+  readingState: ReadingStateReader | null,
+  now: Date
 ): boolean {
   if (!story?.addedAt || readingState?.isRead(story.id)) return false;
   const addedUtcMs = parseIsoDateUtcMs(story.addedAt);
@@ -63,37 +132,46 @@ export function isNewStory(
   return diffDays >= 0 && diffDays <= NEW_BADGE_DAYS;
 }
 
-export function isDefaultShelfState(filters: Partial<ShelfFilters>): boolean {
-  return (
-    filters.category === "all" &&
-    (!filters.status || filters.status === "all") &&
-    !filters.entityId &&
-    !filters.region &&
-    !(filters.query || "").trim() &&
-    (!filters.sort || filters.sort === "recommended")
+function normalizeFilters(filters: Partial<ShelfFilters>): ShelfFilters {
+  return {
+    category: filters.category || DEFAULT_SHELF_FILTERS.category,
+    status: filters.status || DEFAULT_SHELF_FILTERS.status,
+    entityId: filters.entityId ?? DEFAULT_SHELF_FILTERS.entityId,
+    region: filters.region ?? DEFAULT_SHELF_FILTERS.region,
+    query: filters.query ?? DEFAULT_SHELF_FILTERS.query,
+    sort: filters.sort || DEFAULT_SHELF_FILTERS.sort,
+  };
+}
+
+function isFilteredShelf(filters: ShelfFilters): boolean {
+  return Boolean(
+    filters.category !== "all" ||
+      filters.status !== "all" ||
+      filters.entityId ||
+      filters.region ||
+      filters.query.trim()
   );
 }
 
-export function selectFeaturedStoryId(
-  stories: ReadonlyArray<Pick<StoryIndexItem, "id">> | null | undefined,
-  readingState: ReadingStateReader | null = null,
-  now: Date = new Date()
+function selectFeaturedStoryId(
+  stories: ReadonlyArray<Pick<StoryIndexItem, "id">>,
+  readingState: ReadingStateReader | null,
+  now: Date
 ): string | null {
-  const list = stories || [];
-  if (list.length === 0) return null;
-  const unread = list.filter((s) => !readingState?.isRead(s.id));
-  const pool = (unread.length > 0 ? unread : list)
+  if (stories.length === 0) return null;
+  const unread = stories.filter((s) => !readingState?.isRead(s.id));
+  const pool = (unread.length > 0 ? unread : stories)
     .slice()
     .sort((a, b) => a.id.localeCompare(b.id));
   const seed = hashDateSeed(getLocalDateKey(now));
   return pool[seed % pool.length].id;
 }
 
-export function sortStories<T extends Pick<StoryIndexItem, "addedAt" | "charCount">>(
-  stories: ReadonlyArray<T> | null | undefined,
-  sortMode: SortMode = "recommended"
+function sortStories<T extends Pick<StoryIndexItem, "addedAt" | "charCount">>(
+  stories: ReadonlyArray<T>,
+  sortMode: SortMode
 ): T[] {
-  const list = (stories || []).slice();
+  const list = stories.slice();
   if (sortMode === "newest") {
     return list.sort((a, b) => {
       const aMs = parseIsoDateUtcMs(a.addedAt);
@@ -114,24 +192,23 @@ export function sortStories<T extends Pick<StoryIndexItem, "addedAt" | "charCoun
   return list;
 }
 
-export function filterStories<T extends StoryIndexItem>(
-  stories: ReadonlyArray<T> | null | undefined,
-  filters: Pick<ShelfFilters, "category" | "status" | "entityId" | "region" | "query">,
-  readingState: ReadingStateReader | null = null
+function filterStories<T extends StoryIndexItem>(
+  stories: ReadonlyArray<T>,
+  filters: ShelfFilters,
+  readingState: ReadingStateReader | null
 ): T[] {
-  const query = (filters.query || "").trim().toLowerCase();
-  const status = filters.status || "all";
-  return (stories || []).filter((story) => {
+  const query = filters.query.trim().toLowerCase();
+  return stories.filter((story) => {
     if (filters.category !== "all" && story.shelfCategory !== filters.category) {
       return false;
     }
-    if (status === "unread" && readingState?.isRead(story.id)) {
+    if (filters.status === "unread" && readingState?.isRead(story.id)) {
       return false;
     }
-    if (status === "read" && !readingState?.isRead(story.id)) {
+    if (filters.status === "read" && !readingState?.isRead(story.id)) {
       return false;
     }
-    if (status === "bookmarked" && !readingState?.isBookmarked?.(story.id)) {
+    if (filters.status === "bookmarked" && !readingState?.isBookmarked?.(story.id)) {
       return false;
     }
     if (filters.entityId && !(story.entityIds || []).includes(filters.entityId)) {
@@ -157,15 +234,16 @@ export function filterStories<T extends StoryIndexItem>(
   });
 }
 
-export function arrangeShelfStories<T extends StoryIndexItem>(
+function arrangeShelfStories<T extends StoryIndexItem>(
   filteredStories: ReadonlyArray<T>,
   allStories: ReadonlyArray<T>,
-  filters: ShelfFilters,
-  readingState: ReadingStateReader | null = null,
-  now: Date = new Date()
+  sortMode: SortMode,
+  isDefaultState: boolean,
+  readingState: ReadingStateReader | null,
+  now: Date
 ): { ordered: T[]; featuredId: string | null } {
-  const sorted = sortStories(filteredStories, filters.sort);
-  if (!isDefaultShelfState(filters) || sorted.length === 0) {
+  const sorted = sortStories(filteredStories, sortMode);
+  if (!isDefaultState || sorted.length === 0) {
     return { ordered: sorted, featuredId: null };
   }
   const featuredId = selectFeaturedStoryId(allStories, readingState, now);
@@ -184,6 +262,143 @@ export function arrangeShelfStories<T extends StoryIndexItem>(
   return { ordered, featuredId };
 }
 
+function deriveCategoryTabs(
+  stories: ReadonlyArray<StoryIndexItem>,
+  indexData: StoriesIndexData | null,
+  activeCategory: ShelfCategoryId
+): ShelfCategoryTab[] {
+  const countedByCategory: Record<StoryCategoryId, number> = {
+    book: 0,
+    artifact: 0,
+    weapon: 0,
+    attire: 0,
+    chronicle: 0,
+  };
+  for (const story of stories) {
+    if (Object.hasOwn(countedByCategory, story.shelfCategory)) {
+      countedByCategory[story.shelfCategory] += 1;
+    }
+  }
+  const totalCount = stories.length;
+  return SHELF_CATEGORIES.map((cat) => {
+    const count =
+      cat.id === "all"
+        ? totalCount
+        : (indexData?.categoryCounts?.[cat.id] ?? countedByCategory[cat.id]);
+    return {
+      id: cat.id,
+      label: cat.label,
+      count,
+      isActive: cat.id === activeCategory,
+    };
+  });
+}
+
+function deriveEntities(indexData: StoriesIndexData | null): ShelfEntityOption[] {
+  if (!indexData?.entitiesIndex) return [];
+  return Object.entries(indexData.entitiesIndex)
+    .map(([id, info]) => ({
+      id,
+      name: info.name,
+      kind: info.kind,
+      count: info.storyIds?.length || 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function deriveRegions(stories: ReadonlyArray<StoryIndexItem>): string[] {
+  const regionSet = new Set<string>();
+  for (const story of stories) {
+    for (const r of story.region || []) {
+      regionSet.add(r);
+    }
+  }
+  return [...regionSet];
+}
+
+function deriveReadCount(
+  validStoryIds: ReadonlySet<string>,
+  readingState: ReadingStateReader | null
+): number {
+  if (!readingState) return 0;
+  let count = 0;
+  for (const id of validStoryIds) {
+    if (readingState.isRead(id)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function deriveResumeState(
+  stories: ReadonlyArray<StoryIndexItem>,
+  validStoryIds: ReadonlySet<string>,
+  readingState: ReadingStateReader | null
+): ShelfResumeState | null {
+  const lastSession = readingState?.getLastSession?.(validStoryIds) ?? null;
+  if (!lastSession) return null;
+  const story = stories.find((s) => s.id === lastSession.storyId) ?? null;
+  if (!story) return null;
+  return { session: lastSession, story };
+}
+
+/**
+ * 書架画面の表示に必要なカード一覧・ピックアップ・ファセット選択肢・集計値を一括導出する。
+ */
+export function deriveShelfView({
+  indexData,
+  filters,
+  readingState = null,
+  now = new Date(),
+}: DeriveShelfViewInput): ShelfViewModel {
+  const normalizedFilters = normalizeFilters(filters);
+  const isFiltered = isFilteredShelf(normalizedFilters);
+  const isDefaultState = !isFiltered && normalizedFilters.sort === "recommended";
+
+  const stories = indexData?.stories ?? [];
+  const validStoryIds = new Set(stories.map((s) => s.id));
+  const totalCount = stories.length;
+  const readCount = deriveReadCount(validStoryIds, readingState);
+  const allRead = totalCount > 0 && readCount >= totalCount;
+
+  const filtered = filterStories(stories, normalizedFilters, readingState);
+  const { ordered, featuredId } = arrangeShelfStories(
+    filtered,
+    stories,
+    normalizedFilters.sort,
+    isDefaultState,
+    readingState,
+    now
+  );
+
+  const items: ShelfCardItem[] = ordered.map((story) => ({
+    story,
+    isFeatured: Boolean(featuredId && story.id === featuredId),
+    isRead: Boolean(readingState?.isRead(story.id)),
+    isNew: isNewStory(story, readingState, now),
+    isBookmarked: Boolean(readingState?.isBookmarked?.(story.id)),
+  }));
+
+  return {
+    hasIndexData: Boolean(indexData),
+    isFiltered,
+    isDefaultState,
+    categories: deriveCategoryTabs(stories, indexData, normalizedFilters.category),
+    entities: deriveEntities(indexData),
+    regions: deriveRegions(stories),
+    items,
+    featuredId,
+    orderedCount: items.length,
+    totalCount,
+    readCount,
+    allRead,
+    resume: deriveResumeState(stories, validStoryIds, readingState),
+  };
+}
+
+/**
+ * おまかせ読書用に、未読短編を優先してランダムに1作品を選出する。
+ */
 export function pickRandomStory<T extends Pick<StoryIndexItem, "id" | "charCount">>(
   stories: ReadonlyArray<T> | null | undefined,
   readingState: ReadingStateReader | null = null,
