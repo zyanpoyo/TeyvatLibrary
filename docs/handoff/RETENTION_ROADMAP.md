@@ -29,7 +29,7 @@
 | **Phase 2**<br>*(実装済み)* | **「今日の物語ピックアップ」・おまかせ読書・新着表示** | フロントエンド ＋ ストーリーJSONの任意フィールド拡張 | 小 | 再訪するたびに未読の短編と出会えるトリガーを作る | [`retention/phase1_2_reading_state.md`](retention/phase1_2_reading_state.md) |
 | **Phase 3** | **目的別・キャラ別「フェア棚＆読書コース」** | `data/shared/courses.json` ＋ ビルドスクリプト ＋ 書架/リーダーUI | 中 | 「何から読めばいいか」の入り口提示と、3〜5部作の連続読書へ引き上げる | [`retention/phase3_curation_courses.md`](retention/phase3_curation_courses.md) |
 | **Phase 4** | **「人物・用語名鑑」ビューの独立** | `scripts/build-stories.mjs` ＋ 名鑑ビューUI | 中 | ゲーム更新やガチャ復刻時に「設定確認辞書」として常用される | [`retention/phase4_5_entities_and_content.md`](retention/phase4_5_entities_and_content.md) |
-| **Phase 5**<br>*(第1・2バッチ実装済み／継続)* | **収録作品の拡充（風の翼 0件解消済み・フェア棚の充実）** | `data/raw/`, `data/stories/`, `data/shared/entities.json` | 継続 | 初回訪問での読み尽くしを防ぎ、フェア棚と人物・用語名鑑の密度を高める | [`retention/phase4_5_entities_and_content.md`](retention/phase4_5_entities_and_content.md) |
+| **Phase 5**<br>*(第1〜3バッチ実装済み／継続)* | **収録作品の拡充（風の翼 0件解消済み・ファデュイ/水仙十字院拡充）** | `data/raw/`, `data/stories/`, `data/shared/entities.json` | 継続 | 初回訪問での読み尽くしを防ぎ、フェア棚と人物・用語名鑑の密度を高める | [`retention/phase4_5_entities_and_content.md`](retention/phase4_5_entities_and_content.md) |
 | **Phase 6**<br>*(Won't / 任意)* | **【将来構想・必須外】軽量DBによる共感ハイライト＆感情別ランキング** | Cloudflare Pages Functions + D1（またはKV） | 中〜大 | **※DBを持つため通常スコープ外（Won't）**。明示的な指示がある時のみ参照 | [`retention/phase6_dynamic_db_wont.md`](retention/phase6_dynamic_db_wont.md) |
 
 > [!IMPORTANT]
