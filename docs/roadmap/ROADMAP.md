@@ -16,10 +16,10 @@
 
 - [ ] **フェア棚／読書コース UI（`courses.json`・ステップ導線）の実装**
   - **コース①：【推しキャラ深掘り】本編では語られない「ファデュイ執行官」の過去**
-    1. 聖遺物『燃え盛る炎の魔女』（収録済み：[`crimson_witch.json`](../../data/stories/artifact/crimson_witch.json)）
+    1. 聖遺物『燃え盛る炎の魔女』（収録済み：[`crimson_witch.json`](../../data/stories/artifact/crimson_witch.json)）＆ 育成素材『紅蓮の蛾と灰燼の追憶（淑女討伐録）』（収録済み：[`signora_chronicle.json`](../../data/stories/chronicle/signora_chronicle.json)）
     2. 聖遺物『華館夢醒形骸記』（収録済み：[`husk.json`](../../data/stories/artifact/husk.json)）
-    3. 聖遺物『蒼白の炎』（収録済み：[`pale_flame.json`](../../data/stories/artifact/pale_flame.json)）
-    4. 書籍『ペリンヘリ』 ＆ 武器『赤月のシルエット』（未収録）
+    3. 聖遺物『蒼白の炎』（収録済み：[`pale_flame.json`](../../data/stories/artifact/pale_flame.json)）＆ 武器『冬極の白星』（収録済み：[`polar_star.json`](../../data/stories/weapon/polar_star.json)）
+    4. 書籍『ペリンヘリ』（収録済み：[`perinheri.json`](../../data/stories/book/perinheri.json)）、武器『赤月のシルエット』（収録済み：[`crimson_moon.json`](../../data/stories/weapon/crimson_moon.json)）＆ 育成素材『残火の灯燭と赤月の裁決（召使討伐録）』（収録済み：[`arlecchino_chronicle.json`](../../data/stories/chronicle/arlecchino_chronicle.json)）
   - **コース②：【一気読み連載】フォンテーヌ「水仙十字院」の軌跡をたどる**
     1. 聖遺物『水仙の夢』（収録済み：[`nymphsdream.json`](../../data/stories/artifact/nymphsdream.json)）＆ 『ファントムハンター』（収録済み：[`marechausseehunter.json`](../../data/stories/artifact/marechausseehunter.json)）
     2. 武器『サーンドルの渡し守』（収録済み：[`fleuvecendreferryman.json`](../../data/stories/weapon/fleuvecendreferryman.json)）＆ 『超越の鍵』（収録済み：[`ateaspoonoftranscendence.json`](../../data/stories/weapon/ateaspoonoftranscendence.json)）
@@ -50,7 +50,7 @@
 | 状態 | 作品名（巻数） | 優先度 | 収録・特集の狙い |
 | :---: | :--- | :---: | :--- |
 | ✅ | **白夜国館蔵**（全5巻 / 特に第2巻『日月前事』） | ★★★ | [`byakuyakoku.json`](../../data/stories/book/byakuyakoku.json) として収録済み。天理・七龍・四つの影などテイワット創世の起点となる最重要書籍。 |
-| ⬜ | **ペリンヘリ**（全2巻） | ★★★ | カーンルイア「赤月王朝」や壁炉の家、外の世界からの漂流者を扱う重要書。全2巻と短く小説として読み応えがある。 |
+| ✅ | **ペリンヘリ**（全2巻） | ★★★ | [`perinheri.json`](../../data/stories/book/perinheri.json) として第3バッチで収録済み。カーンルイア「赤月王朝」や壁炉の家、外の世界からの漂流者を扱う重要書。 |
 | ⬜ | **白姫と六人の小人**（既刊1巻〜） | ★★★ | アビスや月の三姉妹・罪人の暗喩として考察需要が高い童話。 |
 | ⬜ | **イノシシプリンセス**（全7巻） | ★★☆ | 知名度は高いが未読層が多い作品。絵本風の体裁とブラックな結末のコントラストで短編としての完成度が高い。 |
 | ⬜ | **テイワット観光ガイド**（全4巻） | ★★☆ | アリスによる軽快な紀行文。専門用語が少なく、ライト層の最初の1冊に適する。 |
@@ -73,12 +73,12 @@
 | :---: | :--- | :--- | :--- |
 | ✅ | **ルミドゥースの挽歌**（＋**サーンドルの渡し守**・**超越の鍵**） | 水仙十字院の完結・派生編（マルフィサ・エドワルド・アラン＆サンドローネ） | [`lumidouceelegy.json`](../../data/stories/weapon/lumidouceelegy.json) / [`fleuvecendreferryman.json`](../../data/stories/weapon/fleuvecendreferryman.json) / [`ateaspoonoftranscendence.json`](../../data/stories/weapon/ateaspoonoftranscendence.json) として第2バッチで収録済み（※『水仙十字の剣』は `genshin-db` 本文93文字のため代替・拡張収録）。 |
 | ✅ | **久遠流転の大典**（注：静水流転の輝きは本文なし） | 隠修会・先代水神エゲリア・メロピデ要塞以前 | [`tomeoftheeternalflow.json`](../../data/stories/weapon/tomeoftheeternalflow.json) として第2バッチで収録済み（※`genshin-db` 上で『静水流転の輝き』の `story` は0文字）。 |
-| ⬜ | **赤月のシルエット** | アルレッキーノ（召使） | 書籍『ペリンヘリ』と直接リンクする赤月王朝時代の祭具。書籍とのセット特集による回遊を狙う。 |
-| ⬜ | **冬極の白星** | タルタリヤ・スネージナヤ（氷の女皇） | 氷の女皇への忠誠とファデュイの思想が綴られた人気武器ストーリー。 |
+| ✅ | **赤月のシルエット** | アルレッキーノ（召使） | [`crimson_moon.json`](../../data/stories/weapon/crimson_moon.json) として第3バッチで収録済み。書籍『ペリンヘリ』や育成素材『残火の灯燭と赤月の裁決』と直接リンクする赤月王朝時代の祭具。 |
+| ✅ | **冬極の白星** | タルタリヤ・スネージナヤ（氷の女皇） | [`polar_star.json`](../../data/stories/weapon/polar_star.json) として第3バッチで収録済み。氷の女皇への忠誠とファデュイの思想が綴られた人気武器ストーリー。 |
 | ⬜ | **祭礼シリーズ**（剣・大剣・弓・法器） | モンド旧貴族と「時間の執政」 | 身近な星4武器に隠されたモンド古代史と「時間の風（イスタロト）」の伏線。 |
 
 ### 2.4 【その他カテゴリー】既存設計に基づく拡充枠
 - [x] **風の翼（`attire`）カテゴリーの初期収録**
   - Phase 5 第1バッチとして『交錯する運命の翼』『夜来泊月の翼』『樹花爛漫の翼』の3作品を収録（0件解消）。
 - [ ] **突破・育成素材（`chronicle`）の連作拡充**
-  - Phase 5 第1バッチとして『紅蓮の蛾と灰燼の追憶（淑女討伐録）』（`signora_chronicle`）を収録済み。今後は他の突破素材シリーズ（『凛風奔狼』等）や他週ボス素材連作を順次追加する。
+  - Phase 5 第1バッチとして『紅蓮の蛾と灰燼の追憶（淑女討伐録）』（`signora_chronicle`）を、第3バッチとして『残火の灯燭と赤月の裁決（召使討伐録）』（`arlecchino_chronicle`）を収録済み。今後は他の突破素材シリーズ（『凛風奔狼』等）や他週ボス素材連作を順次追加する。
