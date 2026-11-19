@@ -280,3 +280,42 @@ Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
   scripts/extract-raw.mjs における書籍データの原典取得時に利用しています。
 - Google Fonts (Noto Sans JP / Shippori Mincho)
   index.html にて外部スタイルシートとして読み込んでいます。
+
+================================================================================
+5. 開発支援スキル（.agents/skills/）
+================================================================================
+
+--------------------------------------------------------------------------------
+mattpocock/skills (改良・翻案して利用)
+対象: .agents/skills/ 配下の下記スキル定義
+      ask-matt, code-review, domain-modeling, grill-with-docs, grilling,
+      handoff, implement, implement-spec, improve-codebase-architecture,
+      research, retro, tdd, teach, to-questionnaire, to-spec, to-tickets,
+      wait-what, wayfinder
+License: MIT
+Copyright (c) 2026 Matt Pocock
+Repository: https://github.com/mattpocock/skills
+--------------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2026 Matt Pocock
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+※ 本プロジェクトの開発運用に合わせて一部改変・日本語化しています。
