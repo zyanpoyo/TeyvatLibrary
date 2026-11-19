@@ -1,0 +1,175 @@
+{
+  "$schemaVersion": 1,
+  "upstream": {
+    "owner": "mattpocock",
+    "repo": "skills",
+    "branch": "main",
+    "url": "https://github.com/mattpocock/skills",
+    "license": "MIT",
+    "copyright": "Copyright (c) 2026 Matt Pocock"
+  },
+  "lastSyncedCommit": "3a05171775a49076900759e0dd1b3ef8e2671323",
+  "lastSyncedAt": "2026-11-19",
+  "localConventions": [
+    "フロントマター description 末尾の日本語トリガー説明を維持する",
+    "タスク・仕様書・チケットの保存先はローカルの .scratch/<feature-slug>/ を標準とする",
+    "補助ドキュメントは各スキル配下の ./references/ ディレクトリ構成とリンクを維持する",
+    "Antigravity 環境のツール名・サブエージェント呼び出し（invoke_subagent / manage_subagents）表現を維持する",
+    "GitHub への通信・操作は事前承認必須とする制約を維持する",
+    "TeyvatLibrary 固有の注記（doc-sync / genshin-story-curator / GLOSSARY.md / docs/adr/ 等）を保持する"
+  ],
+  "trackedSkills": {
+    "ask-matt": {
+      "upstreamDir": "skills/engineering/ask-matt",
+      "localDir": ".agents/skills/ask-matt",
+      "files": {
+        "SKILL.md": "SKILL.md",
+        "PHASE-BOUNDARIES.md": "references/PHASE-BOUNDARIES.md"
+      }
+    },
+    "code-review": {
+      "upstreamDir": "skills/engineering/code-review",
+      "localDir": ".agents/skills/code-review",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "domain-modeling": {
+      "upstreamDir": "skills/engineering/domain-modeling",
+      "localDir": ".agents/skills/domain-modeling",
+      "files": {
+        "SKILL.md": "SKILL.md",
+        "ADR-FORMAT.md": "references/ADR-FORMAT.md",
+        "GLOSSARY-FORMAT.md": "references/GLOSSARY-FORMAT.md"
+      }
+    },
+    "grill-with-docs": {
+      "upstreamDir": "skills/engineering/grill-with-docs",
+      "localDir": ".agents/skills/grill-with-docs",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "grilling": {
+      "upstreamDir": "skills/productivity/grilling",
+      "localDir": ".agents/skills/grilling",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "handoff": {
+      "upstreamDir": "skills/productivity/handoff",
+      "localDir": ".agents/skills/handoff",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "implement": {
+      "upstreamDir": "skills/engineering/implement",
+      "localDir": ".agents/skills/implement",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "implement-spec": {
+      "upstreamDir": "skills/engineering/implement-spec",
+      "localDir": ".agents/skills/implement-spec",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "improve-codebase-architecture": {
+      "upstreamDir": "skills/engineering/improve-codebase-architecture",
+      "localDir": ".agents/skills/improve-codebase-architecture",
+      "files": {
+        "SKILL.md": "SKILL.md",
+        "HTML-REPORT.md": "references/HTML-REPORT.md"
+      }
+    },
+    "research": {
+      "upstreamDir": "skills/engineering/research",
+      "localDir": ".agents/skills/research",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "retro": {
+      "upstreamDir": "skills/engineering/retro",
+      "localDir": ".agents/skills/retro",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "tdd": {
+      "upstreamDir": "skills/engineering/tdd",
+      "localDir": ".agents/skills/tdd",
+      "files": {
+        "SKILL.md": "SKILL.md",
+        "mocking.md": "references/mocking.md",
+        "tests.md": "references/tests.md"
+      }
+    },
+    "teach": {
+      "upstreamDir": "skills/productivity/teach",
+      "localDir": ".agents/skills/teach",
+      "files": {
+        "SKILL.md": "SKILL.md",
+        "GLOSSARY-FORMAT.md": "references/GLOSSARY-FORMAT.md",
+        "LEARNING-RECORD-FORMAT.md": "references/LEARNING-RECORD-FORMAT.md",
+        "MISSION-FORMAT.md": "references/MISSION-FORMAT.md",
+        "RESOURCES-FORMAT.md": "references/RESOURCES-FORMAT.md"
+      }
+    },
+    "to-questionnaire": {
+      "upstreamDir": "skills/productivity/to-questionnaire",
+      "localDir": ".agents/skills/to-questionnaire",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "to-spec": {
+      "upstreamDir": "skills/engineering/to-spec",
+      "localDir": ".agents/skills/to-spec",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "to-tickets": {
+      "upstreamDir": "skills/engineering/to-tickets",
+      "localDir": ".agents/skills/to-tickets",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "wait-what": {
+      "upstreamDir": "skills/productivity/wait-what",
+      "localDir": ".agents/skills/wait-what",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    },
+    "wayfinder": {
+      "upstreamDir": "skills/engineering/wayfinder",
+      "localDir": ".agents/skills/wayfinder",
+      "files": {
+        "SKILL.md": "SKILL.md"
+      }
+    }
+  },
+  "ignoredUpstreamSkills": {
+    "skills/engineering/codebase-design": "ユーザーグローバル側で管理しているためプロジェクト対象外",
+    "skills/engineering/diagnosing-bugs": "ユーザーグローバル側で管理しているためプロジェクト対象外",
+    "skills/engineering/pr": "GitHub操作は事前承認運用のため未採用",
+    "skills/engineering/prototype": "ユーザーグローバル側で管理しているためプロジェクト対象外",
+    "skills/engineering/setup-matt-pocock-skills": "初期導入ウィザードのため未採用",
+    "skills/engineering/triage": "GitHub Issues連携が不要なため未採用",
+    "skills/engineering/wizard": "ユーザーグローバル側で管理しているためプロジェクト対象外",
+    "skills/productivity/grill-me": "ユーザーグローバル側で管理しているためプロジェクト対象外",
+    "skills/productivity/writing-for-agents": "ユーザーグローバル側で管理しているためプロジェクト対象外"
+  },
+  "ignoredCategories": [
+    "skills/deprecated",
+    "skills/in-progress",
+    "skills/misc"
+  ]
+}
