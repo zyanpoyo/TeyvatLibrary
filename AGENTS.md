@@ -12,3 +12,4 @@
 - **仕様化・タスク分割・TDD実装・2軸並列レビュー・一次情報調査を行う時**: ローカル標準保存先 `.scratch/` を用いて `.agents/skills/` の `to-spec`・`to-tickets`・`implement`・`implement-spec`・`tdd`・`code-review`・`research` スキルを使用する（GitHub・外部通信時は事前承認必須）。
 - **セッション引継ぎ・振り返り・平易な再説明・質問票・学習支援を行う時**: 用途に応じて `.agents/skills/` の `handoff`・`retro`・`wait-what`・`to-questionnaire`・`teach` スキルを使用する。
 - **機能追加・仕様変更を行う時、または `/plan` で実装計画を立てる時**: [`.agents/skills/doc-sync/SKILL.md`](.agents/skills/doc-sync/SKILL.md) を参照し、[`README.md`](README.md)・`docs/`・`AGENTS.md`・`.agents/skills/` の更新対象候補を精査・同期する。
+- **上流 `mattpocock/skills` の更新に追従・同期する時**: [`.agents/skills/sync-upstream-skills/SKILL.md`](.agents/skills/sync-upstream-skills/SKILL.md) と追跡マニフェスト（[`.agents/skills-upstream.json`](.agents/skills-upstream.json)）を参照。ローカル整合性検証は `npm run skills:validate`、上流差分検知＆純粋パッチ抽出は `npm run skills:check`（[`scripts/check-skills-upstream.mjs`](scripts/check-skills-upstream.mjs)、GitHub 読み取りの事前承認必須）を使用する。

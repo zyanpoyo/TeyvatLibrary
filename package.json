@@ -15,6 +15,8 @@
     "lore:search": "node scripts/lore-tools.mjs search",
     "build:data": "node scripts/build-stories.mjs",
     "validate": "node scripts/build-stories.mjs --validate-only",
+    "skills:check": "node scripts/check-skills-upstream.mjs",
+    "skills:validate": "node scripts/check-skills-upstream.mjs --validate-only",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:all": "npm test && npm run test:e2e"
