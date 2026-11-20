@@ -6,7 +6,7 @@ description: >-
 
 This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user; just synthesize what you already know.
 
-By default, specs are stored locally at `.scratch/<feature-slug>/spec.md` (only publish to an external GitHub/remote tracker if explicitly requested with prior user approval).
+By default, specs are stored locally at `.scratch/<feature-slug>/spec.md` (only publish to an external tracker if explicitly requested).
 
 ## Process
 

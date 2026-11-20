@@ -8,13 +8,13 @@ description: >-
 
 Break a plan, spec, or conversation into a set of **tickets**: tracer-bullet vertical slices, each declaring the tickets that **block** it.
 
-By default, tickets live locally as one Markdown file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md` (only interact with GitHub or remote trackers if explicitly requested with prior user approval).
+By default, tickets live locally as one Markdown file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md` (only interact with external trackers if explicitly requested).
 
 ## Process
 
 ### 1. Gather context
 
-Work from whatever is already in the conversation context. If the user passes a reference (a `.scratch/` or `docs/` spec path, or an approved remote issue), read its full body and notes.
+Work from whatever is already in the conversation context. If the user passes a reference (a `.scratch/` or `docs/` spec path, or a specified remote issue), read its full body and notes.
 
 ### 2. Explore the codebase (optional)
 

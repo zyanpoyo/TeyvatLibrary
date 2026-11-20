@@ -15,7 +15,6 @@
     "タスク・仕様書・チケットの保存先はローカルの .scratch/<feature-slug>/ を標準とする",
     "補助ドキュメントは各スキル配下の ./references/ ディレクトリ構成とリンクを維持する",
     "Antigravity 環境のツール名・サブエージェント呼び出し（invoke_subagent / manage_subagents）表現を維持する",
-    "GitHub への通信・操作は事前承認必須とする制約を維持する",
     "TeyvatLibrary 固有の注記（doc-sync / genshin-story-curator / GLOSSARY.md / docs/adr/ 等）を保持する"
   ],
   "trackedSkills": {
@@ -159,7 +158,7 @@
   "ignoredUpstreamSkills": {
     "skills/engineering/codebase-design": "ユーザーグローバル側で管理しているためプロジェクト対象外",
     "skills/engineering/diagnosing-bugs": "ユーザーグローバル側で管理しているためプロジェクト対象外",
-    "skills/engineering/pr": "GitHub操作は事前承認運用のため未採用",
+    "skills/engineering/pr": "PR作成はユーザー依頼時に都度対応する運用のため未採用",
     "skills/engineering/prototype": "ユーザーグローバル側で管理しているためプロジェクト対象外",
     "skills/engineering/setup-matt-pocock-skills": "初期導入ウィザードのため未採用",
     "skills/engineering/triage": "GitHub Issues連携が不要なため未採用",
