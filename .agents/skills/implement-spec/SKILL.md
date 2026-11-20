@@ -6,7 +6,7 @@ description: >-
 
 You have been provided a spec. This spec should have tickets associated with it under `.scratch/<feature-slug>/` (`spec.md` and `issues/<NN>-<slug>.md`), describing how to implement the spec.
 
-The goal is the entire spec implemented on a single local **integration branch**, with every ticket resolved (`Status: done` in each local ticket file, or per user-approved tracker).
+The goal is the entire spec implemented on a single local **integration branch**, with every ticket resolved (`Status: done` in each local ticket file, or per user-specified tracker).
 
 The tickets are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of tickets which are ready to be grabbed.
 
@@ -22,7 +22,7 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 2. (optional) Use an **exploration subagent** (`invoke_subagent`) to conduct any exploration required by the tickets - relevant codebase files or documentation. Save markdown notes under `.scratch/<feature-slug>/notes/` (or `<Artifact Directory Path>/scratch/`) accessible by future subagents so **implementer subagents** focus on implementation rather than exploration.
 
-3. Create the local integration branch. (Do not push branches or open GitHub PRs without explicit prior user approval.)
+3. Create the local integration branch.
 
 4. Use a fresh **implementer subagent** (`invoke_subagent` with `TypeName: "self"`, `Workspace: "share"` or `"branch"`) for each ticket in the ready frontier. Each implementer subagent:
    - confirms its working copy is based on the integration branch before starting, and resets onto it if not;
@@ -35,6 +35,6 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 7. Once all tickets are complete, read and follow the `code-review` skill (`SKILL.md` in `<skills>`) on the integration branch. Fix all issues raised by the code review in a fresh **implementer subagent** (or cleanly on the integration branch).
 
-8. Verify the full test suite and doc sync, update each ticket status to resolved, and report the integration branch. (If remote PR creation is desired, ask the user for explicit approval first.)
+8. Verify the full test suite and doc sync, update each ticket status to resolved, and report the integration branch.
 
 9. Clean up temporary subagent workspaces/branches as needed (`manage_subagents`).

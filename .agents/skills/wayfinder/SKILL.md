@@ -26,7 +26,7 @@ By default, wayfinding lives in `.scratch/<effort>/`:
 - **Claim**: set `Status: claimed` and save before starting work on a ticket.
 - **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, and append a one-line context pointer (gist + link) to `map.md` under `## Decisions so far`.
 
-*(Only use a remote issue tracker if explicitly requested with prior user approval.)*
+*(Only use a remote issue tracker if explicitly requested.)*
 
 ### The map body
 
@@ -116,7 +116,7 @@ User invokes with a loose idea.
 2. **Map the frontier.** Grill again, **breadth-first** this time: fan out across the whole space rather than deep on any one thread, surfacing the open decisions and the first steps takeable now. **If this surfaces no fog** (the way to the destination is already clear, the whole journey small enough for one session), you don't need a map. Stop and ask the user how they'd like to proceed.
 3. **Create the map** at `.scratch/<effort>/map.md`: Destination and Notes filled in, Decisions-so-far empty, the fog sketched into **Not yet specified**.
 4. **Create the tickets you can specify now** under `.scratch/<effort>/issues/` numbered `01`, `02`, etc., and wire `Blocked by:` edges and cross-references. Everything you can't yet specify stays in **Not yet specified**.
-5. **Fire the research subagents.** For each `research` ticket you just created, spin up a subagent (`invoke_subagent`) with a fresh context window following `research` to resolve it in parallel, writing findings to `.scratch/<effort>/research/<name>.md` (or on a local `research/<name>` branch, never pushing to a remote without explicit prior user approval) and linking it from the ticket.
+5. **Fire the research subagents.** For each `research` ticket you just created, spin up a subagent (`invoke_subagent`) with a fresh context window following `research` to resolve it in parallel, writing findings to `.scratch/<effort>/research/<name>.md` (or on a local `research/<name>` branch) and linking it from the ticket.
 6. Stop: charting is one session's work; it hand-resolves nothing.
 
 ### Work through the map

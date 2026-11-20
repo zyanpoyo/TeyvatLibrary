@@ -11,7 +11,7 @@ Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
 Both axes run as **parallel sub-agents** (via `invoke_subagent`) so they don't pollute each other's context, then this skill aggregates their findings. Start every sub-agent with a fresh context window.
 
-By default, this repository uses local Markdown specs/tickets under `.scratch/` or `docs/` (only access GitHub or remote issue trackers if the user explicitly asks and gives prior approval).
+By default, this repository uses local Markdown specs/tickets under `.scratch/` or `docs/` (only access GitHub or remote issue trackers if the user explicitly asks).
 
 ## Process
 
@@ -29,7 +29,7 @@ Look for the originating spec, in this order:
 
 1. A path the user passed as an argument.
 2. A spec or ticket file under `.scratch/`, `docs/`, or `specs/` matching the branch name or feature.
-3. Issue references in the commit messages (`#123`, `Closes #45`, etc.) — only fetch from GitHub/remote if the user approves external access.
+3. Issue references in the commit messages (`#123`, `Closes #45`, etc.) — only fetch from GitHub/remote if explicitly requested by the user.
 4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".
 
 ### 3. Identify the standards sources

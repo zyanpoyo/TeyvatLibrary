@@ -10,16 +10,9 @@ description: >-
 
 ---
 
-## 1. 事前確認（GitHub 読み取りの承認）
+## 1. 上流差分の検知とパッチ抽出
 
-1. `npm run skills:check` は GitHub API（`https://api.github.com/repos/mattpocock/skills/...`）へ読み取りリクエストを送るため、**未承認の場合は実行前に必ずユーザーの承認を得る**こと（目的・対象・読み取りのみである旨を明示）。
-2. ローカルの整合性確認だけを行いたい場合は、通信を行わない `npm run skills:validate` を使用する。
-
----
-
-## 2. 上流差分の検知とパッチ抽出
-
-承認を得たら以下を実行する。
+ローカルの整合性確認だけを行いたい場合は、通信を行わない `npm run skills:validate` を使用する。上流差分を検知する場合は以下を実行する（GitHub API `https://api.github.com/repos/mattpocock/skills/...` を読み取る）。
 
 ```powershell
 npm run skills:check
@@ -32,7 +25,7 @@ npm run skills:check
 
 ---
 
-## 3. 取り込み判断（ユーザー合意）
+## 2. 取り込み判断（ユーザー合意）
 
 `.scratch/skills-sync/report.md` を読み、以下を簡潔に報告して取り込み範囲をユーザーと合意する。
 
@@ -43,7 +36,7 @@ npm run skills:check
 
 ---
 
-## 4. 3-way マージ適用ルール（重要）
+## 3. 3-way マージ適用ルール（重要）
 
 ローカル版と上流最新版を全文比較して上書きするのではなく、**`.scratch/skills-sync/patches/<skill>.patch` の変更意図だけをローカルの該当ファイルへ反映**する。
 
@@ -53,12 +46,11 @@ npm run skills:check
 - 保存先やチケット管理はローカルの `.scratch/<feature-slug>/` 運用を維持する
 - 補助ファイルは `./references/` 配下のパス・リンクを維持する
 - Antigravity のツール名・サブエージェント表記（`invoke_subagent` / `manage_subagents` 等）を維持する
-- GitHub 操作は事前承認必須とする記述を維持する
 - `TeyvatLibrary` 固有の注記（`doc-sync` / `genshin-story-curator` / `GLOSSARY.md` / `docs/adr/` 等）を消さない
 
 ---
 
-## 5. 連動ファイルの同期と完了検証
+## 4. 連動ファイルの同期と完了検証
 
 取り込みが完了したら、以下を必ず実施する。
 
@@ -75,4 +67,4 @@ npm run skills:check
    npm run skills:validate
    npm test
    ```
-4. 差分を確認し、必要であればユーザー承認のもとコミット・プッシュする。
+4. 差分を確認し、ユーザーへ結果を報告する。

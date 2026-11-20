@@ -6,7 +6,7 @@ description: >-
 
 Implement the work described by the user in the spec or tickets.
 
-If the user passes a ticket or spec reference, read it from `.scratch/` (or the provided local path; obtain prior user approval before fetching any remote GitHub resource) and state its title before starting. If the reference is ambiguous, ask.
+If the user passes a ticket or spec reference, read it from `.scratch/` (or the provided path) and state its title before starting. If the reference is ambiguous, ask.
 
 Read and follow the `tdd` skill (`SKILL.md` in `<skills>`) where possible, at pre-agreed seams.
 
@@ -14,4 +14,4 @@ Run typechecking regularly, single test files regularly, and the full test suite
 
 Once done, read and follow the `code-review` skill (`SKILL.md` in `<skills>`) to review the work.
 
-Commit your work to the current local branch (never push without explicit prior user approval).
+Commit your work to the current local branch.
