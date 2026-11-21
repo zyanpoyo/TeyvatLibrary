@@ -10,9 +10,16 @@ export interface GlossaryDialogProps {
   termId: string | null;
   entry: GlossaryEntry | null;
   onClose: () => void;
+  onSelectEvidenceLink?: (targetId: string) => void;
 }
 
-export function GlossaryDialog({ storyId, termId, entry, onClose }: GlossaryDialogProps) {
+export function GlossaryDialog({
+  storyId,
+  termId,
+  entry,
+  onClose,
+  onSelectEvidenceLink,
+}: GlossaryDialogProps) {
   const isOpen = Boolean(termId && entry);
   const popoverId = termId ? `pop-${storyId}-${termId}` : undefined;
   const titleId = popoverId ? `${popoverId}-title` : undefined;
@@ -62,7 +69,10 @@ export function GlossaryDialog({ storyId, termId, entry, onClose }: GlossaryDial
                         className={`${styles.evidenceLink} evidence-link`}
                         to={`/story/${encodeURIComponent(token.storyId)}`}
                         data-target-id={token.storyId}
-                        onClick={onClose}
+                        onClick={() => {
+                          onSelectEvidenceLink?.(token.storyId);
+                          onClose();
+                        }}
                       >
                         『{token.title}』
                       </Link>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useParams } from "react-router";
+import { analytics, type StoryCompleteMethod } from "../../analytics/ga4";
 import { fetchStoryDetail } from "../../api/stories";
 import { useReaderSession } from "../../hooks/useReaderSession";
 import { useSearchHighlight } from "../../hooks/useSearchHighlight";
@@ -31,10 +32,17 @@ export function ReaderPage() {
   const readerViewRef = useRef<HTMLElement | null>(null);
   const loreDetailsRef = useRef<HTMLDetailsElement | null>(null);
   const isProgrammaticLoreOpenRef = useRef(false);
+  const lastTrackedViewKeyRef = useRef<string | null>(null);
+  const hasReportedTruthOpenRef = useRef(false);
   const location = useLocation();
   const hasSearchTarget = useMemo(
     () => Boolean(parseReaderJumpParams(location.search)),
     [location.search]
+  );
+
+  const storyCategoryById = useMemo(
+    () => new Map((indexData?.stories ?? []).map((item) => [item.id, item.shelfCategory])),
+    [indexData]
   );
 
   const [story, setStory] = useState<StoryDetail | null>(null);
@@ -48,6 +56,49 @@ export function ReaderPage() {
     story,
     readerViewRef,
   });
+
+  const entryKey = `${storyId}:${transition.navigationKey}`;
+
+  useEffect(() => {
+    hasReportedTruthOpenRef.current = false;
+  }, [entryKey]);
+
+  useEffect(() => {
+    if (!story || story.id !== storyId) return;
+    const viewKey = `${transition.navigationKey}:${story.id}`;
+    if (lastTrackedViewKeyRef.current === viewKey) return;
+    lastTrackedViewKeyRef.current = viewKey;
+    analytics.trackPageView({
+      pagePath: `/story/${story.id}`,
+      pageTitle: `${story.title} | テイワット文庫`,
+      storyId: story.id,
+      storyCategory: story.shelfCategory,
+    });
+  }, [story, storyId, transition.navigationKey]);
+
+  const handleStoryComplete = useCallback(
+    (method: StoryCompleteMethod) => {
+      if (!story || story.id !== storyId) return;
+      analytics.trackStoryComplete({
+        storyId: story.id,
+        storyCategory: story.shelfCategory,
+        method,
+      });
+    },
+    [story, storyId]
+  );
+
+  const handleBookmarkToggled = useCallback(
+    (added: boolean) => {
+      if (!story || story.id !== storyId) return;
+      analytics.trackBookmarkToggle({
+        storyId: story.id,
+        action: added ? "add" : "remove",
+        surface: "reader",
+      });
+    },
+    [story, storyId]
+  );
 
   const isInvalidStoryId =
     Boolean(indexData) && validStoryIds.size > 0 && !validStoryIds.has(storyId);
@@ -63,6 +114,8 @@ export function ReaderPage() {
     navigationKey: transition.navigationKey,
     keepNavVisible: isDisplayPopoverOpen,
     hasSearchTarget,
+    onStoryComplete: handleStoryComplete,
+    onBookmarkToggled: handleBookmarkToggled,
   });
 
   const { highlightQuery } = useSearchHighlight({
@@ -102,6 +155,48 @@ export function ReaderPage() {
       cancelled = true;
     };
   }, [storyId, isInvalidStoryId, retryCount]);
+
+  const handleLoreOpened = useCallback(() => {
+    if (story && story.id === storyId && !hasReportedTruthOpenRef.current) {
+      hasReportedTruthOpenRef.current = true;
+      analytics.trackTruthMemoOpen({ storyId: story.id });
+    }
+    reader.markLoreOpened();
+  }, [story, storyId, reader.markLoreOpened]);
+
+  const handleSelectTerm = useCallback(
+    (termId: string) => {
+      setActiveTermId(termId);
+      if (story && story.id === storyId && story.glossary?.[termId]) {
+        analytics.trackGlossaryOpen({ storyId: story.id, termId });
+      }
+    },
+    [story, storyId]
+  );
+
+  const handleSelectConnectedStory = useCallback(
+    (targetId: string) => {
+      if (!targetId) return;
+      analytics.trackStoryOpen({
+        storyId: targetId,
+        storyCategory: storyCategoryById.get(targetId),
+        source: "connected",
+      });
+    },
+    [storyCategoryById]
+  );
+
+  const handleSelectEvidenceLink = useCallback(
+    (targetId: string) => {
+      if (!targetId) return;
+      analytics.trackStoryOpen({
+        storyId: targetId,
+        storyCategory: storyCategoryById.get(targetId),
+        source: "evidence",
+      });
+    },
+    [storyCategoryById]
+  );
 
   const handleBackToShelf = useCallback(() => {
     reader.leave(() => {
@@ -192,8 +287,9 @@ export function ReaderPage() {
               highlightQuery={highlightQuery}
               onToggleBookmark={reader.toggleBookmark}
               onToggleRead={reader.toggleRead}
-              onLoreOpened={reader.markLoreOpened}
-              onSelectTerm={(termId) => setActiveTermId(termId)}
+              onLoreOpened={handleLoreOpened}
+              onSelectTerm={handleSelectTerm}
+              onSelectConnectedStory={handleSelectConnectedStory}
             />
 
             <GlossaryDialog
@@ -201,6 +297,7 @@ export function ReaderPage() {
               termId={activeTermId}
               entry={activeGlossaryEntry}
               onClose={() => setActiveTermId(null)}
+              onSelectEvidenceLink={handleSelectEvidenceLink}
             />
           </>
         ) : null}

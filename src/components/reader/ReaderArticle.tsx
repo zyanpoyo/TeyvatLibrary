@@ -93,6 +93,7 @@ export interface ReaderArticleProps {
   onToggleRead: () => void;
   onLoreOpened: () => void;
   onSelectTerm: (termId: string) => void;
+  onSelectConnectedStory?: (targetId: string) => void;
 }
 
 export function ReaderArticle({
@@ -107,6 +108,7 @@ export function ReaderArticle({
   onToggleRead,
   onLoreOpened,
   onSelectTerm,
+  onSelectConnectedStory,
 }: ReaderArticleProps) {
   const regionLabel = formatRegion(story.region);
   const chapters = story.chapters || [];
@@ -342,6 +344,7 @@ export function ReaderArticle({
                   className={`${styles.connectedItem} connected-item`}
                   to={`/story/${encodeURIComponent(targetId)}`}
                   data-target-id={targetId}
+                  onClick={() => onSelectConnectedStory?.(targetId)}
                 >
                   <div>
                     <div className={styles.connectedItemTitle}>{c.relation}</div>

@@ -14,6 +14,7 @@ import {
   type SetStateAction,
 } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { analytics, type AnalyticsRuntimeStatus } from "../analytics/ga4";
 import { fetchStoriesIndex } from "../api/stories";
 import { DEFAULT_SHELF_FILTERS } from "../domain/catalog";
 import { useSearchIndex } from "../hooks/useSearchIndex";
@@ -22,6 +23,11 @@ import {
   buildShelfSearchParams,
   parseShelfSearchParams,
 } from "../router/search-params";
+import {
+  createAnalyticsPrefsState,
+  type AnalyticsPrefs,
+  type AnalyticsPrefsStore,
+} from "./analytics-prefs";
 import {
   createDisplayPrefsState,
   useDocumentThemeEffect,
@@ -64,6 +70,13 @@ export interface DisplayPrefsContextValue {
   toggleAnnotations: () => void;
 }
 
+export interface AnalyticsPrefsContextValue {
+  prefs: AnalyticsPrefs;
+  setOptOut: (optOut: boolean) => void;
+  toggleOptOut: () => boolean;
+  runtimeStatus: AnalyticsRuntimeStatus;
+}
+
 export interface ShelfContextValue {
   indexData: StoriesIndexData | null;
   indexError: string | null;
@@ -83,10 +96,12 @@ interface TransitionSessionState {
   lastOpenedStoryId: string | null;
   shouldRestoreFocus: boolean;
   shelfDepthInSession: number | null;
+  lastTrackedSearchKey: string | null;
 }
 
 const ReadingStateContext = createContext<ReadingStateContextValue | null>(null);
 const DisplayPrefsContext = createContext<DisplayPrefsContextValue | null>(null);
+const AnalyticsPrefsContext = createContext<AnalyticsPrefsContextValue | null>(null);
 const ShelfContext = createContext<ShelfContextValue | null>(null);
 const TransitionSessionContext = createContext<RefObject<TransitionSessionState> | null>(null);
 
@@ -99,6 +114,11 @@ export function AppProviders({ children }: AppProvidersProps) {
   const navigate = useNavigate();
   const [readingStore] = useState<ReadingStateStore>(() => createReadingState());
   const [prefsStore] = useState(() => createDisplayPrefsState());
+  const [analyticsPrefsStore] = useState<AnalyticsPrefsStore>(() => {
+    const store = createAnalyticsPrefsState();
+    analytics.setOptOut(store.getSnapshot().optOut);
+    return store;
+  });
 
   const readingSnapshot = useSyncExternalStore(
     readingStore.subscribe,
@@ -110,8 +130,25 @@ export function AppProviders({ children }: AppProvidersProps) {
     prefsStore.getSnapshot,
     prefsStore.getSnapshot
   );
+  const analyticsPrefs = useSyncExternalStore(
+    analyticsPrefsStore.subscribe,
+    analyticsPrefsStore.getSnapshot,
+    analyticsPrefsStore.getSnapshot
+  );
 
   useDocumentThemeEffect(displayPrefs);
+
+  useEffect(() => {
+    analytics.setOptOut(analyticsPrefs.optOut);
+  }, [analyticsPrefs.optOut]);
+
+  useEffect(() => {
+    if (location.pathname !== "/") return;
+    analytics.trackPageView({
+      pagePath: "/",
+      pageTitle: BASE_DOCUMENT_TITLE,
+    });
+  }, [location.pathname]);
 
   const [indexData, setIndexData] = useState<StoriesIndexData | null>(null);
   const [indexError, setIndexError] = useState<string | null>(null);
@@ -149,6 +186,7 @@ export function AppProviders({ children }: AppProvidersProps) {
     lastOpenedStoryId: null,
     shouldRestoreFocus: false,
     shelfDepthInSession: null,
+    lastTrackedSearchKey: null,
   });
 
   useEffect(() => {
@@ -211,6 +249,36 @@ export function AppProviders({ children }: AppProvidersProps) {
     [displayPrefs, setPref, annotationsEnabled, toggleAnnotations]
   );
 
+  const setAnalyticsOptOut = useCallback(
+    (optOut: boolean) => {
+      analyticsPrefsStore.setOptOut(optOut);
+    },
+    [analyticsPrefsStore]
+  );
+
+  const toggleAnalyticsOptOut = useCallback(
+    () => analyticsPrefsStore.toggleOptOut(),
+    [analyticsPrefsStore]
+  );
+
+  const baseAnalyticsStatus = analytics.getStatus();
+  const analyticsRuntimeStatus: AnalyticsRuntimeStatus =
+    baseAnalyticsStatus === "disabled_env"
+      ? "disabled_env"
+      : analyticsPrefs.optOut
+        ? "opted_out"
+        : "active";
+
+  const analyticsPrefsContextValue = useMemo<AnalyticsPrefsContextValue>(
+    () => ({
+      prefs: analyticsPrefs,
+      setOptOut: setAnalyticsOptOut,
+      toggleOptOut: toggleAnalyticsOptOut,
+      runtimeStatus: analyticsRuntimeStatus,
+    }),
+    [analyticsPrefs, setAnalyticsOptOut, toggleAnalyticsOptOut, analyticsRuntimeStatus]
+  );
+
   const shelfContextValue = useMemo<ShelfContextValue>(
     () => ({
       indexData,
@@ -240,11 +308,13 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ReadingStateContext.Provider value={readingContextValue}>
       <DisplayPrefsContext.Provider value={prefsContextValue}>
-        <ShelfContext.Provider value={shelfContextValue}>
-          <TransitionSessionContext.Provider value={transitionStateRef}>
-            {children}
-          </TransitionSessionContext.Provider>
-        </ShelfContext.Provider>
+        <AnalyticsPrefsContext.Provider value={analyticsPrefsContextValue}>
+          <ShelfContext.Provider value={shelfContextValue}>
+            <TransitionSessionContext.Provider value={transitionStateRef}>
+              {children}
+            </TransitionSessionContext.Provider>
+          </ShelfContext.Provider>
+        </AnalyticsPrefsContext.Provider>
       </DisplayPrefsContext.Provider>
     </ReadingStateContext.Provider>
   );
@@ -259,6 +329,12 @@ export function useReadingStateStore(): ReadingStateContextValue {
 export function useDisplayPrefsStore(): DisplayPrefsContextValue {
   const ctx = useContext(DisplayPrefsContext);
   if (!ctx) throw new Error("useDisplayPrefsStore must be used inside AppProviders");
+  return ctx;
+}
+
+export function useAnalyticsPrefsStore(): AnalyticsPrefsContextValue {
+  const ctx = useContext(AnalyticsPrefsContext);
+  if (!ctx) throw new Error("useAnalyticsPrefsStore must be used inside AppProviders");
   return ctx;
 }
 
@@ -280,6 +356,8 @@ export interface UseShelfTransitionResult {
     storyId: string,
     options?: { restoreScrollRatio?: number; searchTarget?: SearchJumpTarget }
   ) => void;
+  getLastTrackedSearchKey: () => string | null;
+  setLastTrackedSearchKey: (key: string | null) => void;
 }
 
 /**
@@ -370,9 +448,23 @@ export function useShelfTransition(
     [validStoryIds, sessionRef, navigate]
   );
 
+  const getLastTrackedSearchKey = useCallback(
+    () => sessionRef.current.lastTrackedSearchKey,
+    [sessionRef]
+  );
+
+  const setLastTrackedSearchKey = useCallback(
+    (key: string | null) => {
+      sessionRef.current.lastTrackedSearchKey = key;
+    },
+    [sessionRef]
+  );
+
   return {
     lastOpenedStoryId: sessionRef.current.lastOpenedStoryId,
     openStory,
+    getLastTrackedSearchKey,
+    setLastTrackedSearchKey,
   };
 }
 

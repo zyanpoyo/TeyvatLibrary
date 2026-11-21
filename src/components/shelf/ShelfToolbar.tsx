@@ -1,3 +1,4 @@
+import type { ShelfFilterTrackType } from "../../analytics/ga4";
 import type { ShelfEntityOption } from "../../domain/catalog";
 import type { ReadingStatusFilter, ShelfFilters, SortMode } from "../../types/story";
 import { AppIcon } from "../common/AppIcon";
@@ -16,6 +17,7 @@ export interface ShelfToolbarProps {
   readCount: number;
   allRead: boolean;
   onChangeFilters: (updater: (prev: ShelfFilters) => ShelfFilters) => void;
+  onFilterTracked?: (filterType: ShelfFilterTrackType, filterValue: string) => void;
   onSearchFocus?: () => void;
   onRandomPick: () => void;
 }
@@ -33,6 +35,7 @@ export function ShelfToolbar({
   readCount,
   allRead,
   onChangeFilters,
+  onFilterTracked,
   onSearchFocus,
   onRandomPick,
 }: ShelfToolbarProps) {
@@ -55,12 +58,14 @@ export function ShelfToolbar({
           className={styles.filterControl}
           aria-label="読書状態で絞り込む"
           value={filters.status}
-          onChange={(e) =>
+          onChange={(e) => {
+            const nextStatus = (e.target.value || "all") as ReadingStatusFilter;
+            onFilterTracked?.("status", nextStatus);
             onChangeFilters((prev) => ({
               ...prev,
-              status: (e.target.value || "all") as ReadingStatusFilter,
-            }))
-          }
+              status: nextStatus,
+            }));
+          }}
         >
           <option value="all">状態：すべて</option>
           <option value="unread">未読のみ</option>
@@ -73,9 +78,11 @@ export function ShelfToolbar({
           className={styles.filterControl}
           aria-label="登場人物・用語で絞り込む"
           value={filters.entityId}
-          onChange={(e) =>
-            onChangeFilters((prev) => ({ ...prev, entityId: e.target.value }))
-          }
+          onChange={(e) => {
+            const nextEntityId = e.target.value;
+            onFilterTracked?.("entity", nextEntityId || "all");
+            onChangeFilters((prev) => ({ ...prev, entityId: nextEntityId }));
+          }}
         >
           <option value="">登場人物・用語：すべて</option>
           {entities.map((entity) => (
@@ -90,9 +97,11 @@ export function ShelfToolbar({
           className={styles.filterControl}
           aria-label="地域で絞り込む"
           value={filters.region}
-          onChange={(e) =>
-            onChangeFilters((prev) => ({ ...prev, region: e.target.value }))
-          }
+          onChange={(e) => {
+            const nextRegion = e.target.value;
+            onFilterTracked?.("region", nextRegion || "all");
+            onChangeFilters((prev) => ({ ...prev, region: nextRegion }));
+          }}
         >
           <option value="">地域：すべて</option>
           {regions.map((r) => (
@@ -122,9 +131,10 @@ export function ShelfToolbar({
           data-action="toggle-truth-search"
           aria-pressed={includeTruth}
           title="未読作品の真相・考察メモも横断検索の対象に含めます"
-          onClick={() =>
-            onChangeFilters((prev) => ({ ...prev, includeTruth: !prev.includeTruth }))
-          }
+          onClick={() => {
+            onFilterTracked?.("include_truth", String(!includeTruth));
+            onChangeFilters((prev) => ({ ...prev, includeTruth: !prev.includeTruth }));
+          }}
         >
           <AppIcon name="magnifier" active={includeTruth} />
           <span>真相メモも含める</span>
@@ -135,12 +145,14 @@ export function ShelfToolbar({
           className={styles.filterControl}
           aria-label="並び替え"
           value={filters.sort}
-          onChange={(e) =>
+          onChange={(e) => {
+            const nextSort = (e.target.value || "recommended") as SortMode;
+            onFilterTracked?.("sort", nextSort);
             onChangeFilters((prev) => ({
               ...prev,
-              sort: (e.target.value || "recommended") as SortMode,
-            }))
-          }
+              sort: nextSort,
+            }));
+          }}
         >
           <option value="recommended">
             {hasSearchQuery ? "並び順：関連度順" : "並び順：おすすめ順"}

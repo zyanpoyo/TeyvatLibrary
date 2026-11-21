@@ -19,6 +19,7 @@ export interface StoryCardProps {
   searchQuery?: string;
   searchMatch?: StorySearchMatch | null;
   onOpenStory: (storyId: string) => void;
+  onTrackExternalOpen?: (storyId: string) => void;
   onOpenStoryWithTarget?: (storyId: string, target: SearchJumpTarget) => void;
   onToggleBookmark: (storyId: string) => void;
 }
@@ -36,6 +37,7 @@ export function StoryCard({
   searchQuery = "",
   searchMatch = null,
   onOpenStory,
+  onTrackExternalOpen,
   onOpenStoryWithTarget,
   onToggleBookmark,
 }: StoryCardProps) {
@@ -115,7 +117,10 @@ export function StoryCard({
             className={`${styles.cardPrimaryLink} card-primary-link`}
             to={storyPath}
             onClick={(e) => {
-              if (isModifiedClick(e)) return;
+              if (isModifiedClick(e)) {
+                onTrackExternalOpen?.(story.id);
+                return;
+              }
               e.preventDefault();
               onOpenStory(story.id);
             }}

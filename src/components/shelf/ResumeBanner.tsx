@@ -7,6 +7,7 @@ export interface ResumeBannerProps {
   session: LastSessionSnapshot | null;
   story: StoryIndexItem | null;
   onResumeClick: (storyId: string, scrollRatio: number) => void;
+  onTrackExternalResume?: (storyId: string) => void;
   onDismiss: () => void;
 }
 
@@ -14,6 +15,7 @@ export function ResumeBanner({
   session,
   story,
   onResumeClick,
+  onTrackExternalResume,
   onDismiss,
 }: ResumeBannerProps) {
   if (!session || !story) {
@@ -35,7 +37,10 @@ export function ResumeBanner({
           data-action="resume-story"
           data-story-id={story.id}
           onClick={(e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+              onTrackExternalResume?.(story.id);
+              return;
+            }
             e.preventDefault();
             onResumeClick(story.id, session.scrollRatio);
           }}
