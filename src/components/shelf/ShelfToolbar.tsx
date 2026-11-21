@@ -1,5 +1,6 @@
 import type { ShelfEntityOption } from "../../domain/catalog";
 import type { ReadingStatusFilter, ShelfFilters, SortMode } from "../../types/story";
+import { AppIcon } from "../common/AppIcon";
 import styles from "./ShelfToolbar.module.css";
 
 export interface ShelfToolbarProps {
@@ -64,7 +65,7 @@ export function ShelfToolbar({
           <option value="all">状態：すべて</option>
           <option value="unread">未読のみ</option>
           <option value="read">読了済み</option>
-          <option value="bookmarked">🔖 あとで読む</option>
+          <option value="bookmarked">あとで読む</option>
         </select>
 
         <select
@@ -125,7 +126,7 @@ export function ShelfToolbar({
             onChangeFilters((prev) => ({ ...prev, includeTruth: !prev.includeTruth }))
           }
         >
-          <span aria-hidden="true">🔍</span>
+          <AppIcon name="magnifier" active={includeTruth} />
           <span>真相メモも含める</span>
         </button>
 
@@ -178,7 +179,7 @@ export function ShelfToolbar({
           aria-label={randomAriaLabel}
           onClick={onRandomPick}
         >
-          <span aria-hidden="true">🎲</span>
+          <AppIcon name="dice" />
           <span id="random-story-btn-label">{randomLabel}</span>
         </button>
       </div>

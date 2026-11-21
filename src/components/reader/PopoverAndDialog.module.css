@@ -152,6 +152,11 @@
   margin: 0;
 }
 
+.evidenceIcon {
+  --icon-size: 1.3em;
+  margin-inline-end: 0.3em;
+}
+
 .evidenceLink {
   color: var(--accent-gold-bright);
   text-decoration: underline;

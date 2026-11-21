@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { formatRegion, parseParagraphTokens } from "../../domain/text-parser";
 import commonStyles from "../../styles/common.module.css";
 import type { StoryDetail } from "../../types/story";
+import { AppIcon } from "../common/AppIcon";
 import { HighlightedText } from "../common/HighlightedText";
 import styles from "./ReaderArticle.module.css";
 
@@ -134,7 +135,8 @@ export function ReaderArticle({
         <div className={styles.readerKicker}>
           <span className={commonStyles.categoryBadge}>{story.categoryLabel}</span>
           <span>
-            ⏱ 読了目安 {story.readingTime}（約{(story.charCount || 0).toLocaleString()}字）
+            <AppIcon name="hourglass" className={styles.inlineLeadIcon} />
+            読了目安 {story.readingTime}（約{(story.charCount || 0).toLocaleString()}字）
           </span>
           <span>舞台：{regionLabel}</span>
           {story.era ? <span>時代：{story.era}</span> : null}
@@ -164,7 +166,7 @@ export function ReaderArticle({
             aria-pressed={isBookmarked}
             onClick={onToggleBookmark}
           >
-            <span aria-hidden="true">🔖</span>
+            <AppIcon name="bookmark" active={isBookmarked} />
             <span>あとで読む</span>
           </button>
 
@@ -262,7 +264,7 @@ export function ReaderArticle({
             </div>
             {ch.chapterNote ? (
               <aside className={`${styles.chapterNoteBox} chapter-note-box`}>
-                💡{" "}
+                <AppIcon name="lantern" className={styles.chapterNoteIcon} />
                 <HighlightedText
                   text={ch.chapterNote}
                   query={highlightQuery}
@@ -286,7 +288,12 @@ export function ReaderArticle({
             onLoreOpened();
           }}
         >
-          <summary>🔍 読了後の真相・考察メモ（誰の物語だったのか？）</summary>
+          <summary>
+            <span className={styles.loreSummaryLabel}>
+              <AppIcon name="magnifier" />
+              <span>読了後の真相・考察メモ（誰の物語だったのか？）</span>
+            </span>
+          </summary>
           <div className={`${styles.loreDetailsBody} lore-details-body`}>
             <p>
               <HighlightedText
@@ -322,7 +329,10 @@ export function ReaderArticle({
 
       {connected.length > 0 ? (
         <aside className={styles.connectedBox} id="connected-container">
-          <h2 className={styles.connectedHeading}>🔗 この物語と裏表で繋がる作品</h2>
+          <h2 className={styles.connectedHeading}>
+            <AppIcon name="link-rings" />
+            <span>この物語と裏表で繋がる作品</span>
+          </h2>
           <div className={styles.connectedList}>
             {connected.map((c) => {
               const targetId = c.targetId || c.id || "";

@@ -333,12 +333,30 @@
   margin-top: 2rem;
 }
 
+.inlineLeadIcon {
+  margin-inline-end: 0.3em;
+}
+
+.chapterNoteIcon {
+  --icon-size: 1.32em;
+  margin-inline-end: 0.35em;
+}
+
+.loreSummaryLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
 .connectedHeading {
   font-family: "Shippori Mincho", serif;
   font-size: 1.125rem;
   font-weight: 700;
   margin: 0 0 0.9rem;
   color: var(--accent-gold-bright);
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
 }
 
 .connectedList {

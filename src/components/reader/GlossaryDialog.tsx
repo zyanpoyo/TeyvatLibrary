@@ -2,6 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Link } from "react-router";
 import { parseEvidenceTokens } from "../../domain/text-parser";
 import type { GlossaryEntry } from "../../types/story";
+import { AppIcon } from "../common/AppIcon";
 import styles from "./PopoverAndDialog.module.css";
 
 export interface GlossaryDialogProps {
@@ -52,7 +53,8 @@ export function GlossaryDialog({ storyId, termId, entry, onClose }: GlossaryDial
               <p className={styles.popoverDesc}>{entry.desc}</p>
               {evidenceTokens.length > 0 ? (
                 <p className={styles.popoverEvidence}>
-                  📚 出典・根拠：
+                  <AppIcon name="books" className={styles.evidenceIcon} />
+                  出典・根拠：
                   {evidenceTokens.map((token, idx) =>
                     token.type === "link" ? (
                       <Link

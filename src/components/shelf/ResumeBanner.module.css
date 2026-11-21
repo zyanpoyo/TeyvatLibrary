@@ -40,6 +40,10 @@
 
 .resumeBannerIcon {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent-gold);
+  --icon-size: 1.35rem;
 }
 
 .resumeBannerText {
