@@ -39,8 +39,8 @@
   - 原典テキストと抽出根拠を元に、`hook`・`preGuide`・時系列 `chapters`・`{{term_id|...}}` 注釈・`glossary`・`overallTruth`・`connected` をビルド前に半自動生成するパイプラインを構築する。
 
 ### 1.4 運用・アクセス解析基盤
-- [ ] **Google Analytics によるアナリティクス追跡対応**
-  - 具体的な計測仕様・実装方法は今後決定（主な検討事項：GA4 タグ／測定IDの設定方法、ハッシュルーティング `#/story/<id>` 遷移を含むページビュー計測、カスタムイベント設計〔作品開封・検索・用語ガイド表示・関連作品遷移等〕、プライバシー表記・Cookie同意要否）。
+- [x] **Google Analytics によるアナリティクス追跡対応**（[ADR-0005](../adr/0005-google-analytics-and-privacy-opt-out.md) / [GA4 セットアップガイド](../guides/GOOGLE_ANALYTICS_SETUP.md)）
+  - Vite 環境変数（`VITE_GA_MEASUREMENT_ID`）による有効化ガード、HashRouter 向け正規化仮想パスの手動 `page_view` 計測、7 種カスタムイベント（作品開封導線・検索・読了・用語ガイド・真相メモ・あとで読む・書架フィルタ）、およびフッター「アクセス解析について」ダイアログでの告知・即時オプトアウト切替を実装済み。
 
 ---
 

@@ -1,0 +1,254 @@
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--popover-backdrop);
+  backdrop-filter: blur(2px);
+}
+
+.privacyDialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 61;
+  width: min(30rem, calc(100vw - 2rem));
+  max-width: min(30rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--popover-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-gold);
+  border-radius: 0.85rem;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--popover-shadow);
+  margin: 0;
+}
+
+.privacyDialog:focus {
+  outline: none;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.dialogTitle {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.leadText {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin: 0 0 0.7rem;
+}
+
+.detailText {
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.toggleCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--pill-bg);
+  margin-bottom: 1rem;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.toggleLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  line-height: 1.45;
+}
+
+.switchInput {
+  appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 1.55rem;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border-gold);
+  background: var(--control-bg);
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.switchInput::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transform: translate(0, -50%);
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.switchInput:checked {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+}
+
+.switchInput:checked::before {
+  background: var(--accent-gold-bright);
+  transform: translate(1.2rem, -50%);
+}
+
+.switchInput:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 3px;
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--control-bg);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.statusBadge[data-analytics-status="active"] {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+}
+
+.linksSection {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.8rem;
+}
+
+.linksList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.externalLink {
+  display: inline-block;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--accent-gold-bright);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.2em;
+  border-radius: 0.2rem;
+}
+
+.externalLink:hover,
+.externalLink:focus-visible {
+  text-decoration-style: solid;
+  color: var(--accent-gold);
+}
+
+.externalLink:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switchInput,
+  .switchInput::before {
+    transition: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .privacyDialog {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    max-width: 100vw;
+    width: 100%;
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: none;
+    padding: 1.25rem 1.25rem max(1.75rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (pointer: coarse) {
+  .closeBtn {
+    min-block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toggleRow {
+    min-block-size: 44px;
+  }
+
+  .switchInput::after {
+    content: "";
+    position: absolute;
+    inset: -0.6rem -0.35rem;
+  }
+
+  .externalLink {
+    padding: 0.35rem 0;
+  }
+}

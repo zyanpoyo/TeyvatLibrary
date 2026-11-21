@@ -8,6 +8,7 @@ import {
   type RefObject,
 } from "react";
 import { flushSync } from "react-dom";
+import type { StoryCompleteMethod } from "../analytics/ga4";
 import {
   AUTO_READ_THRESHOLD,
   BOOKMARK_THRESHOLD_MIN,
@@ -225,6 +226,10 @@ export interface UseReaderSessionOptions {
   keepNavVisible?: boolean;
   /** 検索スニペット等からの位置指定ジャンプ遷移のとき true（途中しおり復元と自動スクロール競合を抑止）。 */
   hasSearchTarget?: boolean;
+  /** 未読→読了へ状態遷移したときの通知コールバック（1閲覧セッションにつき最大1回）。 */
+  onStoryComplete?: (method: StoryCompleteMethod) => void;
+  /** あとで読む状態が切り替わったときの通知コールバック。 */
+  onBookmarkToggled?: (added: boolean) => void;
 }
 
 export interface UseReaderSessionResult {
@@ -271,6 +276,8 @@ export function useReaderSession({
   navigationKey = "",
   keepNavVisible = false,
   hasSearchTarget = false,
+  onStoryComplete,
+  onBookmarkToggled,
 }: UseReaderSessionOptions): UseReaderSessionResult {
   const activeStory = story && story.id === storyId ? story : null;
   const activeStoryId = activeStory?.id ?? null;
@@ -290,12 +297,20 @@ export function useReaderSession({
   const keepNavVisibleRef = useRef(keepNavVisible);
 
   const autoReadSuppressedRef = useRef(false);
+  const hasReportedCompleteRef = useRef(false);
+  const onStoryCompleteRef = useRef(onStoryComplete);
+  const onBookmarkToggledRef = useRef(onBookmarkToggled);
   const hasUserScrolledDownRef = useRef(false);
   const initialMountedScrollYRef = useRef(0);
   const suppressUntilRef = useRef(0);
   const bookmarkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSnapshotRef = useRef<PendingSnapshot | null>(null);
   const capturedRestoreRef = useRef<{ entryKey: string; ratio: number | null } | null>(null);
+
+  useEffect(() => {
+    onStoryCompleteRef.current = onStoryComplete;
+    onBookmarkToggledRef.current = onBookmarkToggled;
+  }, [onStoryComplete, onBookmarkToggled]);
 
   const getReadSnapshot = useCallback(
     () => (activeStoryId ? readingState.isRead(activeStoryId) : false),
@@ -410,11 +425,23 @@ export function useReaderSession({
     }
   }, [updateNavHidden]);
 
+  const markReadAndNotify = useCallback(
+    (targetStoryId: string, method: StoryCompleteMethod) => {
+      const wasAlreadyRead = readingState.isRead(targetStoryId);
+      readingState.markRead(targetStoryId);
+      if (!wasAlreadyRead && !hasReportedCompleteRef.current) {
+        hasReportedCompleteRef.current = true;
+        onStoryCompleteRef.current?.(method);
+      }
+    },
+    [readingState]
+  );
+
   const applySessionAction = useCallback(
     (action: ScrollSessionAction) => {
       if (action.type === "mark-read") {
         clearPendingBookmark();
-        readingState.markRead(action.storyId);
+        markReadAndNotify(action.storyId, "auto_scroll");
         return;
       }
       if (action.type === "clear-session") {
@@ -428,7 +455,7 @@ export function useReaderSession({
         scheduleBookmarkSave(action.session);
       }
     },
-    [clearPendingBookmark, readingState, scheduleBookmarkSave]
+    [clearPendingBookmark, markReadAndNotify, readingState, scheduleBookmarkSave]
   );
 
   const syncProgressAndSession = useCallback(
@@ -486,6 +513,7 @@ export function useReaderSession({
 
     isInEffectRef.current = true;
     try {
+      hasReportedCompleteRef.current = false;
       navStateRef.current = INITIAL_NAV_SCROLL_STATE;
       setIsNavHidden(false);
       currentIndexRef.current = 0;
@@ -530,6 +558,7 @@ export function useReaderSession({
     let rafId: number | null = null;
     isSessionActiveRef.current = true;
     autoReadSuppressedRef.current = false;
+    hasReportedCompleteRef.current = false;
     hasUserScrolledDownRef.current = false;
     suppressUntilRef.current = performance.now() + MOUNT_SUPPRESS_MS;
 
@@ -649,23 +678,29 @@ export function useReaderSession({
 
   const toggleBookmark = useCallback(() => {
     if (!activeStory) return;
-    readingState.toggleBookmark(activeStory.id);
+    const added = readingState.toggleBookmark(activeStory.id);
+    onBookmarkToggledRef.current?.(added);
   }, [activeStory, readingState]);
 
   const toggleRead = useCallback(() => {
     if (!activeStory) return;
+    const wasAlreadyRead = readingState.isRead(activeStory.id);
     const nextRead = readingState.toggleRead(activeStory.id);
     autoReadSuppressedRef.current = !nextRead;
     if (nextRead) {
       clearPendingBookmark();
+      if (!wasAlreadyRead && !hasReportedCompleteRef.current) {
+        hasReportedCompleteRef.current = true;
+        onStoryCompleteRef.current?.("manual");
+      }
     }
   }, [activeStory, readingState, clearPendingBookmark]);
 
   const markLoreOpened = useCallback(() => {
     if (!activeStory || autoReadSuppressedRef.current) return;
     clearPendingBookmark();
-    readingState.markRead(activeStory.id);
-  }, [activeStory, readingState, clearPendingBookmark]);
+    markReadAndNotify(activeStory.id, "auto_lore");
+  }, [activeStory, clearPendingBookmark, markReadAndNotify]);
 
   const syncAfterExternalScroll = useCallback(() => {
     if (!activeStory || !isSessionActiveRef.current) return;

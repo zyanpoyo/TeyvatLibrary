@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useMatch } from "react-router";
 import styles from "./AppShell.module.css";
+import { PrivacyDialog } from "./PrivacyDialog";
 
 export function AppShell() {
   const isReaderRoute = Boolean(useMatch("/story/:storyId"));
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   useEffect(() => {
     document.body.dataset.view = isReaderRoute ? "reader" : "shelf";
@@ -57,7 +59,20 @@ export function AppShell() {
       <footer className={styles.siteFooter}>
         <p>テイワット文庫 — 非公式ファンアーカイブ（原文テキストはゲーム内収録資料に基づき無改変で掲載しています）</p>
         <p>本サイトは HoYoverse の公式サービスではありません。ゲーム内テキストの著作権は COGNOSPHERE PTE. LTD. に帰属します。</p>
+        <div className={styles.footerActions}>
+          <button
+            type="button"
+            id="privacy-dialog-trigger"
+            className={styles.footerLinkBtn}
+            data-action="open-privacy-dialog"
+            onClick={() => setIsPrivacyOpen(true)}
+          >
+            アクセス解析について
+          </button>
+        </div>
       </footer>
+
+      <PrivacyDialog open={isPrivacyOpen} onOpenChange={setIsPrivacyOpen} />
     </>
   );
 }
