@@ -21,9 +21,10 @@
   - **表示設定（Aa）**: 文字サイズ（小 / 標準 / 大）、書体（明朝 / ゴシック）、背景テーマ（夜空 / 生成り紙 / セピア）の切り替え（Popover メニュー）
   - **読書状態の保存（`localStorage`）**: スクロール90%到達または真相メモ展開での自動読了マーク、手動読了／あとで読むトグル、途中位置の自動しおり保存（別タブ同期対応）
   - **章目次・読了進捗・関連作品リンク**: 読書進捗バーと章末の関連作品カード表示
-- **アクセス解析・プライバシー管理**
-  - Google Analytics 4（GA4）による仮想パス `page_view` および読書・検索・回遊イベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
-  - フッターの「アクセス解析について」ダイアログからの収集概要確認とサイト内オプトアウト切替（`localStorage` 保存・別タブ同期対応）
+- **アクセス解析・サイト案内・プライバシー管理**
+  - Google Analytics 4（GA4）による仮想パス `page_view`（`/`・`/story/<id>`・`/about`）および読書・検索・回遊イベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
+  - フッターの「アクセス解析について」ダイアログおよび「このサイトについて」（`#/about`）ページからの収集概要確認とサイト内オプトアウト切替（`localStorage` 保存・別タブ同期対応）
+  - 「このサイトについて」ページ（`#/about`）での非公式ファンサイト表記、著作権・引用方針、`localStorage` 保存データの説明、免責事項、およびお問い合わせ案内（GitHub Issues・専用フォーム・運営者 X アカウント＋任意で連絡用メールアドレス）
 - **データ検証・ビルドパイプライン**
   - 原典層（`data/raw/`）・編集層（`data/stories/`, `data/shared/`）・配信層（`public/data/`）の3層構造を採用
   - ビルド時に原典データと本文の1文字完全一致チェックや各種整合性検証を実行
@@ -49,9 +50,9 @@
 npm install
 ```
 
-### アクセス解析の環境変数設定（任意）
+### 環境変数の設定（任意）
 
-Google Analytics 4（GA4）を有効にする場合は、`.env.example` をコピーして `.env.local` を作成し、測定 ID を設定します（未設定時は外部通信を行わずに動作します。詳細は [`docs/guides/GOOGLE_ANALYTICS_SETUP.md`](docs/guides/GOOGLE_ANALYTICS_SETUP.md) を参照）。
+Google Analytics 4（GA4）を有効にする場合や、About ページのお問い合わせ窓口（GitHub Issues・専用フォーム・X URL の上書きや連絡用メールアドレスの追加）を設定する場合は、`.env.example` をコピーして `.env.local` を作成します（未設定時は外部通信を行わず、お問い合わせ欄は既定の GitHub Issues・専用お問い合わせフォーム・運営者 X アカウントを表示します。GA4 詳細は [`docs/guides/GOOGLE_ANALYTICS_SETUP.md`](docs/guides/GOOGLE_ANALYTICS_SETUP.md) を参照）。
 
 ```bash
 cp .env.example .env.local
@@ -123,7 +124,8 @@ npm run preview
 ├── src/                # React + TypeScript フロントエンドソース
 │   ├── analytics/      # GA4 クライアント（環境ガード・仮想PV・イベント計測・PIIサニタイズ）
 │   ├── api/            # 作品一覧・詳細 JSON フェッチ
-│   ├── components/     # layout / shelf / reader / common の React コンポーネント & CSS Modules
+│   ├── components/     # layout / shelf / reader / about / common の React コンポーネント & CSS Modules
+│   ├── config/         # 連絡先 URL・メールアドレス等の環境設定解決＆サニタイズ
 │   ├── domain/         # 書架表示状態導出・横断検索エンジン（正規化/AND/スニペット）・テキスト構文トークナイザの純粋ロジック
 │   ├── hooks/          # リーダー閲覧セッション統合・検索コーパス遅延取得・検索ハイライト着地・テーマ同期フック
 │   ├── router/         # HashRouter ルート定義・検索URLクエリ同期・旧ハッシュ互換（#story/<id>）

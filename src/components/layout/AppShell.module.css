@@ -8,7 +8,8 @@
   transition: opacity 0.45s ease, filter 0.45s ease;
 }
 
-:global(:root[data-theme="night"] body[data-view="reader"]) .celestialBackdrop {
+:global(:root[data-theme="night"] body[data-view="reader"]) .celestialBackdrop,
+:global(:root[data-theme="night"] body[data-view="about"]) .celestialBackdrop {
   opacity: 0.65;
   filter: brightness(0.8);
 }
@@ -77,6 +78,11 @@
 
 .footerActions {
   margin-top: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem 0.9rem;
 }
 
 .footerLinkBtn {
@@ -85,6 +91,7 @@
   padding: 0.15rem 0.4rem;
   font-family: inherit;
   font-size: 0.75rem;
+  line-height: 1.5;
   color: var(--text-secondary);
   text-decoration: underline;
   text-decoration-style: dotted;
@@ -92,6 +99,12 @@
   cursor: pointer;
   border-radius: 0.25rem;
   transition: color 0.15s ease;
+}
+
+.footerLinkBtn[aria-current="page"] {
+  color: var(--accent-gold-bright);
+  text-decoration-style: solid;
+  font-weight: 600;
 }
 
 .footerLinkBtn:hover,
