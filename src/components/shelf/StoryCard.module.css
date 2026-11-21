@@ -178,6 +178,14 @@
   color: var(--text-muted);
 }
 
+.metaIcon {
+  margin-inline-end: 0.22em;
+}
+
+.bookmarkIcon {
+  --icon-size: 1.25em;
+}
+
 .cardTitle {
   font-family: "Shippori Mincho", serif;
   font-size: 1.25rem;

@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import type { StorySearchMatch } from "../../domain/search";
 import { formatRegion } from "../../domain/text-parser";
 import type { SearchJumpTarget, StoryIndexItem } from "../../types/story";
+import { AppIcon } from "../common/AppIcon";
 import { CategoryEmblem } from "../common/CategoryEmblem";
 import { HighlightedText } from "../common/HighlightedText";
 import commonStyles from "../../styles/common.module.css";
@@ -83,7 +84,8 @@ export function StoryCard({
             ) : null}
             <span className={commonStyles.categoryBadge}>{story.categoryLabel}</span>
             <span>
-              ⏱ {story.readingTime} ・ {regionLabel}
+              <AppIcon name="hourglass" className={styles.metaIcon} />
+              {story.readingTime} ・ {regionLabel}
             </span>
           </div>
 
@@ -102,7 +104,7 @@ export function StoryCard({
                 onToggleBookmark(story.id);
               }}
             >
-              <span aria-hidden="true">🔖</span>
+              <AppIcon name="bookmark" active={isBookmarked} className={styles.bookmarkIcon} />
               <span>あとで読む</span>
             </button>
           </div>

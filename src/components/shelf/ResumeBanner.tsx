@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import type { LastSessionSnapshot, StoryIndexItem } from "../../types/story";
+import { AppIcon } from "../common/AppIcon";
 import styles from "./ResumeBanner.module.css";
 
 export interface ResumeBannerProps {
@@ -40,7 +41,7 @@ export function ResumeBanner({
           }}
         >
           <span className={styles.resumeBannerIcon} aria-hidden="true">
-            📖
+            <AppIcon name="open-book" />
           </span>
           <span className={styles.resumeBannerText}>
             <strong>前回の続き</strong>：『{story.title}』{progressLabel}から再開する
