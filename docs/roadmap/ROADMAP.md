@@ -18,8 +18,9 @@
   - **コース①：【推しキャラ深掘り】本編では語られない「ファデュイ執行官」の過去**
     1. 聖遺物『燃え盛る炎の魔女』（収録済み：[`crimson_witch.json`](../../data/stories/artifact/crimson_witch.json)）＆ 育成素材『紅蓮の蛾と灰燼の追憶（淑女討伐録）』（収録済み：[`signora_chronicle.json`](../../data/stories/chronicle/signora_chronicle.json)）
     2. 聖遺物『華館夢醒形骸記』（収録済み：[`husk.json`](../../data/stories/artifact/husk.json)）
-    3. 聖遺物『蒼白の炎』（収録済み：[`pale_flame.json`](../../data/stories/artifact/pale_flame.json)）＆ 武器『冬極の白星』（収録済み：[`polar_star.json`](../../data/stories/weapon/polar_star.json)）
+    3. 聖遺物『蒼白の炎』（収録済み：[`pale_flame.json`](../../data/stories/artifact/pale_flame.json)）＆ 『紅血の証』（収録済み：[`scarlet_proof.json`](../../data/stories/artifact/scarlet_proof.json)）＆ 武器『冬極の白星』（収録済み：[`polar_star.json`](../../data/stories/weapon/polar_star.json)）
     4. 書籍『ペリンヘリ』（収録済み：[`perinheri.json`](../../data/stories/book/perinheri.json)）、武器『赤月のシルエット』（収録済み：[`crimson_moon.json`](../../data/stories/weapon/crimson_moon.json)）＆ 育成素材『残火の灯燭と赤月の裁決（召使討伐録）』（収録済み：[`arlecchino_chronicle.json`](../../data/stories/chronicle/arlecchino_chronicle.json)）
+    5. 書籍『スネージナヤ通史』（収録済み：[`general_history_of_snezhnaya.json`](../../data/stories/book/general_history_of_snezhnaya.json)）・『スネージナヤ通史補編』（収録済み：[`general_history_of_snezhnaya_supplement.json`](../../data/stories/book/general_history_of_snezhnaya_supplement.json)）・『蒼星フェイ史略』（収録済み：[`pale_starborn_history.json`](../../data/stories/book/pale_starborn_history.json)）＆ 聖遺物『影に沈む幻』（収録済み：[`disenchantment_in_deep_shadow.json`](../../data/stories/artifact/disenchantment_in_deep_shadow.json)）・『炉炎溶錬の心』（収録済み：[`heart_of_the_furnace.json`](../../data/stories/artifact/heart_of_the_furnace.json)）
   - **コース②：【一気読み連載】フォンテーヌ「水仙十字院」の軌跡をたどる**
     1. 聖遺物『水仙の夢』（収録済み：[`nymphsdream.json`](../../data/stories/artifact/nymphsdream.json)）＆ 『ファントムハンター』（収録済み：[`marechausseehunter.json`](../../data/stories/artifact/marechausseehunter.json)）
     2. 武器『サーンドルの渡し守』（収録済み：[`fleuvecendreferryman.json`](../../data/stories/weapon/fleuvecendreferryman.json)）＆ 『超越の鍵』（収録済み：[`ateaspoonoftranscendence.json`](../../data/stories/weapon/ateaspoonoftranscendence.json)）
@@ -45,13 +46,16 @@
 
 ## 2. 優先収録作品ロードマップ
 
-### 2.1 【書籍】世界観の根幹＆入門・重要書籍ラインナップ（9選）
+### 2.1 【書籍】世界観の根幹＆入門・重要書籍ラインナップ（12選）
 
 | 状態 | 作品名（巻数） | 優先度 | 収録・特集の狙い |
 | :---: | :--- | :---: | :--- |
 | ✅ | **白夜国館蔵**（全5巻 / 特に第2巻『日月前事』） | ★★★ | [`byakuyakoku.json`](../../data/stories/book/byakuyakoku.json) として収録済み。天理・七龍・四つの影などテイワット創世の起点となる最重要書籍。 |
 | ✅ | **ペリンヘリ**（全2巻） | ★★★ | [`perinheri.json`](../../data/stories/book/perinheri.json) として第3バッチで収録済み。カーンルイア「赤月王朝」や壁炉の家、外の世界からの漂流者を扱う重要書。 |
 | ✅ | **白姫と六人の小人**（全7巻 ※ゲーム本編は第1巻のみ入手） | ★★★ | [`pale_princess.json`](../../data/stories/book/pale_princess.json) として第4バッチで収録済み。アビス・月の三姉妹・罪人や、夜の国と月光の森を舞台にした天理勢力との対峙構図の暗喩として考察需要が高い童話。 |
+| ✅ | **スネージナヤ通史**（全2巻） | ★★★ | [`general_history_of_snezhnaya.json`](../../data/stories/book/general_history_of_snezhnaya.json) として第5バッチで収録済み。氷の女皇アナスターシャへ献上された正史であり、ヒュペルボレイア伝説と先代皇帝モノマフ（ツァーリ・ベールイ）および盟友フィリポフの旅路を描く。 |
+| ✅ | **スネージナヤ通史補編**（全3巻） | ★★★ | [`general_history_of_snezhnaya_supplement.json`](../../data/stories/book/general_history_of_snezhnaya_supplement.json) として第5バッチで収録済み。モノマフ皇帝の宿敵ミスティスラフ王と異怪の獣連盟の興亡、および敗者側の一次史料『諸獣王公列伝』を収録。 |
+| ✅ | **蒼星フェイ史略**（全1巻） | ★★★ | [`pale_starborn_history.json`](../../data/stories/book/pale_starborn_history.json) として第5バッチで収録済み。キーテジ会戦でのツァーリ・ベールイ誕生から、第七百九十九紀の女皇アナスターシャ戴冠・ファデュイ創設・妖精大公から人間への政権移行を描く年代記。 |
 | ⬜ | **イノシシプリンセス**（全7巻） | ★★☆ | 知名度は高いが未読層が多い作品。絵本風の体裁とブラックな結末のコントラストに加え、「天の御遣い」や幻想シアターにも関わる暗喩として注目度が高い。 |
 | ⬜ | **テイワット観光ガイド**（全4巻） | ★★☆ | アリスによる軽快な紀行文。専門用語が少なく、ライト層の最初の1冊に適する。 |
 | ✅ | **竹林月夜**（全4巻） | ★★☆ | [`moonlit_bamboo_forest.json`](../../data/stories/book/moonlit_bamboo_forest.json) として第4バッチで収録済み。月の三姉妹伝承と白馬の仙人兹白の記憶を描く民話。 |
@@ -94,7 +98,9 @@
 | ⬜ | ナド・クライ | **長き夜の誓い**（`longnightsoath`） | ライトキーパー・最初のライトブリンガー | 漆黒の夜から辺境を守り抜いたライトキーパーたちの戦いと誓い。 |
 | ⬜ | ナド・クライ | **月を紡ぐ夜の歌**（`silkenmoonsserenade`） | 霜月の子・詠月使・ヒュペルボレイア | 砕けた銀の月光と霜月の子・ヒュペルボレイアにまつわる悲劇。 |
 | ✅ | スネージナヤ・各国 | **蒼白の炎** | ファデュイ執行官（道化・博士・散兵・淑女・富者） | [`pale_flame.json`](../../data/stories/artifact/pale_flame.json) として収録済み（コース①対象）。執行官5名の勧誘オムニバス。 |
-| ⬜ | スネージナヤ・各国 | **影に沈む幻**（`disenchantmentindeepshadow`） | 氷の女皇即位前後のスネージナヤ・雪の精・執行官 | 氷雪の王の時代から氷の女皇・執行官、世界任務「グライアイの目」周辺につながる長編記録。 |
+| ✅ | スネージナヤ・各国 | **紅血の証**（`scarletproof`） | サンドローネ・雄鶏・隊長・博士・富者 | [`scarlet_proof.json`](../../data/stories/artifact/scarlet_proof.json) として第5バッチで収録済み。アラン亡き後に雪国へ渡ったギヨタン嬢や、人間の議長に師事した『雄鶏』、辺境の孤立村での『博士』の実験と『隊長』の面談室が交錯する長編群像劇。 |
+| ✅ | スネージナヤ・各国 | **影に沈む幻**（`disenchantmentindeepshadow`） | 先代氷神ツァーリ・ベールイ・白髪の学者アクシーニャ・雪の娘・コシチェイ・アルヴィス | [`disenchantment_in_deep_shadow.json`](../../data/stories/artifact/disenchantment_in_deep_shadow.json) として第5バッチで収録済み。ヒュペルボレイアの廃墟から見出された少女アクシーニャと秘密研究所「フヴェルゲルミル」の記憶。 |
+| ✅ | スネージナヤ・各国 | **炉炎溶錬の心**（`heartofthefurnace`） | 小さき者イズマイール・アクシーニャ・アルヴィス大公・氷の女皇 | [`heart_of_the_furnace.json`](../../data/stories/artifact/heart_of_the_furnace.json) として第5バッチで収録済み。『影に沈む幻』と表裏をなす、弟子イズマイールの500年にわたる闇域探索と「ヴィソーキイ・ストール」創設の記録。 |
 
 ### 2.3 【武器】ガチャ限定・シリーズ横断ストーリー（5選）
 
