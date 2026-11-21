@@ -46,7 +46,7 @@ import type {
 
 export { DEFAULT_SHELF_FILTERS };
 
-const BASE_DOCUMENT_TITLE = "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー";
+export const BASE_DOCUMENT_TITLE = "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー";
 
 function getHistoryIndex(): number | null {
   if (typeof window === "undefined") return null;

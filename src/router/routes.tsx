@@ -1,4 +1,5 @@
 import { createHashRouter, Navigate, type RouteObject } from "react-router";
+import { AboutPage } from "../components/about/AboutPage";
 import { AppShell } from "../components/layout/AppShell";
 import { ReaderPage } from "../components/reader/ReaderPage";
 import { ShelfPage } from "../components/shelf/ShelfPage";
@@ -9,12 +10,12 @@ export function getStoryHash(storyId: string): string {
 }
 
 /**
- * 旧形式のハッシュ URL（#story/<id>）を React Router 標準の #/story/<id> へ正規化する。
+ * 旧形式のハッシュ URL（#story/<id> や #about）を React Router 標準の #/<path> へ正規化する。
  */
 export function normalizeLegacyHash(): void {
   if (typeof window === "undefined") return;
   const hash = window.location.hash;
-  if (/^#story\/.+/.test(hash)) {
+  if (/^#(story\/.+|about)$/.test(hash)) {
     const normalized = `#/${hash.slice(1)}`;
     window.history.replaceState(
       window.history.state,
@@ -39,6 +40,10 @@ export const appRoutes: RouteObject[] = [
       {
         path: "story/:storyId",
         element: <ReaderPage />,
+      },
+      {
+        path: "about",
+        element: <AboutPage />,
       },
       {
         path: "*",
