@@ -42,6 +42,17 @@
 - [x] **Google Analytics によるアナリティクス追跡対応**（[ADR-0005](../adr/0005-google-analytics-and-privacy-opt-out.md) / [GA4 セットアップガイド](../guides/GOOGLE_ANALYTICS_SETUP.md)）
   - Vite 環境変数（`VITE_GA_MEASUREMENT_ID`）による有効化ガード、HashRouter 向け正規化仮想パスの手動 `page_view` 計測、7 種カスタムイベント（作品開封導線・検索・読了・用語ガイド・真相メモ・あとで読む・書架フィルタ）、およびフッター「アクセス解析について」ダイアログでの告知・即時オプトアウト切替を実装済み。
 
+### 1.5 SEO メタタグ・OGP・公開準備
+一般公開前のタイミングで方針を確定させる項目。URL 構造（`HashRouter` 維持かパス URL 化か）は公開後に変更すると共有リンクや検索評価が分散するため、**一般公開前の優先度：高**として位置づける（具体的な採用案は未確定）。
+
+- [ ] **SEO メタタグ・OGP 方針決定および公開前実装**（優先度：高／一般公開前・参考：[TeyvatLibrary_seo_and_share_spec.md](../spec/TeyvatLibrary_seo_and_share_spec.md)）
+  - 公開先のホスティング環境とあわせ、以下の 3 段階から採用範囲を決定・実装する：
+    - **案A（最小対応）**：現行の `HashRouter` ＋ SPA を維持し、[`index.html`](../../index.html) に `meta description`・共通 OGP / Twitter Card・ファビコン・静的 OGP 画像を追加（絶対 URL は `VITE_SITE_URL` 等の環境変数でビルド時注入）。
+    - **案B（完全静的プリレンダリング／SSG）**：`BrowserRouter`（パス URL）へ移行し、ビルド時に作品別静的 HTML（各作品の `<title>`・`description`・OGP・JSON-LD）と `sitemap.xml` / `robots.txt` を生成して、完全静的構成のまま作品単位の検索流入・SNS OGP を実現する。
+    - **案C（動的引用 OGP 拡張）**：案B に加え、Cloudflare Pages Functions で一節引用ごとの動的 OGP 画像生成を行う（※導入時は [ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) の改訂が必要）。
+- [ ] **公開後の検索・SNS クロール検証**（優先度：中／一般公開後）
+  - 本番ドメイン確定後の `canonical`・`og:url`・`og:image`・`sitemap.xml` 実 URL 反映、Google Search Console 登録、および OGP・構造化データのリッチリザルト表示検証を行う。
+
 ---
 
 ## 2. 優先収録作品ロードマップ
