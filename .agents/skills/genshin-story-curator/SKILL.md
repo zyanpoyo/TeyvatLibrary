@@ -1,7 +1,7 @@
 ---
 name: genshin-story-curator
 description: >-
-  原神の書籍・武器・聖遺物・風の翼・突破育成素材ストーリーのローカル抽出（npm run extract-raw）、代名詞・用語のクロスリファレンス特定、時系列順の章再構成、entities.json 連携、および検証・配信ビルド（npm run build:data）を行う手順。新しいストーリーデータの追加、原神テキストの構造化・注釈付与、または作品間リンクの更新時に使用する。
+  原神の書籍・武器・聖遺物・風の翼・突破育成素材ストーリーのローカル抽出（npm run extract-raw）、代名詞・用語のクロスリファレンス特定、時系列順の章再構成、entities.json 連携、読書コース（courses.json）編入・編集、および検証・配信ビルド（npm run build:data）を行う手順。新しいストーリーデータの追加、原神テキストの構造化・注釈付与、読書コースや作品間リンクの更新時に使用する。
 ---
 
 # Genshin Story Curator（原神ストーリー抽出・構造化・検証手順）
@@ -96,7 +96,19 @@ description: >-
 
 ---
 
-## Step 5: ガードレール検証と配信JSONビルド（必須）
+## Step 5: 読書コース（`data/shared/courses.json`）への編入・編集判断
+
+新しい物語を追加したままにせず、読者が迷わず連続通読できるよう [`data/shared/courses.json`](../../../data/shared/courses.json) の更新要否を判定する（基準の詳細は [`references/course-curation-guide.md`](./references/course-curation-guide.md) を参照）。
+
+1. **既存コースへの編入または新コース追加**: テーマや時代が繋がる既存コースの適切な位置へ `steps` を追記する。関連作が 3 篇以上まとまった場合は新しい読書コースの追加を検討する。
+2. **一貫性・語彙・代表 3 枠の維持**: コースタイトルが示す軸と収録作を一致させ、「アーク」などの直訳カタカナ語を避けて和語・漢字で記す。代表枠（`featured: true`）を変更する場合は 3 種別バランス・代表枠間重複ゼロを保つ。
+3. **順路ガイド（`note`）とバッジ同期**: `steps[].note` にはネタバレなしの 1 行で読む順番の意図を書き、収録数が変わった場合は `badge`（例：`厳選4選`）や仕様ドキュメント例示も揃える。
+
+- **完了条件**: 追加作品がいずれかの読書コースに所属していること（未決定時は `npm run validate` の `⚠️ [コース未所属作品]` ヒントを確認してユーザーへ相談できる状態であること）。
+
+---
+
+## Step 6: ガードレール検証と配信JSONビルド（必須）
 
 データ作成・編集後は、検証および配信層（`public/data/`）の再生成を実行する。
 
@@ -105,13 +117,20 @@ npm run validate
 npm run build:data
 ```
 
+コースのステップ・文言を変更した場合は、以下でコース OGP 画像の崩れ・文字欠けがないことも確認する。
+
+```bash
+npm run build:og -- --only courses,course/<courseId> --force
+```
+
 ### エラー検出時の対処
-- **`[JSONスキーマ]`**: [`data/schemas/story.schema.json`](../../../data/schemas/story.schema.json) / [`entities.schema.json`](../../../data/schemas/entities.schema.json) の必須項目・パターン・未定義プロパティ禁止（`additionalProperties: false`）に違反している箇所を修正する。
+- **`[JSONスキーマ]`**: [`data/schemas/story.schema.json`](../../../data/schemas/story.schema.json) / [`entities.schema.json`](../../../data/schemas/entities.schema.json) / [`courses.schema.json`](../../../data/schemas/courses.schema.json) の必須項目・パターン・未定義プロパティ禁止（`additionalProperties: false`）に違反している箇所を修正する。
 - **`[原文不一致]`**: `data/raw/` と照合し、段落分割（`\n\n` と `\n`）、`stripPrefix` の1文字差異、タグ内文字列の改変を修正する。
 - **`[NG固有名詞検出]`**: メッセージで示された公式表記（例：`ツァーリツァ` → `氷の女皇`、`ロストム` → `ルースタン`）へ修正する。
 - **`[公式コーパス未登録カタカナ]`**: サジェストの公式表記に合わせるか、解説文を和語・漢字へ言い換える。公式テキストに存在しない正当なメディア由来語・必須一般語のみ [`data/shared/official-entities.json`](../../../data/shared/official-entities.json) へ追加する。
 - **`[出典リンク表記エラー]`**: 収録済み他作品名の後に `（...）` を `『』` の中へ含めたためリンク不発になっている箇所（例：`『蒼白の炎（無垢の花）』`）を `『蒼白の炎』（無垢の花）` 形式へ修正する。
 - **`[出典根拠欠落]` / `[確度区分欠落]`**: 該当 `glossary`（または `entities.json`）に `evidence` と確度区分3種プレフィックス（`正体：` / `解説：` / `有力説：`）を補う。
 - **`⚠️ [エンティティ未連携候補]`（非ブロッキング警告）**: 本文や `overallTruth` に登録済み人物名が登場しているものの `glossary` の `entityId` に未反映の作品を通知する。主役級の関係であれば `entityId` 連携を追加する。
+- **`⚠️ [コース未所属作品]` / `⚠️ [フェア棚代表枠]` / `⚠️ [フェア棚代表枠重複]`（非ブロッキング警告）**: どのコースにも未所属の作品、代表 3 枠の増減、代表枠間の作品重複を通知する。Step 5 の基準に沿って編入・調整する。
 
-- **完了条件**: `npm run validate` および `npm run build:data` が終了コード `0` で成功し、[`public/data/stories-index.json`](../../../public/data/stories-index.json) に追加作品の件数・`entityIds`・`evidenceLinks` が正しく反映されていること（ロードマップや設計書の進捗に影響する場合は [`doc-sync`](../doc-sync/SKILL.md) スキルに従って更新対象を確認する）。
+- **完了条件**: `npm run validate` および `npm run build:data` が終了コード `0` で成功し、[`public/data/stories-index.json`](../../../public/data/stories-index.json) に追加作品の件数・`entityIds`・`evidenceLinks`・`courses` が正しく反映されていること（ロードマップや設計書の進捗に影響する場合は [`doc-sync`](../doc-sync/SKILL.md) スキルに従って更新対象を確認する）。

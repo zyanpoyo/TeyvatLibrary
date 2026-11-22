@@ -1,0 +1,339 @@
+.courseBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.9rem;
+  margin: 0.85rem 0 0;
+  padding: 0.55rem 0.95rem;
+  border-radius: 0.55rem;
+  background: var(--pre-guide-bg);
+  border: 1px solid var(--border-gold);
+  font-size: 0.8125rem;
+}
+
+.courseBannerLead {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-width: 0;
+  color: var(--text-secondary);
+}
+
+.courseBannerLink {
+  color: var(--accent-gold-bright);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.2em;
+  border-radius: 0.25rem;
+}
+
+.courseBannerLink:hover,
+.courseBannerLink:focus-visible {
+  color: var(--accent-gold);
+  text-decoration-style: solid;
+  outline: none;
+}
+
+.courseBannerLink:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.courseBannerStep {
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.courseFooterBox {
+  background: var(--connected-bg);
+  border: 1px solid var(--border-gold);
+  border-radius: 0.9rem;
+  padding: 1.5rem 1.75rem;
+  margin-top: 2rem;
+}
+
+.courseFooterHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.9rem;
+  margin-bottom: 0.95rem;
+}
+
+.courseFooterHeading {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--accent-gold-bright);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.courseHeadingLink {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.25rem;
+}
+
+.courseHeadingLink:hover,
+.courseHeadingLink:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.courseHeadingLink:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 3px;
+}
+
+.courseStepCounter {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  padding: 0.14rem 0.62rem;
+  border-radius: 999px;
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--border-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.coursePrimaryCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem 1.25rem;
+  border-radius: 0.7rem;
+  background: var(--connected-item-bg);
+  border: 1px solid var(--accent-gold);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+}
+
+.coursePrimaryCard:hover,
+.coursePrimaryCard:focus-visible {
+  border-color: var(--accent-gold-bright);
+  background: var(--accent-gold-soft);
+  transform: translateX(3px);
+  outline: none;
+}
+
+.coursePrimaryCard:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.coursePrimaryLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.coursePrimaryTitle {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.03125rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+}
+
+.coursePrimaryArrow {
+  font-size: 1.15rem;
+  color: var(--accent-gold-bright);
+  flex-shrink: 0;
+}
+
+.courseCompletionNotice {
+  padding: 1rem 1.2rem;
+  border-radius: 0.7rem;
+  background: var(--connected-item-bg);
+  border: 1px solid var(--accent-gold);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.courseCompletionText {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+}
+
+.courseCompletionActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.courseSecondaryPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-gold);
+  background: var(--pill-bg);
+  color: var(--accent-gold-bright);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.courseSecondaryPill:hover,
+.courseSecondaryPill:focus-visible {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  outline: none;
+}
+
+.courseSecondaryPill:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.coursePrevRow {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.coursePrevLink {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.2em;
+  border-radius: 0.25rem;
+}
+
+.coursePrevLink:hover,
+.coursePrevLink:focus-visible {
+  color: var(--accent-gold-bright);
+  text-decoration-style: solid;
+  outline: none;
+}
+
+.coursePrevLink:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.otherCoursesBlock {
+  margin-top: 1.05rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.6rem;
+}
+
+.otherCoursesLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.otherCourseChip {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--pill-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.otherCourseChip:hover,
+.otherCourseChip:focus-visible {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold-bright);
+  outline: none;
+}
+
+.membershipList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.membershipCard {
+  background: var(--connected-item-bg);
+  border: 1px solid var(--connected-item-border);
+  border-radius: 0.7rem;
+  padding: 0.95rem 1.15rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+}
+
+.membershipInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.membershipTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.membershipTitleLink {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--accent-gold-bright);
+  text-decoration: none;
+  border-radius: 0.25rem;
+}
+
+.membershipTitleLink:hover,
+.membershipTitleLink:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.membershipStepMeta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 599px) {
+  .courseFooterBox {
+    padding: 1.25rem 1.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coursePrimaryCard,
+  .courseSecondaryPill,
+  .otherCourseChip {
+    transition: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .courseSecondaryPill {
+    min-block-size: 44px;
+  }
+}

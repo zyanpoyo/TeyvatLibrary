@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import coursesSchema from "../data/schemas/courses.schema.json";
 import entitiesSchema from "../data/schemas/entities.schema.json";
 import storySchema from "../data/schemas/story.schema.json";
 import {
@@ -607,5 +608,169 @@ describe("StoryCompiler (compileStories)", () => {
 
     expect(result.ok).toBe(false);
     expect(result.errors.some((e) => e.includes("addedAt"))).toBe(true);
+  });
+
+  it("compiles courses into index and story memberships, and rejects invalid kind, missing storyId, duplicate IDs, blank note, or NG/non-corpus text", () => {
+    const okResult = compileStories({
+      ...createBaseInput(),
+      schemas: {
+        story: storySchema,
+        entities: entitiesSchema,
+        courses: coursesSchema,
+      },
+      courses: [
+        {
+          id: "rosalyne_set",
+          kind: "character",
+          badge: "ロザリン編",
+          title: "ロザリンと騎士の記憶",
+          subtitle: "モンドから始まる物語",
+          hook: "ロザリンとルースタンの記録を順番に読む。",
+          featured: true,
+          steps: [
+            { storyId: "elegy", note: "まずは騎士の物語から。" },
+            { storyId: "crimson_witch", note: "続けて魔女の視点へ。" },
+          ],
+        },
+      ],
+    });
+
+    expect(okResult.ok).toBe(true);
+    expect(okResult.stats.courseCount).toBe(1);
+    expect(okResult.dist?.index.courses).toHaveLength(1);
+    const compiledCourse = okResult.dist?.index.courses?.[0];
+    expect(compiledCourse).toMatchObject({
+      id: "rosalyne_set",
+      kind: "character",
+      storyIds: ["elegy", "crimson_witch"],
+      storyCount: 2,
+      featured: true,
+    });
+    expect(compiledCourse?.totalCharCount).toBeGreaterThan(0);
+    expect(compiledCourse?.totalReadingTime).toMatch(/^約\d+分$/);
+
+    expect(okResult.dist?.storiesById.elegy.courses).toEqual([
+      {
+        courseId: "rosalyne_set",
+        kind: "character",
+        badge: "ロザリン編",
+        title: "ロザリンと騎士の記憶",
+        stepIndex: 0,
+        totalSteps: 2,
+        prevStep: null,
+        nextStep: { storyId: "crimson_witch", title: "炎の魔女" },
+        steps: [
+          { storyId: "elegy", title: "終焉の詩（追憶の弓）" },
+          { storyId: "crimson_witch", title: "炎の魔女" },
+        ],
+      },
+    ]);
+
+    const schemaErrResult = compileStories({
+      ...createBaseInput(),
+      schemas: {
+        story: storySchema,
+        entities: entitiesSchema,
+        courses: coursesSchema,
+      },
+      courses: [
+        {
+          id: "bad_kind",
+          kind: "unknown_kind",
+          badge: "バッジ",
+          title: "タイトル",
+          subtitle: "サブ",
+          hook: "フック",
+          steps: [{ storyId: "elegy", note: "ガイド" }],
+        },
+      ],
+    });
+    expect(schemaErrResult.ok).toBe(false);
+    expect(schemaErrResult.errors.some((e) => e.includes("unknown_kind"))).toBe(true);
+
+    const refAndCorpusErrResult = compileStories({
+      ...createBaseInput(),
+      schemas: {
+        story: storySchema,
+        entities: entitiesSchema,
+        courses: coursesSchema,
+      },
+      courses: [
+        {
+          id: "dup_course",
+          kind: "arc",
+          badge: "バッジ",
+          title: "ツァーリツァの記録",
+          subtitle: "サブ",
+          hook: "フック",
+          steps: [
+            { storyId: "missing_story", note: "   " },
+            { storyId: "elegy", note: "未登録カタカナのカタカナ文字列" },
+            { storyId: "elegy", note: "重複ステップ" },
+          ],
+        },
+      ],
+    });
+    expect(refAndCorpusErrResult.ok).toBe(false);
+    expect(refAndCorpusErrResult.errors.some((e) => e.includes("[リンク切れ]"))).toBe(true);
+    expect(refAndCorpusErrResult.errors.some((e) => e.includes("[重複ストーリー]"))).toBe(true);
+    expect(refAndCorpusErrResult.errors.some((e) => e.includes("[NG固有名詞検出]"))).toBe(true);
+    expect(
+      refAndCorpusErrResult.errors.some((e) => e.includes("[公式コーパス未登録カタカナ]"))
+    ).toBe(true);
+    expect(refAndCorpusErrResult.errors.some((e) => e.includes("空でない文字列"))).toBe(true);
+  });
+
+  it("emits non-blocking warnings for unassigned stories, featured count mismatch, and featured story overlap", () => {
+    const withCourseWarnings = compileStories({
+      ...createBaseInput(),
+      schemas: {
+        story: storySchema,
+        entities: entitiesSchema,
+        courses: coursesSchema,
+      },
+      courses: [
+        {
+          id: "featured_one",
+          kind: "beginner",
+          badge: "入門",
+          title: "ロザリン編",
+          subtitle: "モンド編",
+          hook: "騎士と魔女。",
+          featured: true,
+          steps: [{ storyId: "elegy", note: "まずは騎士から。" }],
+        },
+        {
+          id: "featured_two",
+          kind: "character",
+          badge: "人物別",
+          title: "騎士編",
+          subtitle: "モンド記録",
+          hook: "同じ作品を重複収録。",
+          featured: true,
+          steps: [{ storyId: "elegy", note: "重複例。" }],
+        },
+      ],
+    });
+
+    expect(withCourseWarnings.ok).toBe(true);
+    expect(
+      withCourseWarnings.warnings.some(
+        (w) => w.includes("[コース未所属作品]") && w.includes("crimson_witch")
+      )
+    ).toBe(true);
+    expect(
+      withCourseWarnings.warnings.some(
+        (w) => w.includes("[フェア棚代表枠]") && w.includes("2 件")
+      )
+    ).toBe(true);
+    expect(
+      withCourseWarnings.warnings.some(
+        (w) =>
+          w.includes("[フェア棚代表枠重複]") &&
+          w.includes("elegy") &&
+          w.includes("featured_one, featured_two")
+      )
+    ).toBe(true);
   });
 });

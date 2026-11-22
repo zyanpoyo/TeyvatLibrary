@@ -7,6 +7,7 @@ import {
 export { extractInlineTagReferences, stripInlineTags };
 
 export const VALID_SHELF_CATEGORIES = ["book", "artifact", "weapon", "attire", "chronicle"];
+export const VALID_COURSE_KINDS = ["beginner", "character", "arc"];
 export const VALID_IDENTITY_PREFIXES = ["正体：", "解説：", "有力説："];
 export const VALID_PIECES = ["flower", "plume", "sands", "goblet", "circlet"];
 

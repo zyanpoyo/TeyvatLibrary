@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { compileStories } from "./lib/story-compiler.mjs";
-import { VALID_SHELF_CATEGORIES } from "./lib/validator.mjs";
+import { VALID_COURSE_KINDS, VALID_SHELF_CATEGORIES } from "./lib/validator.mjs";
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -86,11 +86,13 @@ export function buildProjectStories({
   const result = compileStories({
     stories: collectStoryEntries(storiesDir),
     entities: readJson(path.join(sharedDir, "entities.json")),
+    courses: readJson(path.join(sharedDir, "courses.json")),
     officialEntities: readJson(path.join(sharedDir, "official-entities.json")),
     officialCorpus: readJson(path.join(sharedDir, "official-corpus.json")),
     schemas: {
       entities: readJson(path.join(schemasDir, "entities.schema.json")),
       story: readJson(path.join(schemasDir, "story.schema.json")),
+      courses: readJson(path.join(schemasDir, "courses.schema.json")),
     },
     readRawSnapshot: (sourceRef) => readRawSnapshot(rawDir, rootDir, sourceRef),
   });
@@ -202,6 +204,56 @@ function verifyEntitiesIndex(index, expectedIds, errors, stats) {
   }
 }
 
+function verifyCoursesIndex(index, expectedIds, errors, stats) {
+  if (!index || typeof index !== "object") return;
+  if (!Array.isArray(index.courses)) {
+    errors.push("stories-index.json の courses が配列ではありません");
+    return;
+  }
+
+  stats.courseCount = index.courses.length;
+  const seenCourseIds = new Set();
+
+  for (const course of index.courses) {
+    if (!course || typeof course !== "object" || typeof course.id !== "string" || !course.id) {
+      errors.push("stories-index.json に不正なコースエントリがあります");
+      continue;
+    }
+    if (seenCourseIds.has(course.id)) {
+      errors.push(`stories-index.json 内でコース ID "${course.id}" が重複しています`);
+      continue;
+    }
+    seenCourseIds.add(course.id);
+
+    if (!VALID_COURSE_KINDS.includes(course.kind)) {
+      errors.push(`courses["${course.id}"].kind ("${course.kind}") が不正です`);
+    }
+    if (!Array.isArray(course.steps) || course.steps.length === 0) {
+      errors.push(`courses["${course.id}"].steps が空または配列ではありません`);
+      continue;
+    }
+    if (!Array.isArray(course.storyIds) || course.storyIds.length !== course.steps.length) {
+      errors.push(`courses["${course.id}"].storyIds と steps の件数が一致しません`);
+    } else {
+      course.steps.forEach((step, idx) => {
+        if (!step || typeof step.storyId !== "string" || !expectedIds.has(step.storyId)) {
+          errors.push(
+            `courses["${course.id}"].steps[${idx}] が存在しない作品 ID "${step?.storyId}" を参照しています`
+          );
+        }
+        if (course.storyIds[idx] !== step?.storyId) {
+          errors.push(
+            `courses["${course.id}"].storyIds[${idx}] ("${course.storyIds[idx]}") と steps[${idx}].storyId ("${step?.storyId}") が一致しません`
+          );
+        }
+      });
+    }
+    if (typeof course.totalCharCount !== "number" || typeof course.totalReadingTime !== "string") {
+      errors.push(`courses["${course.id}"] の文字数または読了目安時間が不足しています`);
+    }
+  }
+}
+
 function verifyStoryDetailFiles(storiesDir, storyById, expectedIds, errors, stats) {
   if (!fs.existsSync(storiesDir) || !fs.statSync(storiesDir).isDirectory()) {
     errors.push(`stories ディレクトリが存在しません: ${storiesDir}`);
@@ -251,6 +303,7 @@ export function verifyDistOutput(distDir) {
   const errors = [];
   const stats = {
     storyCount: 0,
+    courseCount: 0,
     searchStoryCount: 0,
     storyFileCount: 0,
     entityCount: 0,
@@ -267,6 +320,7 @@ export function verifyDistOutput(distDir) {
 
   if (index) {
     verifyEntitiesIndex(index, expectedIds, errors, stats);
+    verifyCoursesIndex(index, expectedIds, errors, stats);
   }
 
   const searchIndex = readJsonSafe(
@@ -346,13 +400,13 @@ function main() {
 
   if (validateOnly) {
     console.log(
-      `✅ 検証成功 (--validate-only): 全 ${result.stats.storyCount} 作品（原文1文字一致・スキーマ・公式コーパス ${result.stats.corpusTermCount} 語・マスタ・リンク整合性）すべて正常です。`
+      `✅ 検証成功 (--validate-only): 全 ${result.stats.storyCount} 作品・${result.stats.courseCount} コース（原文1文字一致・スキーマ・公式コーパス ${result.stats.corpusTermCount} 語・マスタ・リンク整合性）すべて正常です。`
     );
     return;
   }
 
   console.log(
-    `✅ ビルド＆検証成功: 全 ${result.dist.index.totalCount} 作品を検証し、public/data/ (stories-index.json + search-index.json + stories/*.json) を生成しました。`
+    `✅ ビルド＆検証成功: 全 ${result.dist.index.totalCount} 作品・${result.stats.courseCount} コースを検証し、public/data/ (stories-index.json + search-index.json + stories/*.json) を生成しました。`
   );
 }
 

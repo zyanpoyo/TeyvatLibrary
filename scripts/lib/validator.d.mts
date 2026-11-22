@@ -2,12 +2,14 @@ import type { InlineTagReference } from "../../src/domain/text-parser";
 import type {
   ArtifactPieceId,
   ChapterSourceRef,
+  CourseKind,
   EvidenceLink,
   IdentityPrefix,
   StoryCategoryId,
 } from "../../src/types/story";
 
 export const VALID_SHELF_CATEGORIES: StoryCategoryId[];
+export const VALID_COURSE_KINDS: CourseKind[];
 export const VALID_IDENTITY_PREFIXES: IdentityPrefix[];
 export const VALID_PIECES: ArtifactPieceId[];
 

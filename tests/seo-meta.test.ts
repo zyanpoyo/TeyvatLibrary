@@ -3,14 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   ABOUT_DOCUMENT_TITLE,
   buildAboutMeta,
+  buildCourseDetailMeta,
+  buildCoursesMeta,
   buildNotFoundMeta,
   buildShelfMeta,
   buildStoryDescription,
   buildStoryDocumentTitle,
   buildStoryMeta,
+  COURSES_DOCUMENT_TITLE,
   SHELF_DOCUMENT_TITLE,
 } from "../src/domain/seo";
-import type { StoriesIndexData, StoryDetail } from "../src/types/story";
+import type { CourseIndexItem, StoriesIndexData, StoryDetail } from "../src/types/story";
 
 function findTitle(meta: MetaDescriptor[]): string | undefined {
   const entry = meta.find((item) => "title" in item) as { title?: string } | undefined;
@@ -307,5 +310,97 @@ describe("SEO meta & JSON-LD builders", () => {
     expect(findCanonical(notFoundMeta)).toBeUndefined();
     expect(findMetaContent(notFoundMeta, "property", "og:image")).toBeUndefined();
     expect(findLdJson(notFoundMeta)).toBeUndefined();
+  });
+
+  it("builds courses index and course detail metadata with ItemList, BreadcrumbList, OGP, and course 404 fallback", () => {
+    const sampleCourse: CourseIndexItem = {
+      id: "rosalyne_chronicle",
+      kind: "character",
+      badge: "キャラ別・500年の軌跡",
+      title: "ロザリン（淑女）とルースタンの500年",
+      subtitle: "歌と炎を愛した少女が『淑女』に至るまで",
+      hook: "西風騎士団の騎士と炎の魔女の物語を時系列で追う。",
+      storyIds: ["elegy", "crimson_witch"],
+      steps: [
+        { storyId: "elegy", note: "1話目" },
+        { storyId: "crimson_witch", note: "2話目" },
+      ],
+      storyCount: 2,
+      totalCharCount: 1661,
+      totalReadingTime: "約3分",
+    };
+
+    const indexData: StoriesIndexData = {
+      generatedAt: "2026-11-22T00:00:00.000Z",
+      totalCount: 2,
+      categoryCounts: { book: 0, artifact: 1, weapon: 1, attire: 0, chronicle: 0 },
+      entitiesIndex: {},
+      stories: [
+        {
+          id: "elegy",
+          title: "終焉を嘆く詩",
+          shelfCategory: "weapon",
+          categoryLabel: "武器",
+          region: ["モンド"],
+          era: "500年前",
+          readingTime: "約1分",
+          charCount: 602,
+          hook: "h",
+          tags: [],
+        },
+        {
+          id: "crimson_witch",
+          title: "燃え盛る炎の魔女",
+          shelfCategory: "artifact",
+          categoryLabel: "聖遺物",
+          region: ["モンド"],
+          era: "500年前",
+          readingTime: "約2分",
+          charCount: 1059,
+          hook: "h2",
+          tags: [],
+        },
+      ],
+      courses: [sampleCourse],
+    };
+
+    const coursesMeta = buildCoursesMeta({ indexData });
+    expect(findTitle(coursesMeta)).toBe(COURSES_DOCUMENT_TITLE);
+    expect(findCanonical(coursesMeta)).toBe("https://teyvat-bunko.com/courses");
+    expect(findMetaContent(coursesMeta, "property", "og:image")).toBe(
+      "https://teyvat-bunko.com/og/courses.png"
+    );
+    const coursesLd = findLdJson(coursesMeta) as { "@graph": Array<Record<string, unknown>> };
+    expect(coursesLd["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "CollectionPage"]);
+
+    const detailMeta = buildCourseDetailMeta({ course: sampleCourse, indexData });
+    expect(findTitle(detailMeta)).toBe(
+      "【原神】読書コース「ロザリン（淑女）とルースタンの500年」（全2篇）｜テイワット文庫"
+    );
+    expect(findCanonical(detailMeta)).toBe(
+      "https://teyvat-bunko.com/courses/rosalyne_chronicle"
+    );
+    expect(findMetaContent(detailMeta, "property", "og:image")).toBe(
+      "https://teyvat-bunko.com/og/course/rosalyne_chronicle.png"
+    );
+    const detailLd = findLdJson(detailMeta) as { "@graph": Array<Record<string, unknown>> };
+    expect(detailLd["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "CollectionPage"]);
+    expect(detailLd["@graph"][1].mainEntity).toMatchObject({
+      "@type": "ItemList",
+      numberOfItems: 2,
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "終焉を嘆く詩", url: "https://teyvat-bunko.com/story/elegy" },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "燃え盛る炎の魔女",
+          url: "https://teyvat-bunko.com/story/crimson_witch",
+        },
+      ],
+    });
+
+    const missingCourseMeta = buildCourseDetailMeta({ course: null, indexData });
+    expect(findTitle(missingCourseMeta)).toBe("読書コースが見つかりません｜テイワット文庫");
+    expect(findMetaContent(missingCourseMeta, "name", "robots")).toBe("noindex, nofollow");
   });
 });

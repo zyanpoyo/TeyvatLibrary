@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 
 export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
-export const OG_TEMPLATE_VERSION = "v3";
+export const OG_TEMPLATE_VERSION = "v4";
 const OUTER_PADDING = 28;
 const INNER_WIDTH = OG_IMAGE_WIDTH - OUTER_PADDING * 2;
 const INNER_HEIGHT = OG_IMAGE_HEIGHT - OUTER_PADDING * 2;
@@ -646,6 +646,282 @@ function buildAboutOgNode({ displayHost, fontFamily500, fontFamily700 }) {
   });
 }
 
+const COURSE_KIND_OG_LABELS = {
+  beginner: "入門・必読",
+  character: "キャラクター別",
+  arc: "地域・歴史別",
+};
+
+function buildCoursesIndexOgNode({
+  courseCount,
+  totalStoryCount,
+  displayHost,
+  fontFamily500,
+  fontFamily700,
+}) {
+  const summaryLine =
+    typeof courseCount === "number" && courseCount > 0
+      ? `全${courseCount}コース ・ 収録${totalStoryCount || 0}篇を推奨順で連続通読`
+      : "入門・キャラクター別・地域・歴史別の切り口で推奨順に通読";
+
+  return wrapOgCardShell({
+    displayHost,
+    fontFamily500,
+    fontFamily700,
+    topLeft: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          padding: "8px 18px",
+          borderRadius: "999px",
+          border: "1px solid rgba(216, 184, 120, 0.55)",
+          backgroundColor: "rgba(216, 184, 120, 0.14)",
+          color: "#f4e4bf",
+          fontSize: "20px",
+          fontWeight: 700,
+          fontFamily: fontFamily700,
+        },
+      },
+      "読書コース・フェア棚一覧"
+    ),
+    body: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+        },
+      },
+      el(
+        "div",
+        {
+          style: {
+            fontSize: "54px",
+            fontWeight: 700,
+            fontFamily: fontFamily700,
+            color: "#f4e4bf",
+            lineHeight: 1.3,
+          },
+        },
+        "何から読むか迷う旅人のための読書コース"
+      ),
+      el(
+        "div",
+        {
+          style: {
+            fontSize: "26px",
+            fontWeight: 500,
+            fontFamily: fontFamily500,
+            color: "#e6e2d8",
+            lineHeight: 1.55,
+          },
+        },
+        summaryLine
+      ),
+      el(
+        "div",
+        {
+          style: {
+            fontSize: "21px",
+            fontWeight: 500,
+            fontFamily: fontFamily500,
+            color: "#a7b1c7",
+            lineHeight: 1.5,
+          },
+        },
+        "ネタバレなしの1行順路ガイドと読了進捗つきで物語の背景を体系的に辿る"
+      )
+    ),
+    footerLeft: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          gap: "10px",
+        },
+      },
+      ...["入門・必読", "キャラクター別", "地域・歴史別"].map((label) =>
+        el(
+          "div",
+          {
+            style: {
+              display: "flex",
+              padding: "6px 14px",
+              borderRadius: "8px",
+              border: "1px solid rgba(216, 184, 120, 0.3)",
+              backgroundColor: "rgba(216, 184, 120, 0.08)",
+              color: "#f4e4bf",
+              fontSize: "18px",
+              fontFamily: fontFamily500,
+            },
+          },
+          label
+        )
+      )
+    ),
+  });
+}
+
+function buildCourseOgNode(course, { displayHost, fontFamily500, fontFamily700 }) {
+  const titleText = truncateText(course.title, 44);
+  const titleLen = Array.from(titleText).length;
+  const titleSize = titleLen <= 16 ? 50 : titleLen <= 26 ? 43 : 36;
+  const subtitleText = truncateText(course.subtitle, 54);
+  const hookText = truncateText(course.hook, 84);
+  const kindLabel = COURSE_KIND_OG_LABELS[course.kind] || "読書コース";
+  const countMeta = `全${course.storyCount ?? course.storyIds?.length ?? 0}篇 ・ ${course.totalReadingTime || ""}`;
+
+  return wrapOgCardShell({
+    displayHost,
+    fontFamily500,
+    fontFamily700,
+    topLeft: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+        },
+      },
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 18px",
+            borderRadius: "999px",
+            border: "1px solid rgba(216, 184, 120, 0.55)",
+            backgroundColor: "rgba(216, 184, 120, 0.14)",
+            color: "#f4e4bf",
+            fontSize: "20px",
+            fontWeight: 700,
+            fontFamily: fontFamily700,
+          },
+        },
+        course.badge
+      ),
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 16px",
+            borderRadius: "999px",
+            border: "1px solid rgba(142, 166, 200, 0.34)",
+            backgroundColor: "rgba(142, 166, 200, 0.1)",
+            color: "#c6d2e8",
+            fontSize: "19px",
+            fontWeight: 500,
+            fontFamily: fontFamily500,
+          },
+        },
+        countMeta
+      )
+    ),
+    body: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
+          marginTop: "6px",
+          marginBottom: "6px",
+        },
+      },
+      el(
+        "div",
+        {
+          style: {
+            fontSize: `${titleSize}px`,
+            lineHeight: 1.3,
+            fontWeight: 700,
+            fontFamily: fontFamily700,
+            color: "#f4e4bf",
+          },
+        },
+        titleText
+      ),
+      subtitleText
+        ? el(
+            "div",
+            {
+              style: {
+                fontSize: "22px",
+                lineHeight: 1.45,
+                fontWeight: 700,
+                fontFamily: fontFamily700,
+                color: "#d8b878",
+              },
+            },
+            subtitleText
+          )
+        : null,
+      el(
+        "div",
+        {
+          style: {
+            fontSize: "23px",
+            lineHeight: 1.55,
+            fontWeight: 500,
+            fontFamily: fontFamily500,
+            color: "#e6e2d8",
+          },
+        },
+        hookText
+      )
+    ),
+    footerLeft: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        },
+      },
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            padding: "6px 14px",
+            borderRadius: "8px",
+            border: "1px solid rgba(216, 184, 120, 0.3)",
+            backgroundColor: "rgba(216, 184, 120, 0.08)",
+            color: "#f4e4bf",
+            fontSize: "18px",
+            fontFamily: fontFamily500,
+          },
+        },
+        kindLabel
+      ),
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            padding: "6px 14px",
+            borderRadius: "8px",
+            border: "1px solid rgba(167, 177, 199, 0.26)",
+            backgroundColor: "rgba(18, 25, 44, 0.85)",
+            color: "#a7b1c7",
+            fontSize: "18px",
+            fontFamily: fontFamily500,
+          },
+        },
+        "ネタバレなし順路ガイド付き"
+      )
+    ),
+  });
+}
+
 function collectTextsForSpec(spec, displayHost) {
   if (spec.kind === "site") {
     return [
@@ -665,6 +941,35 @@ function collectTextsForSpec(spec, displayHost) {
       "このサイトについて",
       "運営方針・著作権と引用の取り扱い・GA4 アクセス解析オプトアウト・ブラウザ保存データ・免責事項・お問い合わせ窓口のご案内",
       "非公式ファンアーカイブ・完全静的配信",
+      displayHost,
+    ];
+  }
+  if (spec.kind === "courses") {
+    return [
+      SITE_BRAND_TITLE,
+      "読書コース・フェア棚一覧",
+      "何から読むか迷う旅人のための読書コース",
+      `全${spec.courseCount || 0}コース ・ 収録${spec.totalStoryCount || 0}篇を推奨順で連続通読`,
+      "入門・キャラクター別・地域・歴史別の切り口で推奨順に通読",
+      "ネタバレなしの1行順路ガイドと読了進捗つきで物語の背景を体系的に辿る",
+      "入門・必読",
+      "キャラクター別",
+      "地域・歴史別",
+      displayHost,
+    ];
+  }
+  if (spec.kind === "course") {
+    const c = spec.course;
+    return [
+      SITE_BRAND_TITLE,
+      c.badge,
+      `全${c.storyCount ?? c.storyIds?.length ?? 0}篇 ・ ${c.totalReadingTime || ""}`,
+      truncateText(c.title, 44),
+      truncateText(c.subtitle, 54),
+      truncateText(c.hook, 84),
+      COURSE_KIND_OG_LABELS[c.kind] || "読書コース",
+      "ネタバレなし順路ガイド付き",
+      "…",
       displayHost,
     ];
   }
@@ -700,20 +1005,26 @@ function normalizeOnlyTargets(only) {
     .filter(Boolean)
     .map((token) => {
       const stripped = token.replace(/^\/?og\//, "").replace(/\.png$/i, "");
-      if (stripped === "site" || stripped === "about") return stripped;
+      if (stripped === "site" || stripped === "about" || stripped === "courses") {
+        return stripped;
+      }
       if (stripped.startsWith("story/")) return stripped.slice("story/".length);
       if (stripped.startsWith("story-")) return stripped.slice("story-".length);
+      if (stripped.startsWith("course/")) return stripped;
+      if (stripped.startsWith("course-")) return `course/${stripped.slice("course-".length)}`;
       return stripped;
     });
 
   if (normalized.length === 0) {
-    throw new Error("OGP 生成対象 (--only) が空です。site, about, または物語IDを指定してください。");
+    throw new Error(
+      "OGP 生成対象 (--only) が空です。site, about, courses, course/<id>, または物語IDを指定してください。"
+    );
   }
   return Array.from(new Set(normalized));
 }
 
 /**
- * 書架・About・全物語の静的 OGP 画像（1200x630 PNG）をビルド出力先へ生成する。
+ * 書架・About・読書コース・全物語の静的 OGP 画像（1200x630 PNG）をビルド出力先へ生成する。
  */
 export async function generateAllOgImages({
   clientDir,
@@ -726,11 +1037,14 @@ export async function generateAllOgImages({
 } = {}) {
   const ogRootDir = path.join(clientDir, "og");
   const ogStoryDir = path.join(ogRootDir, "story");
+  const ogCourseDir = path.join(ogRootDir, "course");
   fs.mkdirSync(ogStoryDir, { recursive: true });
+  fs.mkdirSync(ogCourseDir, { recursive: true });
   fs.mkdirSync(cacheDir, { recursive: true });
 
   const displayHost = resolveDisplayHost(siteUrl);
   const stories = indexData?.stories ?? [];
+  const courses = indexData?.courses ?? [];
   const totalCount = indexData?.totalCount ?? stories.length;
 
   const specs = [
@@ -749,6 +1063,36 @@ export async function generateAllOgImages({
       kind: "about",
       hashPayload: { kind: "about", displayHost },
     },
+    {
+      targetKey: "courses",
+      cacheId: "courses",
+      outPath: path.join(ogRootDir, "courses.png"),
+      kind: "courses",
+      courseCount: courses.length,
+      totalStoryCount: totalCount,
+      hashPayload: { kind: "courses", courseCount: courses.length, totalStoryCount: totalCount, displayHost },
+    },
+    ...courses
+      .filter((course) => course?.id)
+      .map((course) => ({
+        targetKey: `course/${course.id}`,
+        cacheId: `course-${course.id}`,
+        outPath: path.join(ogCourseDir, `${course.id}.png`),
+        kind: "course",
+        course,
+        hashPayload: {
+          kind: "course",
+          id: course.id,
+          courseKind: course.kind,
+          badge: course.badge,
+          title: course.title,
+          subtitle: course.subtitle,
+          hook: course.hook,
+          storyCount: course.storyCount,
+          totalReadingTime: course.totalReadingTime,
+          displayHost,
+        },
+      })),
     ...stories
       .filter((story) => story?.id)
       .map((story) => ({
@@ -774,19 +1118,29 @@ export async function generateAllOgImages({
   const onlyTargets = normalizeOnlyTargets(only);
   if (onlyTargets) {
     const specByTarget = new Map(specs.map((spec) => [spec.targetKey, spec]));
-    const unknownTargets = onlyTargets.filter((target) => !specByTarget.has(target));
+    const resolvedKeys = new Set();
+    const unknownTargets = [];
+    for (const target of onlyTargets) {
+      if (specByTarget.has(target)) {
+        resolvedKeys.add(target);
+      } else if (specByTarget.has(`course/${target}`)) {
+        resolvedKeys.add(`course/${target}`);
+      } else {
+        unknownTargets.push(target);
+      }
+    }
     if (unknownTargets.length > 0) {
       throw new Error(`指定された OGP 生成対象が見つかりません: ${unknownTargets.join(", ")}`);
     }
-    const targetSet = new Set(onlyTargets);
-    targetSpecs = specs.filter((spec) => targetSet.has(spec.targetKey));
+    targetSpecs = specs.filter((spec) => resolvedKeys.has(spec.targetKey));
   }
 
   const pendingSpecs = [];
   let cacheHits = 0;
 
   for (const spec of targetSpecs) {
-    const hash = computeCacheHash(spec.hashPayload);
+    const renderedTexts = collectTextsForSpec(spec, displayHost);
+    const hash = computeCacheHash({ ...spec.hashPayload, renderedTexts });
     const cacheFile = path.join(cacheDir, `${spec.cacheId}.${hash}.png`);
     if (!force && fs.existsSync(cacheFile)) {
       fs.copyFileSync(cacheFile, spec.outPath);
@@ -823,11 +1177,25 @@ export async function generateAllOgImages({
                 fontFamily500: fontRes.fontFamily500,
                 fontFamily700: fontRes.fontFamily700,
               })
-            : buildStoryOgNode(spec.story, {
-                displayHost,
-                fontFamily500: fontRes.fontFamily500,
-                fontFamily700: fontRes.fontFamily700,
-              });
+            : spec.kind === "courses"
+              ? buildCoursesIndexOgNode({
+                  courseCount: spec.courseCount,
+                  totalStoryCount: spec.totalStoryCount,
+                  displayHost,
+                  fontFamily500: fontRes.fontFamily500,
+                  fontFamily700: fontRes.fontFamily700,
+                })
+              : spec.kind === "course"
+                ? buildCourseOgNode(spec.course, {
+                    displayHost,
+                    fontFamily500: fontRes.fontFamily500,
+                    fontFamily700: fontRes.fontFamily700,
+                  })
+                : buildStoryOgNode(spec.story, {
+                    displayHost,
+                    fontFamily500: fontRes.fontFamily500,
+                    fontFamily700: fontRes.fontFamily700,
+                  });
 
       const svg = await satori(node, {
         width: OG_IMAGE_WIDTH,
@@ -881,6 +1249,8 @@ export async function runOgImageGeneratorSmokeCheck({ indexData, siteUrl } = {})
     const samplePaths = [
       "og/site.png",
       "og/about.png",
+      "og/courses.png",
+      ...(indexData?.courses ?? []).slice(0, 2).map((c) => `og/course/${c.id}.png`),
       ...(indexData?.stories ?? []).slice(0, 3).map((s) => `og/story/${s.id}.png`),
       ...((indexData?.stories ?? []).some((s) => s.id === "moonlit_bamboo_forest")
         ? ["og/story/moonlit_bamboo_forest.png"]

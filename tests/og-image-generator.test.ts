@@ -12,19 +12,22 @@ import {
 import { loadDistStoriesIndex } from "../src/server/dist-data.server.mjs";
 
 describe("static OGP image generator", () => {
-  it("renders valid 1200x630 PNGs for site, about, and all stories with zero missing glyphs and reuses cache", async () => {
+  it("renders valid 1200x630 PNGs for site, about, courses, all courses, and all stories with zero missing glyphs and reuses cache", async () => {
     const realIndex = loadDistStoriesIndex();
     const { firstRun, secondRun, sampleChecks } = await runOgImageGeneratorSmokeCheck({
       indexData: realIndex,
       siteUrl: "https://teyvat-bunko.com",
     });
 
+    const expectedTotal = realIndex.stories.length + (realIndex.courses?.length ?? 0) + 3;
     expect(firstRun.missingChars).toEqual([]);
-    expect(firstRun.totalGenerated).toBe(realIndex.stories.length + 2);
-    expect(firstRun.renderedCount).toBe(realIndex.stories.length + 2);
+    expect(firstRun.totalGenerated).toBe(expectedTotal);
+    expect(firstRun.renderedCount).toBe(expectedTotal);
     expect(firstRun.cacheHits).toBe(0);
 
-    expect(sampleChecks.length).toBeGreaterThanOrEqual(5);
+    expect(sampleChecks.length).toBeGreaterThanOrEqual(7);
+    expect(sampleChecks.some((c) => c.relPath === "og/courses.png")).toBe(true);
+    expect(sampleChecks.some((c) => c.relPath.startsWith("og/course/"))).toBe(true);
     for (const check of sampleChecks) {
       expect(check.exists).toBe(true);
       expect(check.validSignature).toBe(true);
@@ -38,7 +41,7 @@ describe("static OGP image generator", () => {
     expect(secondRun.cacheHits).toBe(firstRun.totalGenerated);
   }, 30000);
 
-  it("supports targeted generation with --only, forced re-render with --force, and rejects unknown targets", async () => {
+  it("supports targeted generation with --only (including courses and course/<id>), forced re-render with --force, and rejects unknown targets", async () => {
     const realIndex = loadDistStoriesIndex();
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "teyvat-og-options-"));
     const clientDir = path.join(tempRoot, "client");
@@ -50,13 +53,17 @@ describe("static OGP image generator", () => {
         indexData: realIndex,
         siteUrl: "https://teyvat-bunko.com",
         cacheDir,
-        only: ["site", "crimson_witch"],
+        only: ["site", "crimson_witch", "courses", "course/must_read_essentials"],
       });
 
-      expect(targeted.totalGenerated).toBe(2);
-      expect(targeted.renderedCount).toBe(2);
+      expect(targeted.totalGenerated).toBe(4);
+      expect(targeted.renderedCount).toBe(4);
       expect(targeted.cacheHits).toBe(0);
       expect(fs.existsSync(path.join(clientDir, "og", "site.png"))).toBe(true);
+      expect(fs.existsSync(path.join(clientDir, "og", "courses.png"))).toBe(true);
+      expect(
+        fs.existsSync(path.join(clientDir, "og", "course", "must_read_essentials.png"))
+      ).toBe(true);
       expect(fs.existsSync(path.join(clientDir, "og", "story", "crimson_witch.png"))).toBe(true);
       expect(fs.existsSync(path.join(clientDir, "og", "about.png"))).toBe(false);
 

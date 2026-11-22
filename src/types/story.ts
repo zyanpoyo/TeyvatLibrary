@@ -8,6 +8,50 @@ export type IdentityPrefix = "正体：" | "解説：" | "有力説：";
 export type EntityKind = "character" | "god" | "organization" | "concept" | "place";
 export type ReadingStatusFilter = "all" | "unread" | "read" | "bookmarked";
 export type SortMode = "recommended" | "newest" | "shortest";
+export type CourseKind = "beginner" | "character" | "arc";
+
+export interface CourseStep {
+  storyId: string;
+  note: string;
+}
+
+export interface CourseSeoOverride {
+  title?: string;
+  description?: string;
+}
+
+export interface CourseIndexItem {
+  id: string;
+  kind: CourseKind;
+  badge: string;
+  title: string;
+  subtitle: string;
+  hook: string;
+  featured?: boolean;
+  seo?: CourseSeoOverride;
+  storyIds: string[];
+  steps: CourseStep[];
+  storyCount: number;
+  totalCharCount: number;
+  totalReadingTime: string;
+}
+
+export interface StoryCourseStepRef {
+  storyId: string;
+  title: string;
+}
+
+export interface StoryCourseMembership {
+  courseId: string;
+  kind: CourseKind;
+  badge: string;
+  title: string;
+  stepIndex: number;
+  totalSteps: number;
+  prevStep: StoryCourseStepRef | null;
+  nextStep: StoryCourseStepRef | null;
+  steps: StoryCourseStepRef[];
+}
 
 export interface ChapterSourceRef {
   package: SourcePackageId;
@@ -52,6 +96,7 @@ export interface StoriesIndexData {
   categoryCounts: Record<StoryCategoryId, number>;
   entitiesIndex: Record<string, EntityIndexEntry>;
   stories: StoryIndexItem[];
+  courses?: CourseIndexItem[];
 }
 
 export interface EvidenceLink {
@@ -105,6 +150,7 @@ export interface StoryDetail extends StoryIndexItem {
   overallTruth: string;
   gameEffect: string;
   connected?: ConnectedStoryLink[];
+  courses?: StoryCourseMembership[];
   glossary: Record<string, GlossaryEntry>;
   chapters: StoryChapter[];
 }

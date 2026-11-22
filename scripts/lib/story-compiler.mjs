@@ -81,7 +81,25 @@ function collectBlankStoryFields(story, errors) {
   });
 }
 
-function runSchemaAndPlacementGate({ stories, entities, schemas }) {
+function collectBlankCourseFields(course, errors) {
+  const cid = course.id;
+  for (const key of ["badge", "title", "subtitle", "hook"]) {
+    pushIfBlank(course[key], `courses.${cid}.${key}`, errors);
+  }
+  if (course.seo) {
+    if (course.seo.title !== undefined) {
+      pushIfBlank(course.seo.title, `courses.${cid}.seo.title`, errors);
+    }
+    if (course.seo.description !== undefined) {
+      pushIfBlank(course.seo.description, `courses.${cid}.seo.description`, errors);
+    }
+  }
+  (course.steps || []).forEach((step, idx) => {
+    pushIfBlank(step.note, `courses.${cid}.steps[${idx}].note`, errors);
+  });
+}
+
+function runSchemaAndPlacementGate({ stories, entities, courses, schemas }) {
   const gateErrors = [];
   const hasStories = Array.isArray(stories) && stories.length > 0;
   if (!hasStories) {
@@ -147,13 +165,57 @@ function runSchemaAndPlacementGate({ stories, entities, schemas }) {
     rawStories.push(story);
   }
 
+  let hasCourseSchemaFailure = false;
+  let hasDuplicateCourseId = false;
+  const rawCourses = [];
+  const hasExplicitCourses = courses !== undefined;
+
+  if (hasExplicitCourses) {
+    if (!schemas?.courses) {
+      gateErrors.push("[JSONスキーマ] courses: courses.schema.json が指定されていません。");
+      hasCourseSchemaFailure = true;
+    } else {
+      const courseSchemaErrors = validateAgainstJsonSchema(courses, schemas.courses, "courses");
+      if (courseSchemaErrors.length > 0) {
+        gateErrors.push(...courseSchemaErrors);
+        hasCourseSchemaFailure = true;
+      } else {
+        const seenCourseIds = new Set();
+        for (const course of courses) {
+          if (seenCourseIds.has(course.id)) {
+            gateErrors.push(`[重複ID] courses.${course.id}: id '${course.id}' が重複しています。`);
+            hasDuplicateCourseId = true;
+          } else {
+            seenCourseIds.add(course.id);
+          }
+
+          const seenStepStoryIds = new Set();
+          for (const [idx, step] of course.steps.entries()) {
+            if (seenStepStoryIds.has(step.storyId)) {
+              gateErrors.push(
+                `[重複ストーリー] courses.${course.id}.steps[${idx}]: storyId '${step.storyId}' が同一コース内で重複しています。`
+              );
+            } else {
+              seenStepStoryIds.add(step.storyId);
+            }
+          }
+
+          collectBlankCourseFields(course, gateErrors);
+          rawCourses.push(course);
+        }
+      }
+    }
+  }
+
   const canProceedToCompile =
     hasStories &&
     entitySchemaErrors.length === 0 &&
     !hasStorySchemaFailure &&
-    !hasDuplicateId;
+    !hasDuplicateId &&
+    !hasCourseSchemaFailure &&
+    !hasDuplicateCourseId;
 
-  return { gateErrors, canProceedToCompile, rawStories };
+  return { gateErrors, canProceedToCompile, rawStories, rawCourses, hasExplicitCourses };
 }
 
 function createCachedSnapshotLoader(readRawSnapshot) {
@@ -404,7 +466,129 @@ function expandBidirectionalConnections(rawStories, compiledMap) {
   }
 }
 
-function buildIndexPayload(compiledMap, entities) {
+function validateCourseReferencesAndText(course, { storyIds, checkText, errors }) {
+  const cid = course.id;
+  errors.push(...checkText(course.badge, `courses.${cid}.badge`));
+  errors.push(...checkText(course.title, `courses.${cid}.title`));
+  errors.push(...checkText(course.subtitle, `courses.${cid}.subtitle`));
+  errors.push(...checkText(course.hook, `courses.${cid}.hook`));
+  if (course.seo?.title) {
+    errors.push(...checkText(course.seo.title, `courses.${cid}.seo.title`));
+  }
+  if (course.seo?.description) {
+    errors.push(...checkText(course.seo.description, `courses.${cid}.seo.description`));
+  }
+
+  course.steps.forEach((step, idx) => {
+    if (!storyIds.has(step.storyId)) {
+      errors.push(
+        `[リンク切れ] courses.${cid}.steps[${idx}]: 対象ID '${step.storyId}' が存在しません。`
+      );
+    }
+    errors.push(...checkText(step.note, `courses.${cid}.steps[${idx}].note`));
+  });
+}
+
+/**
+ * コース未所属作品および代表フェア棚（3枠・作品重複なし）の非ブロッキングヒントを収集する。
+ */
+function collectCourseHints(rawStories, rawCourses, warnings) {
+  if (!Array.isArray(rawCourses) || rawCourses.length === 0) return;
+
+  const assignedStoryIds = new Set();
+  for (const course of rawCourses) {
+    for (const step of course.steps || []) {
+      assignedStoryIds.add(step.storyId);
+    }
+  }
+
+  for (const story of rawStories) {
+    if (!assignedStoryIds.has(story.id)) {
+      warnings.push(
+        `[コース未所属作品] ${story.id}: どの読書コースにも収録されていません。既存コースへの編入または新コース追加を検討してください。`
+      );
+    }
+  }
+
+  const featuredCourses = rawCourses.filter((course) => course.featured === true);
+  if (featuredCourses.length !== 3) {
+    warnings.push(
+      `[フェア棚代表枠] featured: true のコースが ${featuredCourses.length} 件です（書架フェア棚は代表 3 枠を基本としています）。`
+    );
+  }
+
+  const featuredStoryOwners = new Map();
+  for (const course of featuredCourses) {
+    for (const step of course.steps || []) {
+      if (!featuredStoryOwners.has(step.storyId)) {
+        featuredStoryOwners.set(step.storyId, []);
+      }
+      featuredStoryOwners.get(step.storyId).push(course.id);
+    }
+  }
+  for (const [storyId, courseIds] of featuredStoryOwners.entries()) {
+    if (courseIds.length > 1) {
+      warnings.push(
+        `[フェア棚代表枠重複] '${storyId}' が代表コース（${courseIds.join(", ")}）で重複しています。`
+      );
+    }
+  }
+}
+
+function buildCoursesPayloadAndAssignMemberships(rawCourses, compiledMap) {
+  const compiledCourses = [];
+
+  for (const course of rawCourses) {
+    const storyIds = course.steps.map((s) => s.storyId);
+    const stepsSummary = course.steps.map((s) => ({
+      storyId: s.storyId,
+      title: compiledMap.get(s.storyId)?.title || s.storyId,
+    }));
+
+    let totalCharCount = 0;
+    course.steps.forEach((step, idx) => {
+      const targetStory = compiledMap.get(step.storyId);
+      if (!targetStory) return;
+      totalCharCount += targetStory.charCount || 0;
+
+      if (!Array.isArray(targetStory.courses)) {
+        targetStory.courses = [];
+      }
+      targetStory.courses.push({
+        courseId: course.id,
+        kind: course.kind,
+        badge: course.badge,
+        title: course.title,
+        stepIndex: idx,
+        totalSteps: stepsSummary.length,
+        prevStep: idx > 0 ? stepsSummary[idx - 1] : null,
+        nextStep: idx < stepsSummary.length - 1 ? stepsSummary[idx + 1] : null,
+        steps: stepsSummary,
+      });
+    });
+
+    const readingMinutes = Math.max(1, Math.round(totalCharCount / 550));
+    compiledCourses.push({
+      id: course.id,
+      kind: course.kind,
+      badge: course.badge,
+      title: course.title,
+      subtitle: course.subtitle,
+      hook: course.hook,
+      ...(course.featured !== undefined ? { featured: course.featured } : {}),
+      ...(course.seo ? { seo: course.seo } : {}),
+      storyIds,
+      steps: course.steps.map((s) => ({ storyId: s.storyId, note: s.note })),
+      storyCount: course.steps.length,
+      totalCharCount,
+      totalReadingTime: `約${readingMinutes}分`,
+    });
+  }
+
+  return compiledCourses;
+}
+
+function buildIndexPayload(compiledMap, entities, compiledCourses, includeCourses) {
   const categoryCounts = Object.fromEntries(VALID_SHELF_CATEGORIES.map((c) => [c, 0]));
   const entitiesIndex = {};
   const indexStories = [];
@@ -446,6 +630,7 @@ function buildIndexPayload(compiledMap, entities) {
     categoryCounts,
     entitiesIndex,
     stories: indexStories,
+    ...(includeCourses ? { courses: compiledCourses } : {}),
   };
 }
 
@@ -526,6 +711,7 @@ function buildSearchIndexPayload(compiledMap, entities, generatedAt) {
 export function compileStories({
   stories,
   entities,
+  courses,
   officialEntities = {},
   officialCorpus = {},
   schemas,
@@ -537,15 +723,18 @@ export function compileStories({
 
   const stats = {
     storyCount: Array.isArray(stories) ? stories.length : 0,
+    courseCount: Array.isArray(courses) ? courses.length : 0,
     corpusTermCount: Object.keys(officialCorpus?.terms || {}).length,
   };
 
   // Stage 1: Schema & 配置ゲート（不正構造時は Stage 2 へ進まず安全中断）
-  const { gateErrors, canProceedToCompile, rawStories } = runSchemaAndPlacementGate({
-    stories,
-    entities,
-    schemas,
-  });
+  const { gateErrors, canProceedToCompile, rawStories, rawCourses, hasExplicitCourses } =
+    runSchemaAndPlacementGate({
+      stories,
+      entities,
+      courses,
+      schemas,
+    });
   if (!canProceedToCompile) {
     return {
       ok: false,
@@ -589,6 +778,18 @@ export function compileStories({
     compiledMap.set(story.id, compiledStory);
   }
 
+  for (const course of rawCourses) {
+    validateCourseReferencesAndText(course, {
+      storyIds,
+      checkText,
+      errors,
+    });
+  }
+
+  if (hasExplicitCourses && rawCourses.length > 0 && errors.length === 0) {
+    collectCourseHints(rawStories, rawCourses, warnings);
+  }
+
   if (errors.length > 0) {
     return {
       ok: false,
@@ -599,9 +800,12 @@ export function compileStories({
     };
   }
 
-  // Stage 3: 双方向 connected 展開 + 配信データ構築
+  // Stage 3: 双方向 connected 展開 + コース解決 + 配信データ構築
   expandBidirectionalConnections(rawStories, compiledMap);
-  const index = buildIndexPayload(compiledMap, entities);
+  const compiledCourses = hasExplicitCourses
+    ? buildCoursesPayloadAndAssignMemberships(rawCourses, compiledMap)
+    : [];
+  const index = buildIndexPayload(compiledMap, entities, compiledCourses, hasExplicitCourses);
   const searchIndex = buildSearchIndexPayload(compiledMap, entities, index.generatedAt);
   const storiesById = Object.fromEntries(compiledMap);
 

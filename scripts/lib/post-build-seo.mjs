@@ -45,14 +45,35 @@ export function buildSitemapXml({ indexData, siteUrl } = {}) {
 
   const entries = [
     { loc: `${origin}/`, lastmod: indexLastmod },
+    { loc: `${origin}/courses`, lastmod: indexLastmod },
     { loc: `${origin}/about`, lastmod: null },
   ];
 
+  const storyLastmodById = new Map();
   for (const story of indexData?.stories ?? []) {
     if (!story?.id) continue;
+    const storyLastmod = extractIsoDate(story.addedAt);
+    if (storyLastmod) {
+      storyLastmodById.set(story.id, storyLastmod);
+    }
     entries.push({
       loc: `${origin}/story/${encodeURIComponent(story.id)}`,
-      lastmod: extractIsoDate(story.addedAt),
+      lastmod: storyLastmod,
+    });
+  }
+
+  for (const course of indexData?.courses ?? []) {
+    if (!course?.id) continue;
+    let latestCourseDate = null;
+    for (const sid of course.storyIds ?? []) {
+      const dateStr = storyLastmodById.get(sid);
+      if (dateStr && (!latestCourseDate || dateStr > latestCourseDate)) {
+        latestCourseDate = dateStr;
+      }
+    }
+    entries.push({
+      loc: `${origin}/courses/${encodeURIComponent(course.id)}`,
+      lastmod: latestCourseDate || indexLastmod,
     });
   }
 

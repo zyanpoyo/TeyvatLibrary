@@ -57,6 +57,24 @@ const MOCK_INDEX: StoriesIndexData = {
       entityIds: [],
     },
   ],
+  courses: [
+    {
+      id: "must_read_essentials",
+      kind: "beginner",
+      badge: "入門",
+      title: "必読コース",
+      subtitle: "サブ",
+      hook: "フック",
+      storyIds: ["crimson_witch", "byakuyakoku"],
+      steps: [
+        { storyId: "crimson_witch", note: "1" },
+        { storyId: "byakuyakoku", note: "2" },
+      ],
+      storyCount: 2,
+      totalCharCount: 9000,
+      totalReadingTime: "約18分",
+    },
+  ],
 };
 
 describe("site-url canonical helpers", () => {
@@ -136,6 +154,8 @@ describe("post-build SEO asset generators", () => {
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain("<loc>https://bunko.example.jp/</loc>");
     expect(xml).toContain("<lastmod>2026-11-22</lastmod>");
+    expect(xml).toContain("<loc>https://bunko.example.jp/courses</loc>");
+    expect(xml).toContain("<loc>https://bunko.example.jp/courses/must_read_essentials</loc>");
     expect(xml).toContain("<loc>https://bunko.example.jp/about</loc>");
     expect(xml).toContain("<loc>https://bunko.example.jp/story/crimson_witch</loc>");
     expect(xml).toContain("<lastmod>2026-11-15</lastmod>");

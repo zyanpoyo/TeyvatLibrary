@@ -44,7 +44,9 @@ export interface ReadingStateReader {
 
 export type ReadingStateInput = ReadingStateReader | ReadingStateSnapshot | null;
 
-function resolveReadingStateReader(input: ReadingStateInput | undefined): ReadingStateReader | null {
+export function resolveReadingStateReader(
+  input: ReadingStateInput | undefined
+): ReadingStateReader | null {
   if (!input) return null;
   if ("isRead" in input && typeof input.isRead === "function") {
     return input;

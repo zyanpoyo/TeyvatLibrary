@@ -63,19 +63,20 @@ flowchart TD
     subgraph Layer2["② 編集層 (data/stories/ & data/shared/) — キュレーション対象 (Git管理)"]
         STORY["data/stories/<shelfCategory>/<id>.json<br/>1ストーリー = 1 JSONファイル<br/>(異種カテゴリー横断の chapters[].sourceRef 対応)"]
         ENT["data/shared/entities.json<br/>共通人物・神・組織・歴史用語マスタ"]
+        COURSE["data/shared/courses.json<br/>フェア棚・読書コース定義"]
         DICT["data/shared/official-entities.json<br/>NG表記・メディア出典語・許可カタカナ辞書"]
     end
 
     subgraph Compiler["ビルド時パイプライン (Story Compiler & Validator)"]
         CLEAN["1. 原典テキストの標準正規化 & 宣言的スライス<br/>・<br/> / <color> タグ正規化<br/>・sourceRef.stripPrefix / paragraphSlice 適用"]
-        VAL["2. ガードレール検証<br/>・原文1文字完全一致チェック (正規化後raw === タグ除去後paragraphs)<br/>・公式コーパス / NG表記 / 出典evidence / タグ整合性検査"]
-        BUILD["3. データ解決・最適化<br/>・entities.json マスタ結合 & descOverride 適用<br/>・双方向 connected リンク自動展開<br/>・evidence 内の収録作品名『〇〇』を自動リンク化<br/>・読了時間(readingTime) / 登場人物逆引き自動算出"]
+        VAL["2. ガードレール検証<br/>・原文1文字完全一致チェック (正規化後raw === タグ除去後paragraphs)<br/>・公式コーパス / NG表記 / 出典evidence / タグ整合性 / コースID実在検査"]
+        BUILD["3. データ解決・最適化<br/>・entities.json マスタ結合 & descOverride 適用<br/>・双方向 connected リンク自動展開<br/>・evidence 内の収録作品名『〇〇』を自動リンク化<br/>・読了時間 / 登場人物逆引き / コース集計＆所属解決"]
     end
 
     subgraph Layer3["③ 配信層 (public/data/) — フロントエンド配信用 (ビルド生成物)"]
-        INDEX["stories-index.json<br/>(書架5分類・検索・人物/時代フィルタ用 軽量インデックス)"]
+        INDEX["stories-index.json<br/>(書架5分類・検索・人物/時代フィルタ・コース一覧用 軽量インデックス)"]
         SEARCH["search-index.json<br/>(横断全文検索用・タグ除去＆性別展開済み遅延取得コーパス)"]
-        DETAIL["stories/<id>.json<br/>(リーダー画面用・マスタ/逆リンク完全解決済みデータ)"]
+        DETAIL["stories/<id>.json<br/>(リーダー画面用・マスタ/逆リンク/所属コース完全解決済みデータ)"]
     end
 
     GDB -->|"extract-raw"| RAW
@@ -87,6 +88,7 @@ flowchart TD
     CLEAN --> VAL
     STORY --> VAL
     ENT --> VAL
+    COURSE --> VAL
     DICT --> VAL
     CORPUS --> VAL
     VAL -->|"検証パス (Exit 0)"| BUILD
@@ -102,7 +104,8 @@ genshin-books/
 ├── data/
 │   ├── schemas/
 │   │   ├── story.schema.json             # 編集層ストーリーJSONのJSON Schema定義
-│   │   └── entities.schema.json          # 共通人物・用語マスタのJSON Schema定義
+│   │   ├── entities.schema.json          # 共通人物・用語マスタのJSON Schema定義
+│   │   └── courses.schema.json           # フェア棚・読書コース定義のJSON Schema定義
 │   │
 │   ├── raw/                              # 【① 原典層】作品で使用したアイテムの無加工スナップショット
 │   │   ├── artifact/
@@ -121,6 +124,7 @@ genshin-books/
 │   │
 │   ├── shared/                           # 【② 編集層：共通マスタ】
 │   │   ├── entities.json                 # 作品横断の人物・神・組織・歴史用語マスタ
+│   │   ├── courses.json                  # フェア棚・読書コース定義（全10コース）
 │   │   ├── official-entities.json        # NG表記・メディア出典語・一般カタカナ辞書
 │   │   └── official-corpus.json          # genshin-db + genshin-data 全量から生成した公式カタカナ辞書
 │   │
@@ -350,6 +354,13 @@ genshin-books/
 }
 ```
 
+### 4.4 読書コース定義（`data/shared/courses.json`）
+
+複数の物語を推奨順とネタバレなし 1 行順路ガイドで束ねるキュレーション定義配列（スキーマ：[`data/schemas/courses.schema.json`](../../data/schemas/courses.schema.json)）。
+
+- **必須フィールド**: `id`（`^[a-z0-9_]+$`）、`kind`（`"beginner" | "character" | "arc"`）、`badge`、`title`、`subtitle`、`hook`、`steps`（1件以上の `{ storyId, note }` 配列。`note` はネタバレを含まない1行の順路ガイド）
+- **任意フィールド**: `featured`（boolean — `true` のコースを最大3件、書架フェア棚に代表展示）、`seo`（`{ title?, description? }`）
+
 ---
 
 ## 5. 原典参照（`sourceRef`）と宣言的クレンジング・原文一致検証の仕様
@@ -448,10 +459,11 @@ function resolveActualPlainText(paragraphs) {
 - 風の翼『交錯する運命の翼』など、原典テキスト内にゲーム内の主人公性別分岐記法（`{M#彼女}{F#彼}` 等）が含まれる場合、編集層（`data/stories/`）の `paragraphs` では**原文1文字一致の原則に従って記法を無改変のまま保持**する。
 - インラインタグ構文（`stripInlineTags` / `extractInlineTagReferences`）は `src/domain/text-parser.ts` とビルド検証パイプライン（`scripts/lib/validator.mjs` / `story-compiler.mjs`）間で共有されており、`{{term_id|{M#...}{F#...}}}` のように用語タグ内に性別分岐記法を含めた場合も、検証（1文字一致・`glossary` 参照チェック）と描画時展開（`彼女／彼` 形式）が一貫して動作する。
 
-### 5.4 JSON スキーマ・確度区分・出典リンク整合性・エンティティ候補チェック
-- **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json` と `story.schema.json` の必須項目・正規表現パターン・列挙値・キー名制約（`propertyNames`）・未定義プロパティ禁止（`additionalProperties: false`）を厳密に検査する。スキーマゲートを通過したデータのみが後段の `StoryCompiler`（`scripts/lib/story-compiler.mjs`）による解決・検証工程へ進む。
+### 5.4 JSON スキーマ・確度区分・出典リンク整合性・エンティティ候補・コース検証
+- **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json`、`story.schema.json`、`courses.schema.json` の必須項目・正規表現パターン・列挙値・キー名制約（`propertyNames`）・未定義プロパティ禁止（`additionalProperties: false`）を厳密に検査する。あわせてコース ID の一意性・同一コース内 `steps[].storyId` の重複・空白文字列の禁止もスキーマゲートで検証した上で後段の `StoryCompiler`（`scripts/lib/story-compiler.mjs`）へ進む。
 - **確度区分・用語必須チェック (`VALID_IDENTITY_PREFIXES` / `StoryCompiler`)**: `glossary` の `identity` / `identityOverride` および `entities.json` の `defaultIdentity` は、情報の性質・確度を表す 3 種プレフィックス（**`正体：` / `解説：` / `有力説：`**）のいずれかで始まることを強制し、マスタ解決後の `term` / `desc` / `evidence` が空でないこともあわせて検証する。
 - **出典リンク表記チェック (`findSubtitleLinkErrors`)**: `evidence` / `evidenceOverride` / `defaultEvidence` に収録済み他作品のタイトルが含まれるにもかかわらず `『作品名（補足）』` のように括弧を内側へ含めたため `evidenceLinks` が不発になっている記述をエラーとして検出する（部位・巻の補足は必ず `『作品名』（補足）` のように外へ配置する）。
+- **コース実在参照＆コーパス検査**: `courses[].steps[].storyId` が実在する作品 ID であることを検証し、`badge`・`title`・`subtitle`・`hook`・`seo`・`steps[].note` の全テキストに対して公式コーパス／NG 表記チェックを実施する。
 - **未連携エンティティ候補ヒント (`findEntityLinkHints`)**: 本文または `overallTruth` に `entities.json` 登録済み人物・概念名が登場しているにもかかわらず `entityId` 連携に含まれていない場合、非ブロッキングな注意喚起（`⚠️ ヒント`）を出力して見落としを防ぐ。
 
 ---
@@ -460,7 +472,7 @@ function resolveActualPlainText(paragraphs) {
 
 ビルド時の **Story Compiler (`scripts/lib/story-compiler.mjs`)** は、編集層（Layer 2）を検証した上で以下の自動解決処理を行い、`public/data/` に 3 種類の配信用JSONを生成する。
 
-### 6.1 Story Compiler による4つの自動解決処理
+### 6.1 Story Compiler による5つの自動解決処理
 
 1. **`glossary` と `entities` サマリーのマスタ継承解決**:
    - `glossary[key].entityId` が指定されている場合、`data/shared/entities.json` から `defaultIdentity`, `defaultDesc`, `defaultEvidence` を引き継ぎ、`identityOverride` / `descOverride` / `evidenceOverride`（または個別指定）があれば上書きしてフラットなオブジェクトに展開する。
@@ -471,11 +483,14 @@ function resolveActualPlainText(paragraphs) {
    - `glossary` の `evidence` 文字列（例：`"聖遺物『守護の心』・武器『西風剣』『終焉を嘆く詩』"`）を走査し、`『...』` 内の名称がすでに書架に収録されている作品（例：`『終焉を嘆く詩』` → `id: "elegy"`）と一致する場合、配信JSONに `evidenceLinks: [{ title: "終焉を嘆く詩", storyId: "elegy" }]` を自動付与する。これにより、用語ガイド（Dialog）内の出典名をクリックして該当作品へ直接ジャンプできる。
 4. **読了目安時間（`readingTime`）とカテゴリー件数の自動集計**:
    - 全章のプレーンテキスト文字数を合算し、`Math.max(1, Math.round(charCount / 550))` から `"約N分"` を自動算出する。
+5. **読書コース集計と作品別所属解決（`courses[]`）**:
+   - 各コースについて `storyIds`・`storyCount`・`totalCharCount`（全収録作品の `charCount` 合算）・`totalReadingTime`（`Math.max(1, Math.round(totalCharCount / 550))` から `"約N分"`）を算出し、`stories-index.json` の `courses[]` に格納する。
+   - 同時に各作品が収録されているコース情報（`courseId`, `kind`, `badge`, `title`, `stepIndex`, `totalSteps`, `prevStep`, `nextStep`, `steps`）を `stories/<id>.json` の `courses[]` に事前埋め込みし、リーダー直アクセスおよび静的プリレンダリング HTML で追加 fetch や CLS なしにコース導線を描画できるようにする。
 
 ---
 
-### 6.2 配信ファイル①：書架・検索用軽量インデックス（`public/data/stories-index.json`）
-書架（一覧画面）の初期表示、5分類タブ切り替え、登場人物・用語・地域フィルタリング専用の軽量ファイル（本文・用語辞書を含まないため、100作品でも約30〜40KB）。
+### 6.2 配信ファイル①：書架・コース・検索用軽量インデックス（`public/data/stories-index.json`）
+書架（一覧画面）の初期表示、フェア棚・読書コース一覧・詳細ページ（`/courses`, `/courses/:courseId`）、5分類タブ切り替え、登場人物・用語・地域フィルタリング専用の軽量ファイル（本文・用語辞書を含まない）。
 
 ```json
 {
@@ -508,12 +523,31 @@ function resolveActualPlainText(paragraphs) {
       "tags": ["ロザリン（淑女）", "500年前の災厄", "全5章・時系列順"],
       "entityIds": ["rosalyne", "rustan"]
     }
+  ],
+  "courses": [
+    {
+      "id": "must_read_essentials",
+      "kind": "beginner",
+      "badge": "必読入門・厳選4選",
+      "title": "まずはこれ！テイワット核心の重要記録",
+      "subtitle": "空月・『日月前事』・カーンルイアを辿る入門編",
+      "hook": "...",
+      "featured": true,
+      "storyIds": ["wings_of_fate", "aubade_of_morning_star_and_moon"],
+      "steps": [
+        { "storyId": "wings_of_fate", "note": "..." },
+        { "storyId": "aubade_of_morning_star_and_moon", "note": "..." }
+      ],
+      "storyCount": 2,
+      "totalCharCount": 3100,
+      "totalReadingTime": "約6分"
+    }
   ]
 }
 ```
 
 ### 6.3 配信ファイル②：リーダー画面用・解決済み個別データ（`public/data/stories/<id>.json`）
-ユーザーが書架でカードを選択した際に読み込む単一作品の完全データ。マスタ結合・逆リンク・出典リンクがすべて解決済みのため、フロントエンドはそのままDOMに描画するだけで動作する。
+ユーザーが書架・読書コースから作品を選択した際に読み込む単一作品の完全データ。マスタ結合・逆リンク・出典リンク・所属コース情報（`courses`）がすべて解決済みのため、フロントエンドはそのままDOMに描画するだけで動作する。
 
 ### 6.4 配信ファイル③：横断全文検索用コーパス（`public/data/search-index.json`）
 書架の検索欄フォーカスまたは検索語入力時に 1 回だけ遅延取得する全文検索専用データ。初期表示用の `stories-index.json` を肥大化させずに本文・用語解説・真相メモを横断検索でき、検索対象外の出典（`evidence`）や関連リンク（`connected`）による連鎖誤ヒットを除外している。

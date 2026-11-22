@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StoryShareBar } from "../src/components/reader/StoryShareBar";
 import {
+  buildCourseShareText,
+  buildCourseShareUrl,
+  buildCourseXShareIntentUrl,
   buildStoryShareText,
   buildStoryShareUrl,
   buildXShareIntentUrl,
@@ -35,6 +38,23 @@ describe("story share helpers and StoryShareBar", () => {
       "聖遺物『燃え盛る炎の魔女』（ロザリン（淑女））｜テイワット文庫"
     );
     expect(intent.searchParams.get("hashtags")).toBe("原神,原神考察,テイワット文庫");
+
+    const sampleCourse = {
+      id: "rosalyne_chronicle",
+      title: "ロザリン（淑女）とルースタンの500年",
+      storyCount: 5,
+      totalReadingTime: "約7分",
+    };
+    expect(buildCourseShareUrl(sampleCourse.id)).toBe(
+      "https://teyvat-bunko.com/courses/rosalyne_chronicle"
+    );
+    expect(buildCourseShareText(sampleCourse)).toBe(
+      "読書コース『ロザリン（淑女）とルースタンの500年』（全5篇・約7分）｜テイワット文庫"
+    );
+    const courseIntent = new URL(buildCourseXShareIntentUrl(sampleCourse));
+    expect(courseIntent.searchParams.get("url")).toBe(
+      "https://teyvat-bunko.com/courses/rosalyne_chronicle"
+    );
   });
 
   it("copies canonical URL without disabling button, updates external status region, and fires onShare", async () => {

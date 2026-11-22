@@ -9,6 +9,8 @@ const VALID_JUMP_KINDS = new Set<SearchMatchKind>([
   "truth",
 ]);
 
+const VALID_COURSE_ID_PATTERN = /^[a-z0-9_]+$/;
+
 function parseNonNegativeInt(raw: string | null): number | undefined {
   if (raw === null || !/^\d+$/.test(raw)) return undefined;
   const num = Number(raw);
@@ -67,6 +69,39 @@ export function parseReaderJumpParams(search: string): SearchJumpTarget | null {
     ...(paragraphIndex !== undefined ? { paragraphIndex } : {}),
     ...(termId ? { termId } : {}),
   };
+}
+
+/**
+ * リーダーURLのクエリ文字列から進行中コースID（?course=<id>）を抽出する。
+ */
+export function parseReaderCourseParam(search: string): string | null {
+  const params = new URLSearchParams(search || "");
+  const raw = (params.get("course") || "").trim();
+  return raw && VALID_COURSE_ID_PATTERN.test(raw) ? raw : null;
+}
+
+/**
+ * 物語IDと任意の進行中コースID・検索ジャンプ先からリーダーURLパスを構築する。
+ */
+export function buildReaderStoryPath(
+  storyId: string,
+  options?: { courseId?: string | null; searchTarget?: SearchJumpTarget | null }
+): string {
+  const pathname = `/story/${encodeURIComponent(storyId)}`;
+  const params = new URLSearchParams();
+
+  if (options?.courseId && VALID_COURSE_ID_PATTERN.test(options.courseId)) {
+    params.set("course", options.courseId);
+  }
+  const jumpQuery = buildReaderJumpParams(options?.searchTarget);
+  if (jumpQuery) {
+    for (const [k, v] of new URLSearchParams(jumpQuery).entries()) {
+      params.set(k, v);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 /**

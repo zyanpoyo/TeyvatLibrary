@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useParams } from "react-router";
-import { analytics, type StoryCompleteMethod, type StoryShareMethod } from "../../analytics/ga4";
+import {
+  analytics,
+  type StoryCompleteMethod,
+  type StoryOpenSource,
+  type StoryShareMethod,
+} from "../../analytics/ga4";
 import { fetchStoryDetail } from "../../api/stories";
+import { deriveReaderCourseContext } from "../../domain/courses";
 import { buildStoryDocumentTitle } from "../../domain/seo";
 import { useReaderSession } from "../../hooks/useReaderSession";
 import { useSearchHighlight } from "../../hooks/useSearchHighlight";
-import { parseReaderJumpParams } from "../../router/search-params";
+import { parseReaderCourseParam, parseReaderJumpParams } from "../../router/search-params";
 import {
   useDisplayPrefsStore,
   useReaderTransition,
@@ -30,7 +36,7 @@ export function ReaderPage({
 }: ReaderPageProps = {}) {
   const { storyId = "" } = useParams<{ storyId: string }>();
 
-  const { store: readingStore } = useReadingStateStore();
+  const { store: readingStore, snapshot: readingSnapshot } = useReadingStateStore();
   const {
     prefs: displayPrefs,
     annotationsEnabled,
@@ -46,6 +52,10 @@ export function ReaderPage({
   const location = useLocation();
   const hasSearchTarget = useMemo(
     () => Boolean(parseReaderJumpParams(location.search)),
+    [location.search]
+  );
+  const activeCourseId = useMemo(
+    () => parseReaderCourseParam(location.search),
     [location.search]
   );
 
@@ -230,6 +240,29 @@ export function ReaderPage({
     [storyCategoryById]
   );
 
+  const handleSelectCourseStory = useCallback(
+    (targetId: string, source: StoryOpenSource) => {
+      if (!targetId) return;
+      analytics.trackStoryOpen({
+        storyId: targetId,
+        storyCategory: storyCategoryById.get(targetId),
+        source,
+      });
+    },
+    [storyCategoryById]
+  );
+
+  const courseContext = useMemo(
+    () =>
+      deriveReaderCourseContext({
+        story,
+        indexData,
+        activeCourseId,
+        readingState: readingSnapshot,
+      }),
+    [story, indexData, activeCourseId, readingSnapshot]
+  );
+
   const handleSelectEvidenceLink = useCallback(
     (targetId: string) => {
       if (!targetId) return;
@@ -341,11 +374,13 @@ export function ReaderPage({
               loreDetailsRef={loreDetailsRef}
               isProgrammaticLoreOpenRef={isProgrammaticLoreOpenRef}
               highlightQuery={highlightQuery}
+              courseContext={courseContext}
               onToggleBookmark={reader.toggleBookmark}
               onToggleRead={reader.toggleRead}
               onLoreOpened={handleLoreOpened}
               onSelectTerm={handleSelectTerm}
               onSelectConnectedStory={handleSelectConnectedStory}
+              onSelectCourseStory={handleSelectCourseStory}
               onShareStory={handleShareStory}
             />
 

@@ -37,6 +37,9 @@ jobs:
       - name: Validate skills manifest
         run: npm run skills:validate
 
+      - name: Run lint
+        run: npm run lint
+
       - name: Build application
         run: npm run build
 

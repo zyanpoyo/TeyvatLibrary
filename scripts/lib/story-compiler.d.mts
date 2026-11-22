@@ -35,6 +35,7 @@ export interface CompiledStoryDetail extends Omit<StoryDetail, "glossary" | "cha
 export interface CompileStoriesInput {
   stories: StoryInputEntry[];
   entities: unknown;
+  courses?: unknown;
   officialEntities?: {
     ngVariants?: Record<string, string>;
     officialMediaTerms?: string[];
@@ -46,6 +47,7 @@ export interface CompileStoriesInput {
   schemas: {
     story: Record<string, unknown>;
     entities: Record<string, unknown>;
+    courses?: Record<string, unknown>;
   };
   readRawSnapshot: (sourceRef: RawSourceRef) => unknown;
 }
@@ -61,6 +63,7 @@ export interface CompileStoriesResult {
   } | null;
   stats: {
     storyCount: number;
+    courseCount: number;
     corpusTermCount: number;
   };
 }
