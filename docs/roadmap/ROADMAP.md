@@ -30,7 +30,7 @@
     1. 書籍『白夜国館蔵（第2巻『日月前事』）』（収録済み：[`byakuyakoku.json`](../../data/stories/book/byakuyakoku.json)）
     2. 書籍『竹林月夜』（収録済み：[`moonlit_bamboo_forest.json`](../../data/stories/book/moonlit_bamboo_forest.json)）
     3. 書籍『白姫と六人の小人』（収録済み：[`pale_princess.json`](../../data/stories/book/pale_princess.json)）
-    4. 聖遺物『深廊の終曲』（収録済み：[`deep_galleries.json`](../../data/stories/artifact/deep_galleries.json)） ＆ 『黒曜の秘典』（収録済み：[`obsidian_codex.json`](../../data/stories/artifact/obsidian_codex.json)）
+    4. 聖遺物『深廊の終曲』（収録済み：[`deep_galleries.json`](../../data/stories/artifact/deep_galleries.json)）・『暁の星と月の歌』（収録済み：[`aubade_of_morning_star_and_moon.json`](../../data/stories/artifact/aubade_of_morning_star_and_moon.json)）・『天からの贈り物』（収録済み：[`celestial_gift.json`](../../data/stories/artifact/celestial_gift.json)）＆ 『黒曜の秘典』（収録済み：[`obsidian_codex.json`](../../data/stories/artifact/obsidian_codex.json)）※関連作としてナド・クライ編の聖遺物『月を紡ぐ夜の歌』（[`silken_moons_serenade.json`](../../data/stories/artifact/silken_moons_serenade.json)）・『長き夜の誓い』（[`long_nights_oath.json`](../../data/stories/artifact/long_nights_oath.json)）も収録済み
 
 ### 1.3 コンテンツ制作パイプラインの自動化
 - [ ] **全公式テキストのローカル検索インデックス化**（[HANDOFF.md](../handoff/HANDOFF.md) Step 2）
@@ -100,8 +100,8 @@
 | 状態 | 地域・テーマ | 聖遺物セット名 | 関連キャラ・テーマ | 収録・特集の狙い |
 | :---: | :--- | :--- | :--- | :--- |
 | ✅ | 創世記・高天・月 | **深廊の終曲**（`finaleofthedeepgalleries`） | 原初の龍ニーベルンゲン・過客の少女・極北古史 | [`deep_galleries.json`](../../data/stories/artifact/deep_galleries.json) として第4バッチで収録済み（コース③対象）。天理・龍王・月の三姉妹・北国の古文明に関わる最新考察トレンド直結の聖遺物。 |
-| ⬜ | 創世記・高天・月 | **暁の星と月の歌**（`aubadeofmorningstarandmoon`） | 月の三姉妹・空月・統一文明時代 | 三つの空月を中心とした統一文明時代から終焉までの神話を描く創世記テキスト。 |
-| ⬜ | 創世記・高天・月 | **天からの贈り物**（`celestialgift`） | 最初の天の御使・高天への反逆 | 高天から御使へ授けられた贈り物と、最初の御使が天理へ反逆するまでの経緯を描く。 |
+| ✅ | 創世記・高天・月 | **暁の星と月の歌**（`aubadeofmorningstarandmoon`） | 月の三姉妹・空月・統一文明時代 | [`aubade_of_morning_star_and_moon.json`](../../data/stories/artifact/aubade_of_morning_star_and_moon.json) として第6バッチで収録済み。三つの空月を中心とした統一文明時代から終焉までの神話を描く創世記テキスト。 |
+| ✅ | 創世記・高天・月 | **天からの贈り物**（`celestialgift`） | 最初の天の御使・高天への反逆 | [`celestial_gift.json`](../../data/stories/artifact/celestial_gift.json) として第6バッチで収録済み。高天から御使へ授けられた贈り物と、最初の御使が天理へ反逆するまでの経緯を描く。 |
 | ✅ | モンド | **燃え盛る炎の魔女** | 「淑女」シニョーラ（ロザリン） | [`crimson_witch.json`](../../data/stories/artifact/crimson_witch.json) として収録済み（コース①対象）。本編未描写の過去を描く代表作。 |
 | ✅ | モンド | **守護の心** | ルスタム（「幼狼」）・西風騎士団 | [`defenders_will.json`](../../data/stories/artifact/defenders_will.json) として収録済み（Phase 5 第1バッチ）。『燃え盛る炎の魔女』と対をなす物語。 |
 | ⬜ | モンド | **風立ちの日**（`adaycarvedfromrisingwinds`） | ウェンティ・詩人少年・デカラビアン・グンヒルド | 烈風の王の時代から、ウェンティと無名の詩人少年の出会い・新モンド建国までを描く上古史。 |
@@ -126,8 +126,8 @@
 | ⬜ | フォンテーヌ | **諧律奇想の断章**（`fragmentofharmonicwhimsy`） | レムリア文明・神王レムス・ボエティウス | 『黄金の劇団』と対をなす、レムリア建国から滅亡と調律師ボエティウスの物語。 |
 | ✅ | ナタ | **黒曜の秘典**（`obsidiancodex`） | ナタ古史・原初の龍・夜の国 | [`obsidian_codex.json`](../../data/stories/artifact/obsidian_codex.json) として第4バッチで収録済み（コース③対象）。歴史書に記されなかったナタ古代史と大型世界任務の核心に迫る聖遺物。 |
 | ⬜ | ナタ | **遂げられなかった想い**（`unfinishedreverie`） | 半人の独裁者（オチカン）・赤瞳の少年（シュバランケ）・六部族 | オシカ・ナタ時代の独裁と六部族の英雄たちをめぐる古史。 |
-| ⬜ | ナド・クライ | **長き夜の誓い**（`longnightsoath`） | ライトキーパー・最初のライトブリンガー | 漆黒の夜から辺境を守り抜いたライトキーパーたちの戦いと誓い。 |
-| ⬜ | ナド・クライ | **月を紡ぐ夜の歌**（`silkenmoonsserenade`） | 霜月の子・詠月使・ヒュペルボレイア | 砕けた銀の月光と霜月の子・ヒュペルボレイアにまつわる悲劇。 |
+| ✅ | ナド・クライ | **長き夜の誓い**（`longnightsoath`） | ライトキーパー・最初のライトブリンガー | [`long_nights_oath.json`](../../data/stories/artifact/long_nights_oath.json) として第6バッチで収録済み。漆黒の夜から辺境を守り抜いたライトキーパーたちの戦いと誓い。 |
+| ✅ | ナド・クライ | **月を紡ぐ夜の歌**（`silkenmoonsserenade`） | 霜月の子・詠月使・ヒュペルボレイア | [`silken_moons_serenade.json`](../../data/stories/artifact/silken_moons_serenade.json) として第6バッチで収録済み。砕けた銀の月光と霜月の子・ヒュペルボレイアにまつわる悲劇。 |
 | ✅ | スネージナヤ・各国 | **蒼白の炎** | ファデュイ執行官（道化・博士・散兵・淑女・富者） | [`pale_flame.json`](../../data/stories/artifact/pale_flame.json) として収録済み（コース①対象）。執行官5名の勧誘オムニバス。 |
 | ✅ | スネージナヤ・各国 | **紅血の証**（`scarletproof`） | サンドローネ・雄鶏・隊長・博士・富者 | [`scarlet_proof.json`](../../data/stories/artifact/scarlet_proof.json) として第5バッチで収録済み。アラン亡き後に雪国へ渡ったギヨタン嬢や、人間の議長に師事した『雄鶏』、辺境の孤立村での『博士』の実験と『隊長』の面談室が交錯する長編群像劇。 |
 | ✅ | スネージナヤ・各国 | **影に沈む幻**（`disenchantmentindeepshadow`） | 先代氷神ツァーリ・ベールイ・白髪の学者アクシーニャ・雪の娘・コシチェイ・アルヴィス | [`disenchantment_in_deep_shadow.json`](../../data/stories/artifact/disenchantment_in_deep_shadow.json) として第5バッチで収録済み。ヒュペルボレイアの廃墟から見出された少女アクシーニャと秘密研究所「フヴェルゲルミル」の記憶。 |

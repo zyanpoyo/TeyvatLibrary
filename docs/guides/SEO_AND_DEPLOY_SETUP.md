@@ -14,6 +14,7 @@
 - `"workers_dev": false`・`"preview_urls": false`（`*.workers.dev` での重複インデックス防止）
 - `"routes": [{ "pattern": "teyvat-bunko.com", "custom_domain": true }]`
 - `"assets": { "directory": "./build/client", "not_found_handling": "404-page" }`
+- `"previews": {}`（Workers Builds 非本番ブランチ用 `npx wrangler preview` 対応）
 
 Cloudflare ダッシュボードまたは Wrangler CLI からデプロイする際のビルド設定は以下を指定する。
 
