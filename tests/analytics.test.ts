@@ -217,6 +217,16 @@ describe("analytics / ga4 core", () => {
       client.trackBookmarkToggle({ storyId: "crimson_witch", action: "add", surface: "reader" });
       client.trackShelfFilterChange({ filterType: "category", filterValue: "artifact" });
       client.trackStoryShare({ storyId: "crimson_witch", storyCategory: "artifact", method: "copy" });
+      client.trackCourseShare({
+        courseId: "rosalyne_chronicle",
+        courseKind: "character",
+        method: "x",
+      });
+      client.trackPageView({
+        pagePath: "/courses/rosalyne_chronicle",
+        pageTitle: "ロザリン（淑女）とルースタンの500年",
+        courseId: "rosalyne_chronicle",
+      });
 
       expect(appendedScripts).toHaveLength(1);
       expect(gtagSpy.mock.calls).toEqual([
@@ -247,6 +257,21 @@ describe("analytics / ga4 core", () => {
           "event",
           "story_share",
           { story_id: "crimson_witch", story_category: "artifact", method: "copy" },
+        ],
+        [
+          "event",
+          "course_share",
+          { course_id: "rosalyne_chronicle", course_kind: "character", method: "x" },
+        ],
+        [
+          "event",
+          "page_view",
+          {
+            page_path: "/courses/rosalyne_chronicle",
+            page_title: "ロザリン（淑女）とルースタンの500年",
+            page_location: "https://teyvat-library.pages.dev/courses/rosalyne_chronicle",
+            course_id: "rosalyne_chronicle",
+          },
         ],
       ]);
 

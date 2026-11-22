@@ -13,6 +13,7 @@ describe("build-stories smoke checks", () => {
     expect(result.ok).toBe(true);
     expect(result.errors).toEqual([]);
     expect(result.stats.storyCount).toBeGreaterThan(0);
+    expect(result.stats.courseCount).toBeGreaterThan(0);
     expect(result.dist).not.toBeNull();
   });
 
@@ -25,6 +26,7 @@ describe("build-stories smoke checks", () => {
     expect(verifyResult?.ok).toBe(true);
     expect(verifyResult?.errors).toEqual([]);
     expect(verifyResult?.stats.storyCount).toBeGreaterThan(0);
+    expect(verifyResult?.stats.courseCount).toBe(buildResult.stats.courseCount);
     expect(verifyResult?.stats.searchStoryCount).toBe(verifyResult?.stats.storyCount);
     expect(verifyResult?.stats.storyFileCount).toBe(verifyResult?.stats.storyCount);
     expect(verifyResult?.stats.entityCount).toBeGreaterThan(0);
@@ -37,6 +39,7 @@ describe("build-stories smoke checks", () => {
     expect(result.errors.length).toBeGreaterThan(0);
     expect(result.stats).toEqual({
       storyCount: 0,
+      courseCount: 0,
       searchStoryCount: 0,
       storyFileCount: 0,
       entityCount: 0,

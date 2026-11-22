@@ -11,26 +11,12 @@
 - [ ] **時代（`era`）軸での横断フィルタリング**（[HANDOFF.md](../handoff/HANDOFF.md) Step 4）
   - 「500年前の災厄」「魔神戦争」「旧貴族時代」などの時代区分で絞り込める専用フィルタを書架に追加する（現状の `ShelfFilters` はカテゴリー・読書状態・登場人物・用語・地域・キーワード・並び順に対応）。
 
-### 1.2 トップページ「3大フェア棚（読書コース）」機能
-複数の書籍・聖遺物・武器を横断し、読むべき順序付きで案内するフェア棚（読書コース：[`phase3_curation_courses.md`](../handoff/retention/phase3_curation_courses.md) に統合）を書架トップに配置する。
+### 1.2 フェア棚＆読書コース（`/courses`・`/courses/:courseId`）機能
+複数の書籍・聖遺物・武器・風の翼・突破素材を横断し、ネタバレなしの 1 行順路ガイド（`note`）付きで連続通読できるフェア棚＆読書コース機能（詳細：[`phase3_curation_courses.md`](../handoff/retention/phase3_curation_courses.md)）。
 
-- [ ] **フェア棚／読書コース UI（`courses.json`・ステップ導線）の実装**
-  - **コース①：【推しキャラ深掘り】本編では語られない「ファデュイ執行官」の過去**
-    1. 聖遺物『燃え盛る炎の魔女』（収録済み：[`crimson_witch.json`](../../data/stories/artifact/crimson_witch.json)）＆ 育成素材『紅蓮の蛾と灰燼の追憶（淑女討伐録）』（収録済み：[`signora_chronicle.json`](../../data/stories/chronicle/signora_chronicle.json)）
-    2. 聖遺物『華館夢醒形骸記』（収録済み：[`husk.json`](../../data/stories/artifact/husk.json)）
-    3. 聖遺物『蒼白の炎』（収録済み：[`pale_flame.json`](../../data/stories/artifact/pale_flame.json)）＆ 『紅血の証』（収録済み：[`scarlet_proof.json`](../../data/stories/artifact/scarlet_proof.json)）＆ 武器『冬極の白星』（収録済み：[`polar_star.json`](../../data/stories/weapon/polar_star.json)）
-    4. 書籍『ペリンヘリ』（収録済み：[`perinheri.json`](../../data/stories/book/perinheri.json)）、武器『赤月のシルエット』（収録済み：[`crimson_moon.json`](../../data/stories/weapon/crimson_moon.json)）＆ 育成素材『残火の灯燭と赤月の裁決（召使討伐録）』（収録済み：[`arlecchino_chronicle.json`](../../data/stories/chronicle/arlecchino_chronicle.json)）
-    5. 書籍『スネージナヤ通史』（収録済み：[`general_history_of_snezhnaya.json`](../../data/stories/book/general_history_of_snezhnaya.json)）・『スネージナヤ通史補編』（収録済み：[`general_history_of_snezhnaya_supplement.json`](../../data/stories/book/general_history_of_snezhnaya_supplement.json)）・『蒼星フェイ史略』（収録済み：[`pale_starborn_history.json`](../../data/stories/book/pale_starborn_history.json)）＆ 聖遺物『影に沈む幻』（収録済み：[`disenchantment_in_deep_shadow.json`](../../data/stories/artifact/disenchantment_in_deep_shadow.json)）・『炉炎溶錬の心』（収録済み：[`heart_of_the_furnace.json`](../../data/stories/artifact/heart_of_the_furnace.json)）
-  - **コース②：【一気読み連載】フォンテーヌ「水仙十字院」の軌跡をたどる**
-    1. 聖遺物『水仙の夢』（収録済み：[`nymphsdream.json`](../../data/stories/artifact/nymphsdream.json)）＆ 『ファントムハンター』（収録済み：[`marechausseehunter.json`](../../data/stories/artifact/marechausseehunter.json)）
-    2. 武器『サーンドルの渡し守』（収録済み：[`fleuvecendreferryman.json`](../../data/stories/weapon/fleuvecendreferryman.json)）＆ 『超越の鍵』（収録済み：[`ateaspoonoftranscendence.json`](../../data/stories/weapon/ateaspoonoftranscendence.json)）
-    3. 武器『久遠流転の大典』（収録済み：[`tomeoftheeternalflow.json`](../../data/stories/weapon/tomeoftheeternalflow.json) ※なお `genshin-db` 上で『静水流転の輝き』は本文0文字、`水仙十字の剣` は93文字の短文であることを確認）
-    4. 武器『ルミドゥースの挽歌』（収録済み：[`lumidouceelegy.json`](../../data/stories/weapon/lumidouceelegy.json)）
-  - **コース③：【テイワット創世記】『日月前事』から最新聖遺物まで繋がる世界の真相**
-    1. 書籍『白夜国館蔵（第2巻『日月前事』）』（収録済み：[`byakuyakoku.json`](../../data/stories/book/byakuyakoku.json)）
-    2. 書籍『竹林月夜』（収録済み：[`moonlit_bamboo_forest.json`](../../data/stories/book/moonlit_bamboo_forest.json)）
-    3. 書籍『白姫と六人の小人』（収録済み：[`pale_princess.json`](../../data/stories/book/pale_princess.json)）
-    4. 聖遺物『深廊の終曲』（収録済み：[`deep_galleries.json`](../../data/stories/artifact/deep_galleries.json)）・『暁の星と月の歌』（収録済み：[`aubade_of_morning_star_and_moon.json`](../../data/stories/artifact/aubade_of_morning_star_and_moon.json)）・『天からの贈り物』（収録済み：[`celestial_gift.json`](../../data/stories/artifact/celestial_gift.json)）＆ 『黒曜の秘典』（収録済み：[`obsidian_codex.json`](../../data/stories/artifact/obsidian_codex.json)）※関連作としてナド・クライ編の聖遺物『月を紡ぐ夜の歌』（[`silken_moons_serenade.json`](../../data/stories/artifact/silken_moons_serenade.json)）・『長き夜の誓い』（[`long_nights_oath.json`](../../data/stories/artifact/long_nights_oath.json)）も収録済み
+- [x] **フェア棚／読書コース UI（`courses.json`・専用ページ・連続通読・静的 OGP）の実装**
+  - **ハイブリッド導線設計**: 書架トップ（`/`）の `FairShelf` に代表 3 コース（`featured: true`）＋一覧リンクを配置（検索・絞り込み中は自動非表示）し、専用ルート `/courses`（全コース種別フィルタ＆グループ一覧）と `/courses/:courseId`（進捗バー・動的 CTA・順路ガイド `note`・シェア・関連コース）を静的プリレンダリング＋`sitemap.xml`・静的 OGP（`/og/courses.png`, `/og/course/<id>.png`）付きで公開。
+  - **初期 10 コース（収録 39 作品全網羅）＆ `?course=` 連続通読**: 入門（2コース）・キャラ別（3コース：ロザリン／アルレッキーノ／放浪者）・地域・歴史別（5コース：テイワット創世記／水仙十字院／白夜国とオロバシ／ナド・クライ編／スネージナヤ王朝史）を収録し、リーダー画面で `?course=` 文脈バー・章末の次話／前話／全話読破・他収録コース表示に対応。
 
 ### 1.3 コンテンツ制作パイプラインの自動化
 - [ ] **全公式テキストのローカル検索インデックス化**（[HANDOFF.md](../handoff/HANDOFF.md) Step 2）

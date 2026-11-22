@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 
 function extractJsonLdGraph(html) {
@@ -85,6 +87,36 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     const aboutLd = extractJsonLdGraph(aboutHtml);
     expect(aboutLd["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "AboutPage"]);
 
+    // 読書コース一覧および詳細の静的 HTML・JSON-LD 検証
+    const coursesRes = await request.get("/courses");
+    expect(coursesRes.status()).toBe(200);
+    const coursesHtml = await coursesRes.text();
+    expect(coursesHtml).toContain("<title>読書コース・フェア棚一覧｜テイワット文庫</title>");
+    expect(coursesHtml).toContain('data-view="courses"');
+    expect(coursesHtml).toContain('<link rel="canonical" href="https://teyvat-bunko.com/courses"');
+    expect(coursesHtml).toContain(
+      '<meta property="og:image" content="https://teyvat-bunko.com/og/courses.png"'
+    );
+    const coursesLd = extractJsonLdGraph(coursesHtml);
+    expect(coursesLd["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "CollectionPage"]);
+
+    const courseDetailRes = await request.get("/courses/must_read_essentials");
+    expect(courseDetailRes.status()).toBe(200);
+    const courseDetailHtml = await courseDetailRes.text();
+    expect(courseDetailHtml).toContain("まずはこれ！テイワット核心の重要記録");
+    expect(courseDetailHtml).toContain('data-view="courses"');
+    expect(courseDetailHtml).toContain(
+      '<link rel="canonical" href="https://teyvat-bunko.com/courses/must_read_essentials"'
+    );
+    expect(courseDetailHtml).toContain(
+      '<meta property="og:image" content="https://teyvat-bunko.com/og/course/must_read_essentials.png"'
+    );
+    const courseDetailLd = extractJsonLdGraph(courseDetailHtml);
+    expect(courseDetailLd["@graph"].map((n) => n["@type"])).toEqual([
+      "BreadcrumbList",
+      "CollectionPage",
+    ]);
+
     const notFoundRes = await request.get("/nonexistent-ssg-check");
     expect(notFoundRes.status()).toBe(404);
     const notFoundHtml = await notFoundRes.text();
@@ -93,7 +125,13 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     expect(notFoundHtml).not.toContain('rel="canonical"');
 
     // 静的 OGP PNG アセット配信検証
-    for (const ogPath of ["/og/site.png", "/og/about.png", "/og/story/crimson_witch.png"]) {
+    for (const ogPath of [
+      "/og/site.png",
+      "/og/about.png",
+      "/og/courses.png",
+      "/og/course/must_read_essentials.png",
+      "/og/story/crimson_witch.png",
+    ]) {
       const ogRes = await request.get(ogPath);
       expect(ogRes.status()).toBe(200);
       expect(ogRes.headers()["content-type"]).toContain("image/png");
@@ -110,6 +148,8 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     const sitemapRes = await request.get("/sitemap.xml");
     expect(sitemapRes.status()).toBe(200);
     const sitemapXml = await sitemapRes.text();
+    expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/courses</loc>");
+    expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/courses/must_read_essentials</loc>");
     expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/story/crimson_witch</loc>");
     expect(sitemapXml).toContain("<lastmod>2026-11-01</lastmod>");
     expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/about</loc>");
@@ -185,10 +225,28 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
       "URL をコピーしました"
     );
 
-    // 書架・About へ遷移し往復してもエラーが発生しないこと
+    // 書架・読書コース・About へ遷移し往復してもエラーが発生しないこと
     await page.locator("#back-to-shelf-btn").click();
     await expect(page.locator("body")).toHaveAttribute("data-view", "shelf");
     await expect(page.locator("#story-grid .story-card").first()).toBeVisible();
+
+    await page.locator("#shelf-site-nav [data-nav-target='courses']").click();
+    await expect(page.locator("body")).toHaveAttribute("data-view", "courses");
+    await expect(page.locator("#courses-view h1")).toHaveText("読書コース一覧");
+
+    const storiesIndex = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "public", "data", "stories-index.json"), "utf8")
+    );
+    const rosalyneCourse = (storiesIndex.courses ?? []).find(
+      (course) => course.id === "rosalyne_chronicle"
+    );
+    expect(rosalyneCourse).toBeDefined();
+
+    await page.locator(".course-card[data-course-id='rosalyne_chronicle'] .course-primary-link").click();
+    await expect(page).toHaveURL(/\/courses\/rosalyne_chronicle$/);
+    await expect(page.locator("#course-detail-progress")).toContainText(
+      `1 / ${rosalyneCourse.storyCount} 篇 読了`
+    );
 
     await page.locator("#about-page-link").click();
     await expect(page.locator("body")).toHaveAttribute("data-view", "about");

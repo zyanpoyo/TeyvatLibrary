@@ -12,6 +12,7 @@ export interface BuildProjectStoriesResult extends CompileStoriesResult {
 
 export interface DistOutputVerifyStats {
   storyCount: number;
+  courseCount: number;
   searchStoryCount: number;
   storyFileCount: number;
   entityCount: number;

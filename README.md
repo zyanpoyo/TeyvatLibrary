@@ -8,13 +8,18 @@
 
 ### 主な機能
 
-- **書架（一覧・検索）**
+- **書架（一覧・検索）＆フェア棚**
+  - **常設サイトナビゲーション＆フェア棚**: 書架上部・ヘッダーに `SiteNavBar`（`書架` / `読書コース`）を配置し、書架には代表 3 コースを展示する特設フェア棚（`#fair-shelf`、絞り込み・検索時は自動で非表示）と一覧ページへの導線を表示
   - **5分類タブ**: `すべて` / `書籍` / `聖遺物` / `武器` / `風の翼` / `突破・育成素材`
   - **今日の物語ピックアップ**: フィルタ未適用かつ「おすすめ順」の時、未読作品（全件読了時は全作品）から日替わりで1篇を先頭に繰り上げて表示
   - **おまかせ読書**: 「未読から1篇読む」（全件読了時は「おまかせで1篇読む」）ボタンで未読短編を優先して即座に開くショートカット
   - **絞り込み・並び替え・横断全文検索**: 読書状態（`すべて` / `未読のみ` / `読了済み` / `あとで読む`）・登場人物・用語・地域・並び替え（`関連度順` / `おすすめ順` / `新着順` / `短い順`）に加え、タイトル・本文・人物・用語・地名をまたぐ日本語正規化＆スペース区切り AND 横断検索に対応（真相メモのオプトイン検索トグル・一致スニペット表示・検索時カテゴリー件数動的更新・URL クエリ同期付き）
   - **読書状態と新着表示**: 前回の続き再開バナー、カード上の `✦ 読了`・`NEW`（追加から14日以内かつ未読）・`あとで読む` バッジ、読破率サマリー表示
+- **読書コース一覧（`/courses`）・コース詳細（`/courses/:courseId`）**
+  - **全10コース＆種別フィルタ**: 入門・必読（`beginner`）・キャラクター別（`character`）・地域・歴史別（`arc`）別に整理された全 10 コース（収録 39 作品すべてを網羅）を収録
+  - **順路ガイド＆動的 CTA**: コース詳細ページで合計読了目安・読了進捗バー・未読状態に応じた「第1話から読む／続き（第X話）から読む／第1話から読み直す」主要 CTA・ネタバレなし 1 行順路ガイド（`note`）・コースシェア（X シェア／URL コピー）を提供
 - **リーダー画面**
+  - **コース文脈での連続通読（`?course=`）**: コース経由で開いた場合は上部にコース進行バー（第 X 話 / 全 Y 話）、章末に次話／前話ナビ・全話読破表示・他の収録コースチップを表示し、単品閲覧時は「この物語が収録されている読書コース」案内を表示
   - **時系列・連作構成**: 複数部位や段階に分かれたテキストを章立てして通し読みできる構成
   - **用語ガイド（Dialog）**: 原文の意味を補うインライン用語解説ダイアログ（`用語ガイド ON/OFF` 切替・出典リンク対応）
   - **検索着地・ハイライト**: 検索スニペットから該当段落・用語・真相メモへ直接スクロールし、一致語を一時ハイライト表示（誤自動読了の抑止付き）
@@ -22,8 +27,8 @@
   - **読書状態の保存（`localStorage`）**: スクロール90%到達または真相メモ展開での自動読了マーク、手動読了／あとで読むトグル、途中位置の自動しおり保存（別タブ同期対応）
   - **章目次・読了進捗・関連作品リンク・作品シェア**: 読書進捗バーと章末の関連作品カード表示、読了ボタン付近の「X でシェア」「URL をコピー」導線（GA4 `story_share` 連携）
 - **SEO・SNS OGP・アクセス解析・サイト案内・プライバシー管理**
-  - 本番ドメイン `https://teyvat-bunko.com` 正規化、5 分類対応の `<title>` / `description` / `canonical` / JSON-LD 構造化データ（`WebSite` / `CollectionPage` / `Article` / `BreadcrumbList` / `DefinedTerm` / `AboutPage`）、および `satori` + `@resvg/resvg-js` によるビルド時全作品別静的 OGP 画像（`1200×630` PNG）生成
-  - Google Analytics 4（GA4）によるパス単位 `page_view`（`/`・`/story/<id>`・`/about`）および読書・検索・回遊・作品シェアイベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
+  - 本番ドメイン `https://teyvat-bunko.com` 正規化、5 分類および読書コース一覧／詳細対応の `<title>` / `description` / `canonical` / JSON-LD 構造化データ（`WebSite` / `CollectionPage` / `ItemList` / `Article` / `BreadcrumbList` / `DefinedTerm` / `AboutPage`）、および `satori` + `@resvg/resvg-js` によるビルド時全作品・全コース別静的 OGP 画像（`1200×630` PNG）生成
+  - Google Analytics 4（GA4）によるパス単位 `page_view`（`/`・`/courses`・`/courses/<id>`・`/story/<id>`・`/about`）および読書・検索・回遊・作品シェア・コースシェア（`course_share`）イベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
   - フッターの「アクセス解析について」ダイアログおよび「このサイトについて」（`/about`）ページからの収集概要確認とサイト内オプトアウト切替（`localStorage` 保存・別タブ同期対応）
   - 「このサイトについて」ページ（`/about`）での非公式ファンサイト表記、著作権・引用方針、`localStorage` 保存データの説明、免責事項、およびお問い合わせ案内（GitHub Issues・専用フォーム・運営者 X アカウント＋任意で連絡用メールアドレス）
 - **データ検証・ビルドパイプライン**
@@ -103,8 +108,9 @@ npm run preview
 | コマンド | 内容 |
 | :--- | :--- |
 | `npm run build:data` | `data/` の原典・編集データ・共通マスタを検証し、フロントエンド配信用 JSON を `public/data/` に生成します |
-| `npm run build:og` | `public/data/stories-index.json` から書架・About・全作品の静的 OGP 画像（`1200×630` PNG）を `build/client/og/` へ生成します（`.cache/og/` キャッシュ利用。`-- --only <id[,id...]> --force` で特定対象のみ強制再生成可） |
+| `npm run build:og` | `public/data/stories-index.json` から書架・About・読書コース一覧・全コース・全作品の静的 OGP 画像（`1200×630` PNG）を `build/client/og/` へ生成します（`.cache/og/` キャッシュ利用。`-- --only <target[,target...]> --force` で `courses`, `course/<id>` 等の特定対象のみ強制再生成可） |
 | `npm run validate` | 配信用ファイルは出力せず、データ構造や原文一致などのバリデーションのみを実行します |
+| `npm run lint` | Oxlint（`.oxlintrc.json`）による `src/` の React Hooks ルール検証を実行します |
 | `npm run typecheck` | `react-router typegen` と `tsc --noEmit`（ブラウザ用 `tsconfig.json` およびテスト用 `tests/tsconfig.json`）による静的型チェックを実行します |
 | `npm test` | Vitest + React Testing Library によるドメインロジック・状態管理・UI コンポーネントの単体/結合テストを実行します |
 | `npm run test:e2e` | Playwright（Chromium）による UI リグレッションテストを実行します（`build/client/` 本番ビルド＋静的プレビューサーバー自動起動込み） |
@@ -123,20 +129,21 @@ npm run preview
 ├── react-router.config.ts  # React Router Framework Mode（静的プリレンダリング・SEOアセット生成）設定
 ├── wrangler.jsonc          # Cloudflare Workers Static Assets 配信設定（build/client・404-page）
 ├── tsconfig.json           # TypeScript コンパイラ設定（ブラウザ実行 src/ 専用）
+├── .oxlintrc.json          # Oxlint 設定（React Hooks ルール検証）
 ├── vite.config.js          # Vite / Vitest 設定（cssCodeSplit: false、node/dom テスト環境分離）
 ├── package.json            # スクリプト・依存関係定義
 ├── src/                    # React + TypeScript フロントエンドソース（appDirectory）
 │   ├── root.tsx            # ルート HTML シェル（テーマ初期化・favicon・HydrateFallback・ErrorBoundary）
-│   ├── routes.ts           # パス URL ルート定義（/, /story/:storyId, /about, /404, *）
+│   ├── routes.ts           # パス URL ルート定義（/, /courses, /courses/:courseId, /story/:storyId, /about, /404, *）
 │   ├── routes/             # 各ルートの loader / clientLoader / meta / 画面エントリ
 │   ├── server/             # ビルド・プリレンダリング専用の配信 JSON ローダー（*.server.mjs）
 │   ├── analytics/          # GA4 クライアント（環境ガード・PV・イベント計測・PIIサニタイズ）
 │   ├── api/                # 作品一覧・詳細 JSON フェッチ & キャッシュシード
-│   ├── components/         # layout / shelf / reader / about / common の React コンポーネント & CSS Modules
+│   ├── components/         # layout / shelf / courses / reader / about / common の React コンポーネント & CSS Modules
 │   ├── config/             # 連絡先設定（site-contact.ts）・正規URL/canonical生成（site-url.ts）
-│   ├── domain/             # 書架表示状態導出・横断検索エンジン・テキスト構文トークナイザ・SEOメタ/JSON-LD生成（seo.ts）・SNSシェアURL生成（share.ts）
+│   ├── domain/             # 書架表示状態・読書コース導出（courses.ts）・横断検索エンジン・構文パーサ・SEOメタ/JSON-LD（seo.ts）・シェアURL（share.ts）
 │   ├── hooks/              # リーダー閲覧セッション統合・検索コーパス遅延取得・検索ハイライト着地・テーマ同期フック
-│   ├── router/             # 検索・ジャンプURLクエリパラメータ同期（search-params.ts）
+│   ├── router/             # 検索・ジャンプ・コース文脈 URL クエリパラメータ同期（search-params.ts）
 │   ├── state/              # reading-state / prefs / analytics-prefs ストア＆ Context Provider
 │   ├── styles/             # カラートークン（tokens.css）＆共通 CSS Module
 │   └── types/              # ストーリー・状態型定義

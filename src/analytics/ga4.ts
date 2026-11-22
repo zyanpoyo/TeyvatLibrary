@@ -1,4 +1,4 @@
-import type { ShelfCategoryId, StoryCategoryId } from "../types/story";
+import type { CourseKind, ShelfCategoryId, StoryCategoryId } from "../types/story";
 
 declare global {
   interface Window {
@@ -17,7 +17,11 @@ export type StoryOpenSource =
   | "resume"
   | "search_snippet"
   | "connected"
-  | "evidence";
+  | "evidence"
+  | "course_detail"
+  | "course_next"
+  | "course_prev"
+  | "story_course_card";
 
 export type StoryCompleteMethod = "auto_scroll" | "auto_lore" | "manual";
 
@@ -54,6 +58,7 @@ export interface PageViewParams {
   pageTitle: string;
   storyId?: string;
   storyCategory?: StoryCategoryId;
+  courseId?: string;
 }
 
 export interface StoryOpenParams {
@@ -100,6 +105,12 @@ export interface StoryShareParams {
   method: StoryShareMethod;
 }
 
+export interface CourseShareParams {
+  courseId: string;
+  courseKind: CourseKind;
+  method: StoryShareMethod;
+}
+
 export interface AnalyticsClient {
   getStatus(): AnalyticsRuntimeStatus;
   isOptedOut(): boolean;
@@ -114,6 +125,7 @@ export interface AnalyticsClient {
   trackBookmarkToggle(params: BookmarkToggleParams): void;
   trackShelfFilterChange(params: ShelfFilterChangeParams): void;
   trackStoryShare(params: StoryShareParams): void;
+  trackCourseShare(params: CourseShareParams): void;
 }
 
 const MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/i;
@@ -357,7 +369,7 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
     setOptOut,
     getMeasurementId: () => (isValidMeasurementId(config.measurementId) ? config.measurementId : null),
 
-    trackPageView({ pagePath, pageTitle, storyId, storyCategory }) {
+    trackPageView({ pagePath, pageTitle, storyId, storyCategory, courseId }) {
       const origin =
         win?.location?.origin && win.location.origin !== "null" ? win.location.origin : "";
       const normalizedPath = pagePath.startsWith("/") ? pagePath : `/${pagePath}`;
@@ -369,6 +381,7 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
         page_location: pageLocation,
         story_id: storyId,
         story_category: storyCategory,
+        course_id: courseId,
       });
     },
 
@@ -431,6 +444,14 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
       sendEvent("story_share", {
         story_id: storyId,
         story_category: storyCategory,
+        method,
+      });
+    },
+
+    trackCourseShare({ courseId, courseKind, method }) {
+      sendEvent("course_share", {
+        course_id: courseId,
+        course_kind: courseKind,
         method,
       });
     },

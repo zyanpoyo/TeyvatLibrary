@@ -37,3 +37,26 @@ export function listPrerenderStoryPaths(rootDir = process.cwd()) {
   const indexData = loadDistStoriesIndex(rootDir);
   return (indexData.stories ?? []).map((story) => `/story/${story.id}`);
 }
+
+/**
+ * 静的プリレンダリング対象となる全読書コースのパス一覧（/courses/<id>）を返す。
+ */
+export function listPrerenderCoursePaths(rootDir = process.cwd()) {
+  const indexData = loadDistStoriesIndex(rootDir);
+  return (indexData.courses ?? []).map((course) => `/courses/${course.id}`);
+}
+
+/**
+ * 指定された courseId に対応する読書コースとインデックス一式を返す。存在しない場合は null を返す。
+ */
+export function loadDistCourseDetail(courseId, rootDir = process.cwd()) {
+  if (typeof courseId !== "string" || !VALID_STORY_ID_PATTERN.test(courseId)) {
+    return null;
+  }
+  const indexData = loadDistStoriesIndex(rootDir);
+  const course = (indexData.courses ?? []).find((c) => c.id === courseId) ?? null;
+  if (!course) {
+    return null;
+  }
+  return { course, indexData };
+}

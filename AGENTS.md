@@ -13,7 +13,7 @@
 ## Context Pointers
 - **フロントエンド構成・ルーティング・SEO/OGP・テスト詳細を確認する時**: [`docs/architecture/FRONTEND_ARCHITECTURE.md`](docs/architecture/FRONTEND_ARCHITECTURE.md)
 - **3層データモデル・JSONスキーマ・ビルド/検証パイプラインを確認する時**: [`docs/architecture/DATA_ARCHITECTURE.md`](docs/architecture/DATA_ARCHITECTURE.md)（索引は [`docs/README.md`](docs/README.md)）
-- **新しい物語の原典抽出・人物特定・作品間リンク追加を行う時**: [`.agents/skills/genshin-story-curator/SKILL.md`](.agents/skills/genshin-story-curator/SKILL.md)
+- **新しい物語の原典抽出・人物特定・作品間リンク・読書コース編入を行う時**: [`.agents/skills/genshin-story-curator/SKILL.md`](.agents/skills/genshin-story-curator/SKILL.md)
 - **GA4 設定・独自ドメイン（`teyvat-bunko.com`）公開＆検証手順を確認する時**: [`docs/guides/GOOGLE_ANALYTICS_SETUP.md`](docs/guides/GOOGLE_ANALYTICS_SETUP.md)、[`docs/guides/SEO_AND_DEPLOY_SETUP.md`](docs/guides/SEO_AND_DEPLOY_SETUP.md)、[`docs/adr/`](docs/adr/)（特に 0005・0007）
 - **リテンション機能改善（Phase 1〜5 / Phase 6 Won't）を扱う時**: [`docs/handoff/RETENTION_ROADMAP.md`](docs/handoff/RETENTION_ROADMAP.md) および [`docs/handoff/retention/`](docs/handoff/retention/)
 - **設計壁打ち・アーキテクチャ改善・ドメイン言語管理を行う時**: [`GLOSSARY.md`](GLOSSARY.md)、[`docs/adr/`](docs/adr/)、および [`.agents/skills/ask-matt/SKILL.md`](.agents/skills/ask-matt/SKILL.md)（`improve-codebase-architecture` / `grilling` / `grill-with-docs` / `domain-modeling` / `wayfinder`）

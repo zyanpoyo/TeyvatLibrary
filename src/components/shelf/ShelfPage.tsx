@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { analytics, type ShelfFilterTrackType } from "../../analytics/ga4";
 import { deriveShelfView, pickRandomStory } from "../../domain/catalog";
+import { selectFeaturedCourses } from "../../domain/courses";
 import {
   useReadingStateStore,
   useShelfContext,
@@ -12,6 +13,7 @@ import type {
   ShelfCategoryId,
   StoriesIndexData,
 } from "../../types/story";
+import { FairShelf } from "./FairShelf";
 import { ObservatoryHeader } from "./ObservatoryHeader";
 import { ResumeBanner } from "./ResumeBanner";
 import { ShelfToolbar } from "./ShelfToolbar";
@@ -56,6 +58,8 @@ export function ShelfPage({ initialIndexData = null }: ShelfPageProps = {}) {
   }, [initialIndexData, indexData, seedIndexData]);
 
   const stories = effectiveIndexData?.stories ?? [];
+  const courses = effectiveIndexData?.courses ?? [];
+  const featuredCourses = useMemo(() => selectFeaturedCourses(courses, 3), [courses]);
   const storyMap = useMemo(
     () => new Map(stories.map((story) => [story.id, story])),
     [stories]
@@ -242,6 +246,13 @@ export function ShelfPage({ initialIndexData = null }: ShelfPageProps = {}) {
         onResumeClick={handleResumeStory}
         onTrackExternalResume={handleTrackExternalResume}
         onDismiss={() => readingStore.clearLastSession()}
+      />
+
+      <FairShelf
+        courses={featuredCourses}
+        totalCourseCount={courses.length}
+        readingState={readingSnapshot}
+        visible={!shelfView.isFiltered && featuredCourses.length > 0}
       />
 
       <ShelfToolbar

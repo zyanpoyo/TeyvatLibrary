@@ -1,18 +1,8 @@
 import type { ShelfCategoryTab } from "../../domain/catalog";
-import { useDisplayPrefsStore } from "../../state/AppProviders";
-import type { ShelfCategoryId, ThemeMode } from "../../types/story";
-import commonStyles from "../../styles/common.module.css";
+import type { ShelfCategoryId } from "../../types/story";
+import { SiteNavBar } from "../layout/SiteNavBar";
+import { ThemeSwitcher } from "../layout/ThemeSwitcher";
 import styles from "./ObservatoryHeader.module.css";
-
-const THEME_OPTIONS: ReadonlyArray<{
-  value: ThemeMode;
-  label: string;
-  swatchClass: string;
-}> = [
-  { value: "night", label: "夜空", swatchClass: commonStyles.themeSwatchNight },
-  { value: "paper", label: "生成り紙", swatchClass: commonStyles.themeSwatchPaper },
-  { value: "sepia", label: "セピア", swatchClass: commonStyles.themeSwatchSepia },
-];
 
 export interface ObservatoryHeaderProps {
   categories: ReadonlyArray<ShelfCategoryTab>;
@@ -25,8 +15,6 @@ export function ObservatoryHeader({
   showCounts,
   onSelectCategory,
 }: ObservatoryHeaderProps) {
-  const { prefs, setPref } = useDisplayPrefsStore();
-
   return (
     <header className={styles.observatoryHero}>
       <svg
@@ -50,26 +38,9 @@ export function ObservatoryHeader({
         </g>
       </svg>
 
-      <div
-        className={styles.shelfThemeSwitcher}
-        id="shelf-theme-switcher"
-        role="group"
-        aria-label="背景テーマ"
-      >
-        {THEME_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            className={styles.shelfThemeOption}
-            data-setting="theme"
-            data-value={opt.value}
-            aria-pressed={prefs.theme === opt.value}
-            onClick={() => setPref("theme", opt.value)}
-          >
-            <span className={`${commonStyles.themeSwatch} ${opt.swatchClass}`} aria-hidden="true" />
-            <span>{opt.label}</span>
-          </button>
-        ))}
+      <div className={styles.heroTopBar}>
+        <SiteNavBar id="shelf-site-nav" />
+        <ThemeSwitcher id="shelf-theme-switcher" />
       </div>
 
       <div className={styles.observatoryHeaderInner}>

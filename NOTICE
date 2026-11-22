@@ -311,6 +311,16 @@ Repository: https://github.com/fontsource/font-files.git
 SIL Open Font License, Version 1.1 (http://scripts.sil.org/OFL)
 詳細は node_modules/@fontsource/shippori-mincho/LICENSE を参照してください。
 
+--------------------------------------------------------------------------------
+oxlint (v1.94.0 / package.json: ^1.94.0)
+License: MIT
+Copyright (c) 2024-present VoidZero Inc. & Contributors
+Copyright (c) 2023 Boshen
+Homepage: https://oxc.rs/docs/guide/usage/linter
+Repository: https://github.com/oxc-project/oxc
+--------------------------------------------------------------------------------
+MIT License (詳細は node_modules/oxlint/LICENSE を参照)
+
 ================================================================================
 4. 外部サービス・データ取得元
 ================================================================================

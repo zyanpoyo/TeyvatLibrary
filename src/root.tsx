@@ -51,7 +51,16 @@ const THEME_INIT_SCRIPT = `(function () {
 export function Layout({ children }: { children: ReactNode }) {
   const isReaderRoute = Boolean(useMatch("/story/:storyId"));
   const isAboutRoute = Boolean(useMatch("/about"));
-  const initialView = isReaderRoute ? "reader" : isAboutRoute ? "about" : "shelf";
+  const coursesIndexMatch = useMatch("/courses");
+  const courseDetailMatch = useMatch("/courses/:courseId");
+  const isCoursesRoute = Boolean(coursesIndexMatch || courseDetailMatch);
+  const initialView = isReaderRoute
+    ? "reader"
+    : isAboutRoute
+      ? "about"
+      : isCoursesRoute
+        ? "courses"
+        : "shelf";
 
   return (
     <html lang="ja" suppressHydrationWarning>

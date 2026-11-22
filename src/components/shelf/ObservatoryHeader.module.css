@@ -1,6 +1,6 @@
 .observatoryHero {
   position: relative;
-  padding: clamp(2.5rem, 6vw, 4rem) 1rem 0;
+  padding: clamp(3.35rem, 6.2vw, 4.35rem) 1rem 0;
   margin-bottom: 2.25rem;
   text-align: center;
   border-bottom: 1px solid var(--hero-border);
@@ -16,69 +16,31 @@
   opacity: var(--chart-opacity);
 }
 
-.shelfThemeSwitcher {
+.heroTopBar {
   position: relative;
   z-index: 2;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  border-radius: 999px;
-  background: var(--pill-bg);
-  border: 1px solid var(--border-subtle);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.shelfThemeOption {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.68rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-size: 0.78125rem;
-  line-height: 1.3;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-}
-
-.shelfThemeOption:hover {
-  color: var(--text-primary);
-  border-color: var(--border-gold);
-}
-
-.shelfThemeOption[aria-pressed="true"] {
-  background: var(--accent-gold-soft);
-  border-color: var(--accent-gold);
-  color: var(--accent-gold-bright);
-  font-weight: 700;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 @media (min-width: 820px) {
-  .shelfThemeSwitcher {
+  .heroTopBar {
     position: absolute;
     top: 1rem;
+    left: 0.25rem;
     right: 0.25rem;
   }
 }
 
 @media (max-width: 819px) {
   .observatoryHero {
-    padding-top: 1.25rem;
+    padding-top: 1.15rem;
   }
-  .shelfThemeSwitcher {
-    display: flex;
-    width: fit-content;
-    max-width: 100%;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin: 0 0 1.15rem auto;
+  .heroTopBar {
+    margin: 0 0 1.15rem;
   }
 }
 
@@ -185,8 +147,7 @@
 }
 
 @media (pointer: coarse) {
-  .categoryTab,
-  .shelfThemeOption {
+  .categoryTab {
     min-block-size: 44px;
     display: inline-flex;
     align-items: center;

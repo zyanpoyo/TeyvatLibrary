@@ -6,6 +6,9 @@ import { PrivacyDialog } from "./PrivacyDialog";
 export function AppShell() {
   const isReaderRoute = Boolean(useMatch("/story/:storyId"));
   const isAboutRoute = Boolean(useMatch("/about"));
+  const coursesIndexMatch = useMatch("/courses");
+  const courseDetailMatch = useMatch("/courses/:courseId");
+  const isCoursesRoute = Boolean(coursesIndexMatch || courseDetailMatch);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   useEffect(() => {
@@ -13,8 +16,10 @@ export function AppShell() {
       ? "reader"
       : isAboutRoute
         ? "about"
-        : "shelf";
-  }, [isReaderRoute, isAboutRoute]);
+        : isCoursesRoute
+          ? "courses"
+          : "shelf";
+  }, [isReaderRoute, isAboutRoute, isCoursesRoute]);
 
   return (
     <>
@@ -65,6 +70,14 @@ export function AppShell() {
         <p>テイワット文庫 — 非公式ファンアーカイブ（原文テキストはゲーム内収録資料に基づき無改変で掲載しています）</p>
         <p>本サイトは HoYoverse の公式サービスではありません。ゲーム内テキストの著作権は COGNOSPHERE PTE. LTD. に帰属します。</p>
         <div className={styles.footerActions}>
+          <Link
+            to="/courses"
+            id="courses-page-link"
+            className={styles.footerLinkBtn}
+            aria-current={isCoursesRoute ? "page" : undefined}
+          >
+            読書コース
+          </Link>
           <Link
             to="/about"
             id="about-page-link"

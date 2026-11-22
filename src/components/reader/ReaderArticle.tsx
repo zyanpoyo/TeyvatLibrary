@@ -1,11 +1,13 @@
 import { Fragment, type MouseEvent, type RefObject } from "react";
 import { Link } from "react-router";
-import type { StoryShareMethod } from "../../analytics/ga4";
+import type { StoryOpenSource, StoryShareMethod } from "../../analytics/ga4";
+import type { ReaderCourseContext } from "../../domain/courses";
 import { formatRegion, parseParagraphTokens } from "../../domain/text-parser";
 import commonStyles from "../../styles/common.module.css";
 import type { StoryDetail } from "../../types/story";
 import { AppIcon } from "../common/AppIcon";
 import { HighlightedText } from "../common/HighlightedText";
+import { ReaderCourseBanner, ReaderCourseFooter } from "./ReaderCourseNav";
 import { StoryShareBar } from "./StoryShareBar";
 import styles from "./ReaderArticle.module.css";
 
@@ -91,11 +93,13 @@ export interface ReaderArticleProps {
   loreDetailsRef?: RefObject<HTMLDetailsElement | null>;
   isProgrammaticLoreOpenRef?: RefObject<boolean>;
   highlightQuery?: string;
+  courseContext?: ReaderCourseContext | null;
   onToggleBookmark: () => void;
   onToggleRead: () => void;
   onLoreOpened: () => void;
   onSelectTerm: (termId: string) => void;
   onSelectConnectedStory?: (targetId: string) => void;
+  onSelectCourseStory?: (targetId: string, source: StoryOpenSource) => void;
   onShareStory?: (method: StoryShareMethod) => void;
 }
 
@@ -107,11 +111,13 @@ export function ReaderArticle({
   loreDetailsRef,
   isProgrammaticLoreOpenRef,
   highlightQuery,
+  courseContext,
   onToggleBookmark,
   onToggleRead,
   onLoreOpened,
   onSelectTerm,
   onSelectConnectedStory,
+  onSelectCourseStory,
   onShareStory,
 }: ReaderArticleProps) {
   const regionLabel = formatRegion(story.region);
@@ -137,6 +143,8 @@ export function ReaderArticle({
 
   return (
     <>
+      <ReaderCourseBanner activeCourse={courseContext?.activeCourse ?? null} />
+
       <header className={styles.readerHeader} id="reader-header">
         <div className={styles.readerKicker}>
           <span className={commonStyles.categoryBadge}>{story.categoryLabel}</span>
@@ -334,6 +342,11 @@ export function ReaderArticle({
           <StoryShareBar story={story} onShare={onShareStory} />
         </div>
       </div>
+
+      <ReaderCourseFooter
+        courseContext={courseContext}
+        onSelectCourseStory={onSelectCourseStory}
+      />
 
       {connected.length > 0 ? (
         <aside className={styles.connectedBox} id="connected-container">

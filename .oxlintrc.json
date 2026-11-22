@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error"
+  },
+  "ignorePatterns": [".react-router/**", "build/**", "dist/**", "public/**"]
+}

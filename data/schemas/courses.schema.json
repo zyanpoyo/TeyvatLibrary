@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "テイワット文庫 読書コース・フェア棚定義 (courses.json)",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "required": ["id", "kind", "badge", "title", "subtitle", "hook", "steps"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$",
+        "description": "URL /courses/:courseId に使用する一意なコースID"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["beginner", "character", "arc"],
+        "description": "フェアの切り口分類（beginner: 入門 / character: キャラ別 / arc: 地域・歴史別）"
+      },
+      "badge": {
+        "type": "string",
+        "minLength": 1,
+        "description": "カード・詳細ヘッダーに表示する種別バッジ文言"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "description": "読書コースのタイトル"
+      },
+      "subtitle": {
+        "type": "string",
+        "minLength": 1,
+        "description": "タイトルを補う短い副題"
+      },
+      "hook": {
+        "type": "string",
+        "minLength": 1,
+        "description": "コースの魅力を伝える紹介文"
+      },
+      "featured": {
+        "type": "boolean",
+        "description": "書架トップのフェア棚に代表表示するか"
+      },
+      "seo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 }
+        }
+      },
+      "steps": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["storyId", "note"],
+          "additionalProperties": false,
+          "properties": {
+            "storyId": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+$",
+              "description": "収録作品のストーリーID"
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "ネタバレを含まない1行の読み順ガイド"
+            }
+          }
+        }
+      }
+    }
+  }
+}
