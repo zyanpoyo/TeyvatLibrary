@@ -6,6 +6,9 @@ export default defineConfig({
   base: "/",
   publicDir: "public",
   plugins: [process.env.VITEST ? react() : reactRouter()],
+  optimizeDeps: {
+    include: ["@radix-ui/react-dialog", "@radix-ui/react-popover"],
+  },
   build: {
     target: "es2022",
     cssCodeSplit: false,
