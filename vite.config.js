@@ -1,13 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { reactRouter } from "@react-router/dev/vite";
 
 export default defineConfig({
-  base: "./",
+  base: "/",
   publicDir: "public",
-  plugins: [react()],
+  plugins: [process.env.VITEST ? react() : reactRouter()],
   build: {
-    outDir: "dist",
-    emptyOutDir: true,
     target: "es2022",
   },
   test: {

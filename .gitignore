@@ -13,6 +13,7 @@ credentials.json
 node_modules/
 dist/
 build/
+.react-router/
 public/data/
 .vite/
 coverage/

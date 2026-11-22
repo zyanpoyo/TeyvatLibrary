@@ -351,10 +351,8 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
     trackPageView({ pagePath, pageTitle, storyId, storyCategory }) {
       const origin =
         win?.location?.origin && win.location.origin !== "null" ? win.location.origin : "";
-      const pathname = win?.location?.pathname || "";
-      const basePath = pathname && pathname !== "/" ? pathname.replace(/\/+$/, "") : "";
       const normalizedPath = pagePath.startsWith("/") ? pagePath : `/${pagePath}`;
-      const pageLocation = origin ? `${origin}${basePath}${normalizedPath}` : undefined;
+      const pageLocation = origin ? `${origin}${normalizedPath}` : undefined;
 
       sendEvent("page_view", {
         page_path: normalizedPath,

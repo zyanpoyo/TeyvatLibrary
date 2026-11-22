@@ -37,12 +37,14 @@ function createSingletonFetcher<T>(url: string, errorLabel: string) {
   };
 }
 
+const DATA_BASE = `${import.meta.env.BASE_URL.replace(/\/?$/, "/")}data`;
+
 const storiesIndexFetcher = createSingletonFetcher<StoriesIndexData>(
-  "./data/stories-index.json",
+  `${DATA_BASE}/stories-index.json`,
   "書架インデックスの読み込みに失敗しました"
 );
 const searchIndexFetcher = createSingletonFetcher<SearchIndexData>(
-  "./data/search-index.json",
+  `${DATA_BASE}/search-index.json`,
   "検索インデックスの読み込みに失敗しました"
 );
 const storyCache = new Map<string, StoryDetail>();
@@ -67,7 +69,7 @@ export async function fetchStoryDetail(storyId: string): Promise<StoryDetail> {
   if (cached) {
     return cached;
   }
-  const url = `./data/stories/${encodeURIComponent(storyId)}.json`;
+  const url = `${DATA_BASE}/stories/${encodeURIComponent(storyId)}.json`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`作品「${storyId}」の読み込みに失敗しました (HTTP ${res.status})`);
