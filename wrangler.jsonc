@@ -13,5 +13,6 @@
   "assets": {
     "directory": "./build/client",
     "not_found_handling": "404-page"
-  }
+  },
+  "previews": {}
 }
