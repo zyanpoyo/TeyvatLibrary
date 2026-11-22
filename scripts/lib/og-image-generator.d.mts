@@ -32,6 +32,8 @@ export function generateAllOgImages(options: {
   siteUrl?: string | null;
   cacheDir?: string;
   fontPkgDir?: string;
+  force?: boolean;
+  only?: string | string[] | null;
 }): Promise<OgGenerationResult>;
 
 export function runOgImageGeneratorSmokeCheck(options: {

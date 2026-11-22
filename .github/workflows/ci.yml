@@ -34,6 +34,9 @@ jobs:
       - name: Validate story data
         run: npm run validate
 
+      - name: Validate skills manifest
+        run: npm run skills:validate
+
       - name: Build application
         run: npm run build
 

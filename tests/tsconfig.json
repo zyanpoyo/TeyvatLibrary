@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDirs": ["..", "../.react-router/types"],
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"]
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "../src/**/*",
+    "../.react-router/types/**/*"
+  ]
+}

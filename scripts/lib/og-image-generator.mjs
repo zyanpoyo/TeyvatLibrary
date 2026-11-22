@@ -689,6 +689,29 @@ function computeCacheHash(payload) {
     .slice(0, 16);
 }
 
+function normalizeOnlyTargets(only) {
+  if (only === undefined || only === null) {
+    return null;
+  }
+  const rawList = Array.isArray(only) ? only : [only];
+  const normalized = rawList
+    .flatMap((item) => String(item).split(","))
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .map((token) => {
+      const stripped = token.replace(/^\/?og\//, "").replace(/\.png$/i, "");
+      if (stripped === "site" || stripped === "about") return stripped;
+      if (stripped.startsWith("story/")) return stripped.slice("story/".length);
+      if (stripped.startsWith("story-")) return stripped.slice("story-".length);
+      return stripped;
+    });
+
+  if (normalized.length === 0) {
+    throw new Error("OGP 生成対象 (--only) が空です。site, about, または物語IDを指定してください。");
+  }
+  return Array.from(new Set(normalized));
+}
+
 /**
  * 書架・About・全物語の静的 OGP 画像（1200x630 PNG）をビルド出力先へ生成する。
  */
@@ -698,6 +721,8 @@ export async function generateAllOgImages({
   siteUrl,
   cacheDir = path.join(process.cwd(), ".cache", "og"),
   fontPkgDir = path.dirname(require.resolve("@fontsource/shippori-mincho/package.json")),
+  force = false,
+  only = null,
 } = {}) {
   const ogRootDir = path.join(clientDir, "og");
   const ogStoryDir = path.join(ogRootDir, "story");
@@ -710,6 +735,7 @@ export async function generateAllOgImages({
 
   const specs = [
     {
+      targetKey: "site",
       cacheId: "site",
       outPath: path.join(ogRootDir, "site.png"),
       kind: "site",
@@ -717,6 +743,7 @@ export async function generateAllOgImages({
       hashPayload: { kind: "site", totalCount, displayHost },
     },
     {
+      targetKey: "about",
       cacheId: "about",
       outPath: path.join(ogRootDir, "about.png"),
       kind: "about",
@@ -725,6 +752,7 @@ export async function generateAllOgImages({
     ...stories
       .filter((story) => story?.id)
       .map((story) => ({
+        targetKey: story.id,
         cacheId: `story-${story.id}`,
         outPath: path.join(ogStoryDir, `${story.id}.png`),
         kind: "story",
@@ -742,13 +770,25 @@ export async function generateAllOgImages({
       })),
   ];
 
+  let targetSpecs = specs;
+  const onlyTargets = normalizeOnlyTargets(only);
+  if (onlyTargets) {
+    const specByTarget = new Map(specs.map((spec) => [spec.targetKey, spec]));
+    const unknownTargets = onlyTargets.filter((target) => !specByTarget.has(target));
+    if (unknownTargets.length > 0) {
+      throw new Error(`指定された OGP 生成対象が見つかりません: ${unknownTargets.join(", ")}`);
+    }
+    const targetSet = new Set(onlyTargets);
+    targetSpecs = specs.filter((spec) => targetSet.has(spec.targetKey));
+  }
+
   const pendingSpecs = [];
   let cacheHits = 0;
 
-  for (const spec of specs) {
+  for (const spec of targetSpecs) {
     const hash = computeCacheHash(spec.hashPayload);
     const cacheFile = path.join(cacheDir, `${spec.cacheId}.${hash}.png`);
-    if (fs.existsSync(cacheFile)) {
+    if (!force && fs.existsSync(cacheFile)) {
       fs.copyFileSync(cacheFile, spec.outPath);
       cacheHits += 1;
     } else {
@@ -801,7 +841,7 @@ export async function generateAllOgImages({
   }
 
   return {
-    totalGenerated: specs.length,
+    totalGenerated: targetSpecs.length,
     cacheHits,
     renderedCount: pendingSpecs.length,
     missingChars,

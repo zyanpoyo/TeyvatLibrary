@@ -14,9 +14,35 @@ export default defineConfig({
     cssCodeSplit: false,
   },
   test: {
-    environment: "jsdom",
     globals: true,
-    include: ["tests/**/*.test.{ts,tsx}"],
-    setupFiles: ["./tests/setup.ts"],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "node",
+          environment: "node",
+          include: ["tests/**/*.test.ts"],
+          exclude: [
+            "tests/analytics.test.ts",
+            "tests/prefs.test.ts",
+            "tests/reading-state.test.ts",
+          ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          environment: "jsdom",
+          include: [
+            "tests/**/*.test.tsx",
+            "tests/analytics.test.ts",
+            "tests/prefs.test.ts",
+            "tests/reading-state.test.ts",
+          ],
+          setupFiles: ["./tests/setup.ts"],
+        },
+      },
+    ],
   },
 });

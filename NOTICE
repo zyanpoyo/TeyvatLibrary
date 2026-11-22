@@ -233,13 +233,14 @@ Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 詳細は node_modules/typescript/LICENSE および node_modules/typescript/NOTICE.txt を参照してください。
 
 --------------------------------------------------------------------------------
+@types/node (v26.6.6 / package.json: ^26.6.6)
 @types/react (v19.3.0 / package.json: ^19.3.0)
 @types/react-dom (v19.3.0 / package.json: ^19.3.0)
 License: MIT
 Copyright (c) Microsoft Corporation.
 Repository: https://github.com/DefinitelyTyped/DefinitelyTyped.git
 --------------------------------------------------------------------------------
-MIT License (詳細は node_modules/@types/react/LICENSE および node_modules/@types/react-dom/LICENSE を参照)
+MIT License (詳細は node_modules/@types/node/LICENSE、node_modules/@types/react/LICENSE および node_modules/@types/react-dom/LICENSE を参照)
 
 --------------------------------------------------------------------------------
 vitest (v5.1.0 / package.json: ^5.1.0)
