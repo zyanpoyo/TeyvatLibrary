@@ -17,9 +17,10 @@ description: >-
 | :--- | :--- | :--- |
 | **ユーザー向け機能・UI・CLIコマンドの追加/変更** | [`README.md`](../../../README.md) | 「主な機能」「データ関連スクリプト」「ディレクトリ構成」に不足や古い記述がないか |
 | **ストーリーJSONスキーマ・`stories-index.json`・ビルド/検証仕様の変更** | [`docs/architecture/DATA_ARCHITECTURE.md`](../../../docs/architecture/DATA_ARCHITECTURE.md) | 4章・6章のJSON例、フィールド定義、検証アルゴリズムと一致しているか |
+| **フロントエンド構成・主要モジュール・UI/テスト/型境界仕様の変更** | [`docs/architecture/FRONTEND_ARCHITECTURE.md`](../../../docs/architecture/FRONTEND_ARCHITECTURE.md) | 技術スタック・モジュール一覧・SEO/OGP・型境界/テスト環境分離の記述と一致しているか |
 | **新規ストーリー追加ルール・執筆手順の変更** | [`.agents/skills/genshin-story-curator/SKILL.md`](../genshin-story-curator/SKILL.md) | キュレーション手順や任意/必須フィールドの案内が最新か |
 | **リテンション施策（Phase 1〜5）の着手・仕様確定・完了** | [`docs/handoff/retention/`](../../../docs/handoff/retention/) 配下の該当仕様書 | 完了条件（`- [x]`）の更新、選択式だった未確定仕様の確定反映、[`docs/handoff/RETENTION_ROADMAP.md`](../../../docs/handoff/RETENTION_ROADMAP.md) との整合 |
-| **主要モジュールの追加・スキル追加・参照ポインター変更** | [`AGENTS.md`](../../../AGENTS.md) | Context Pointers のファイル一覧・機能要約・参照先が最新か |
+| **トップレベル領域・コマンド・ADR・スキル・運用制約の追加/変更** | [`AGENTS.md`](../../../AGENTS.md) | Workflow & Guardrails・Context Pointers が最新か（※個別モジュール名や機能詳細の羅列は追記せず `FRONTEND_ARCHITECTURE.md` / `DATA_ARCHITECTURE.md` へ集約する） |
 | **設計ドキュメント群の追加・構成変更** | [`docs/README.md`](../../../docs/README.md) | ドキュメント索引表に漏れがないか |
 
 > [!NOTE]

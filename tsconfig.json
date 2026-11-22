@@ -15,7 +15,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "rootDirs": [".", "./.react-router/types"],
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": []
   },
-  "include": ["src", "tests", ".react-router/types/**/*"]
+  "include": ["src", ".react-router/types/**/*"]
 }

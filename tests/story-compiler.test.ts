@@ -128,6 +128,7 @@ function createValidElegyStory(overrides: Record<string, unknown> = {}) {
     categoryLabel: "武器（短編小説）",
     region: ["モンド"],
     era: "災厄の時代",
+    addedAt: "2026-11-01",
     hook: "騎士が最期に残した詩",
     tags: ["ルースタン"],
     preGuide: ["主人公：モンドの騎士"],
@@ -583,5 +584,28 @@ describe("StoryCompiler (compileStories)", () => {
 
     expect(badResult.ok).toBe(false);
     expect(badResult.errors.some((e) => e.includes("crimson_witch.seo.title"))).toBe(true);
+  });
+
+  it("rejects story JSON missing required addedAt field at schema gate", () => {
+    const { addedAt: _omitted, ...crimsonWithoutAddedAt } = createValidCrimsonStory();
+    const result = compileStories(
+      createBaseInput({
+        stories: [
+          {
+            folderCategory: "artifact",
+            fileSlug: "crimson_witch",
+            story: crimsonWithoutAddedAt,
+          },
+          {
+            folderCategory: "weapon",
+            fileSlug: "elegy",
+            story: createValidElegyStory(),
+          },
+        ],
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes("addedAt"))).toBe(true);
   });
 });

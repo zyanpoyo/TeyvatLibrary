@@ -103,9 +103,9 @@ npm run preview
 | コマンド | 内容 |
 | :--- | :--- |
 | `npm run build:data` | `data/` の原典・編集データ・共通マスタを検証し、フロントエンド配信用 JSON を `public/data/` に生成します |
-| `npm run build:og` | `public/data/stories-index.json` から書架・About・全作品の静的 OGP 画像（`1200×630` PNG）を `build/client/og/` へ生成します（`.cache/og/` キャッシュ利用） |
+| `npm run build:og` | `public/data/stories-index.json` から書架・About・全作品の静的 OGP 画像（`1200×630` PNG）を `build/client/og/` へ生成します（`.cache/og/` キャッシュ利用。`-- --only <id[,id...]> --force` で特定対象のみ強制再生成可） |
 | `npm run validate` | 配信用ファイルは出力せず、データ構造や原文一致などのバリデーションのみを実行します |
-| `npm run typecheck` | `react-router typegen` と `tsc --noEmit` による TypeScript の静的型チェックを実行します |
+| `npm run typecheck` | `react-router typegen` と `tsc --noEmit`（ブラウザ用 `tsconfig.json` およびテスト用 `tests/tsconfig.json`）による静的型チェックを実行します |
 | `npm test` | Vitest + React Testing Library によるドメインロジック・状態管理・UI コンポーネントの単体/結合テストを実行します |
 | `npm run test:e2e` | Playwright（Chromium）による UI リグレッションテストを実行します（`build/client/` 本番ビルド＋静的プレビューサーバー自動起動込み） |
 | `npm run test:all` | 単体テスト（`npm test`）と UI リグレッションテスト（`npm run test:e2e`）を一括実行します |
@@ -122,8 +122,8 @@ npm run preview
 .
 ├── react-router.config.ts  # React Router Framework Mode（静的プリレンダリング・SEOアセット生成）設定
 ├── wrangler.jsonc          # Cloudflare Workers Static Assets 配信設定（build/client・404-page）
-├── tsconfig.json           # TypeScript コンパイラ設定
-├── vite.config.js          # Vite / Vitest 設定（cssCodeSplit: false）
+├── tsconfig.json           # TypeScript コンパイラ設定（ブラウザ実行 src/ 専用）
+├── vite.config.js          # Vite / Vitest 設定（cssCodeSplit: false、node/dom テスト環境分離）
 ├── package.json            # スクリプト・依存関係定義
 ├── src/                    # React + TypeScript フロントエンドソース（appDirectory）
 │   ├── root.tsx            # ルート HTML シェル（テーマ初期化・favicon・HydrateFallback・ErrorBoundary）

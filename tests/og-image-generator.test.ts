@@ -1,5 +1,10 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { parseArgs } from "../scripts/generate-og-images.mjs";
 import {
+  generateAllOgImages,
   OG_IMAGE_HEIGHT,
   OG_IMAGE_WIDTH,
   runOgImageGeneratorSmokeCheck,
@@ -32,4 +37,81 @@ describe("static OGP image generator", () => {
     expect(secondRun.renderedCount).toBe(0);
     expect(secondRun.cacheHits).toBe(firstRun.totalGenerated);
   }, 30000);
+
+  it("supports targeted generation with --only, forced re-render with --force, and rejects unknown targets", async () => {
+    const realIndex = loadDistStoriesIndex();
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "teyvat-og-options-"));
+    const clientDir = path.join(tempRoot, "client");
+    const cacheDir = path.join(tempRoot, "cache");
+
+    try {
+      const targeted = await generateAllOgImages({
+        clientDir,
+        indexData: realIndex,
+        siteUrl: "https://teyvat-bunko.com",
+        cacheDir,
+        only: ["site", "crimson_witch"],
+      });
+
+      expect(targeted.totalGenerated).toBe(2);
+      expect(targeted.renderedCount).toBe(2);
+      expect(targeted.cacheHits).toBe(0);
+      expect(fs.existsSync(path.join(clientDir, "og", "site.png"))).toBe(true);
+      expect(fs.existsSync(path.join(clientDir, "og", "story", "crimson_witch.png"))).toBe(true);
+      expect(fs.existsSync(path.join(clientDir, "og", "about.png"))).toBe(false);
+
+      const cached = await generateAllOgImages({
+        clientDir,
+        indexData: realIndex,
+        siteUrl: "https://teyvat-bunko.com",
+        cacheDir,
+        only: ["site", "crimson_witch"],
+      });
+      expect(cached.renderedCount).toBe(0);
+      expect(cached.cacheHits).toBe(2);
+
+      const forced = await generateAllOgImages({
+        clientDir,
+        indexData: realIndex,
+        siteUrl: "https://teyvat-bunko.com",
+        cacheDir,
+        only: ["site", "crimson_witch"],
+        force: true,
+      });
+      expect(forced.totalGenerated).toBe(2);
+      expect(forced.renderedCount).toBe(2);
+      expect(forced.cacheHits).toBe(0);
+
+      await expect(
+        generateAllOgImages({
+          clientDir,
+          indexData: realIndex,
+          siteUrl: "https://teyvat-bunko.com",
+          cacheDir,
+          only: ["nonexistent_story_id"],
+        })
+      ).rejects.toThrow("nonexistent_story_id");
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it("parses --force, --only, --out, and --site-url CLI arguments", () => {
+    const parsed = parseArgs([
+      "--force",
+      "--only",
+      "site,about",
+      "--only",
+      "crimson_witch",
+      "--out",
+      "build/custom",
+      "--site-url=https://teyvat-bunko.com",
+    ]);
+
+    expect(parsed.force).toBe(true);
+    expect(parsed.help).toBe(false);
+    expect(parsed.only).toEqual(["site", "about", "crimson_witch"]);
+    expect(parsed.siteUrl).toBe("https://teyvat-bunko.com");
+    expect(parsed.outDir).toBe(path.resolve(process.cwd(), "build/custom"));
+  });
 });

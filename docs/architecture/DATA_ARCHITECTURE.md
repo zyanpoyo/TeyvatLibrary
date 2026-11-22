@@ -197,7 +197,7 @@ genshin-books/
 ### 4.3 ストーリーJSON（`data/stories/<shelfCategory>/<id>.json`）の完全スキーマ
 
 各章（`chapters[]`）が自身の `sourceRef` を持つことで、**単一アイテムの作品**も**異種カテゴリー横断のオムニバス作品**もまったく同じスキーマで表現・検証できる。
-また、任意フィールド `"addedAt": "YYYY-MM-DD"` を設定することで、書架の「新着順」並び替えや追加から14日以内かつ未読の `NEW` バッジ表示、さらに配信 HTML の JSON-LD `datePublished` および `sitemap.xml` `<lastmod>` に反映される（既存全作品へ設定済み。ビルド時に実在日付形式を検証し `stories-index.json`・個別配信JSON へ引き継ぐ）。あわせて検索タイトル・ディスクリプションを個別調整したい場合向けに任意オブジェクト `"seo": { "title": "...", "description": "..." }` を許容しており、公式コーパス検証を経た上で配信JSONへ透過される。
+また、必須フィールド `"addedAt": "YYYY-MM-DD"` を設定することで、書架の「新着順」並び替えや追加から14日以内かつ未読の `NEW` バッジ表示、さらに配信 HTML の JSON-LD `datePublished` および `sitemap.xml` `<lastmod>` に反映される（`story.schema.json` の必須項目。ビルド時に実在日付形式を検証し `stories-index.json`・個別配信JSON へ引き継ぐ）。あわせて検索タイトル・ディスクリプションを個別調整したい場合向けに任意オブジェクト `"seo": { "title": "...", "description": "..." }` を許容しており、公式コーパス検証を経た上で配信JSONへ透過される。
 
 #### 例1：聖遺物（単一セットの時系列再構成）— `data/stories/artifact/crimson_witch.json`
 
@@ -210,6 +210,7 @@ genshin-books/
   "categoryLabel": "聖遺物（連作短編）",
   "region": ["モンド", "スメール"],
   "era": "500年前の災厄",
+  "addedAt": "2026-11-01",
   "hook": "愛する人を失った少女は、涙が枯れた日に自らの身体を「液体の炎」へと変えた——",
   "tags": ["ロザリン（淑女）", "500年前の災厄", "全5章・時系列順"],
   "preGuide": [
