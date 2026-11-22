@@ -30,7 +30,7 @@ VITE_GA_MEASUREMENT_ID=G-3Y6JZZ21ZM
 | `VITE_GA_DEBUG` | 未設定（または `false`） | — | 本番環境では絶対に `true` にしないでください |
 
 **主なホスティング設定箇所**:
-- **Cloudflare Pages**: `Workers & Pages` → 対象プロジェクト → `Settings` → `Variables and Secrets` → Production 環境へ `VITE_GA_MEASUREMENT_ID` を登録
+- **Cloudflare Workers（Static Assets / `teyvat-bunko.com`）**: Cloudflare ダッシュボード → `Workers & Pages` → 対象 Worker（`teyvat-library`）→ `Settings` → `Build` / `Variables and Secrets` へ `VITE_GA_MEASUREMENT_ID` を登録（独自ドメイン公開や `www` リダイレクト・Search Console 検証は [`SEO_AND_DEPLOY_SETUP.md`](SEO_AND_DEPLOY_SETUP.md) を参照）
 - **GitHub Actions（静的ビルド配信）**: リポジトリ `Settings` → `Secrets and variables` → `Actions` → `Variables` に `VITE_GA_MEASUREMENT_ID` を登録し、ビルドステップの `env:` へ渡す
 
 ---
@@ -38,7 +38,7 @@ VITE_GA_MEASUREMENT_ID=G-3Y6JZZ21ZM
 ## 2. GA4 管理画面の必須設定
 
 ### 2.1 拡張計測機能の「ページ変更に基づくイベント」を OFF にする
-本アプリは `HashRouter`（`#/`・`#/story/<id>`・`#/about`）と検索クエリ `?q=...` の更新を利用しており、[`src/analytics/ga4.ts`](../../src/analytics/ga4.ts) から正規化済み仮想パスで `page_view` を手動送信しています（`send_page_view: false`）。
+本アプリはパス URL（`/`・`/story/<id>`・`/about`）遷移と検索クエリ `?q=...` の更新を利用しており、[`src/analytics/ga4.ts`](../../src/analytics/ga4.ts) から正規化済み仮想パスで `page_view` を手動送信しています（`send_page_view: false`）。
 
 GA4 標準の「ブラウザ履歴イベントに基づくページ変更」が ON のままだと、検索入力による URL 書き換えのたびに二重・過剰計測されるため、必ず OFF にしてください。
 
@@ -59,10 +59,10 @@ GA4 管理画面 → **「管理」** → **「データの表示」→「カス
 
 | ディメンション名（表示例） | イベント パラメータ | 主な利用イベント | 取り得る値の例 |
 | :--- | :--- | :--- | :--- |
-| 作品ID | `story_id` | `page_view`, `story_open`, `story_complete`, `glossary_open`, `truth_memo_open`, `bookmark_toggle` | `crimson_witch`, `byakuyakoku` |
-| 書架カテゴリー | `story_category` | `page_view`, `story_open`, `story_complete` | `book`, `artifact`, `weapon`, `attire`, `chronicle` |
+| 作品ID | `story_id` | `page_view`, `story_open`, `story_complete`, `glossary_open`, `truth_memo_open`, `bookmark_toggle`, `story_share` | `crimson_witch`, `byakuyakoku` |
+| 書架カテゴリー | `story_category` | `page_view`, `story_open`, `story_complete`, `story_share` | `book`, `artifact`, `weapon`, `attire`, `chronicle` |
 | 開封導線 | `source` | `story_open` | `card`, `featured`, `random`, `resume`, `search_snippet`, `connected`, `evidence` |
-| 読了方法 | `method` | `story_complete` | `auto_scroll`, `auto_lore`, `manual` |
+| 読了方法 | `method` | `story_complete`, `story_share` | `auto_scroll`, `auto_lore`, `manual` / `x`, `copy` |
 | 用語ID | `term_id` | `glossary_open` | `cw_lover`, `by_snake` |
 | ブックマーク操作 | `action` | `bookmark_toggle` | `add`, `remove` |
 | 操作画面 | `surface` | `bookmark_toggle` | `shelf`, `reader` |
@@ -91,6 +91,7 @@ GA4 管理画面 → **「管理」** → **「データの表示」→「カス
 | `truth_memo_open` | 読了後の真相・考察メモを手動で展開した時 | 検索ジャンプによるプログラム展開は除外、1 閲覧につき 1 回 |
 | `bookmark_toggle` | 「あとで読む」を追加／解除した時 | 書架カード・リーダー双方から記録 |
 | `shelf_filter_change` | カテゴリータブ・状態・登場人物/用語・地域・並び替え・真相メモ検索・条件リセット操作時 | 同一カテゴリータブの再クリックはスキップ |
+| `story_share` | リーダー末尾の「X でシェア」または「URL をコピー」を実行した時 | クリップボード書き込み失敗時は送信しない（オプトアウト尊重） |
 
 ---
 

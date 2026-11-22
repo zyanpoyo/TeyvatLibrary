@@ -1,9 +1,8 @@
 import type { Route } from "./+types/shelf";
 import { fetchStoriesIndex } from "../api/stories";
 import { ShelfPage } from "../components/shelf/ShelfPage";
-import { buildCanonicalMetaTag } from "../config/site-url";
+import { buildShelfMeta } from "../domain/seo";
 import { loadDistStoriesIndex } from "../server/dist-data.server.mjs";
-import { BASE_DOCUMENT_TITLE } from "../state/AppProviders";
 
 export function loader() {
   return {
@@ -23,8 +22,8 @@ export async function clientLoader() {
   }
 }
 
-export function meta() {
-  return [{ title: BASE_DOCUMENT_TITLE }, ...buildCanonicalMetaTag("/")];
+export function meta({ loaderData }: Route.MetaArgs) {
+  return buildShelfMeta({ indexData: loaderData?.indexData ?? null });
 }
 
 export default function ShelfRoute({ loaderData }: Route.ComponentProps) {

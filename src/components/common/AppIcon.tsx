@@ -9,7 +9,10 @@ export type AppIconName =
   | "open-book"
   | "lantern"
   | "link-rings"
-  | "books";
+  | "books"
+  | "share"
+  | "copy-link"
+  | "check";
 
 export interface AppIconProps {
   name: AppIconName;
@@ -211,6 +214,45 @@ const ICON_RENDERERS: Record<AppIconName, () => ReactNode> = {
         <rect x="13.1" y="6.0" width="4.2" height="13.5" rx="0.9" fill="currentColor" fillOpacity="0.12" />
         <path d="M13.1 9.0 H17.3 M13.1 16.4 H17.3" strokeWidth="1.1" />
       </g>
+    </g>
+  ),
+  share: () => (
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="17.2" cy="5.8" r="2.3" fill="currentColor" fillOpacity="0.18" />
+      <circle cx="6.8" cy="12" r="2.3" fill="currentColor" fillOpacity="0.18" />
+      <circle cx="17.2" cy="18.2" r="2.3" fill="currentColor" fillOpacity="0.18" />
+      <path d="M8.9 10.9 L15.1 7.0 M8.9 13.1 L15.1 17.0" />
+    </g>
+  ),
+  "copy-link": () => (
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="8.6" y="8.6" width="10.4" height="11.4" rx="2.1" fill="currentColor" fillOpacity="0.14" />
+      <path d="M15.4 8.6 V6.1 A2.1 2.1 0 0 0 13.3 4.0 H6.9 A2.1 2.1 0 0 0 4.8 6.1 V13.9 A2.1 2.1 0 0 0 6.9 16.0 H8.6" />
+      <path d="M11.6 12.6 H16.0 M11.6 15.6 H14.8" strokeWidth="1.15" />
+    </g>
+  ),
+  check: () => (
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="8.2" fill="currentColor" fillOpacity="0.14" strokeWidth="1.2" />
+      <path d="M8.4 12.3 L10.9 14.8 L15.8 9.6" />
     </g>
   ),
 };

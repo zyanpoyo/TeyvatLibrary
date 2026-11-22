@@ -1,0 +1,88 @@
+.shareBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.shareAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-block-size: 24px;
+  min-inline-size: 24px;
+  padding: 0.42rem 0.95rem;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+  background: transparent;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.shareAction:hover,
+.shareAction:focus-visible {
+  color: var(--accent-gold-bright);
+  border-color: var(--border-gold);
+  background: var(--accent-gold-soft);
+}
+
+.shareAction[data-copied="true"] {
+  color: var(--accent-gold-bright);
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-soft);
+}
+
+.shareAction[data-failed="true"] {
+  border-color: var(--border-gold);
+  color: var(--text-primary);
+}
+
+.copyGroup {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.copyStatus {
+  position: absolute;
+  inset-block-start: calc(100% + 0.4rem);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  background: var(--bg-surface-solid);
+  border: 1px solid var(--border-gold);
+  color: var(--accent-gold-bright);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.copyStatus[data-visible="true"] {
+  opacity: 1;
+}
+
+.copyStatus[data-error="true"] {
+  color: var(--text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shareAction,
+  .copyStatus {
+    transition: opacity 0.12s linear;
+  }
+}
+
+@media (pointer: coarse) {
+  .shareAction {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: 0.5rem 1rem;
+  }
+}

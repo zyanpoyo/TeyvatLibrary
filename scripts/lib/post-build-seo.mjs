@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const DEFAULT_SITEMAP_ORIGIN = "https://teyvat-library.workers.dev";
+export const DEFAULT_SITEMAP_ORIGIN = "https://teyvat-bunko.com";
 
 export function resolveSitemapOrigin(rawSiteUrl) {
   if (typeof rawSiteUrl !== "string" || !rawSiteUrl.trim()) {

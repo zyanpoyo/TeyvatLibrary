@@ -528,4 +528,60 @@ describe("StoryCompiler (compileStories)", () => {
       "金髪の王は人混みを見た。{M#姫}{F#王子}は歩き出した。".length
     );
   });
+
+  it("passes valid optional seo overrides and resolved entity summaries to dist, and rejects unknown/blank/non-corpus seo text", () => {
+    const okResult = compileStories(
+      createBaseInput({
+        stories: [
+          {
+            folderCategory: "artifact",
+            fileSlug: "crimson_witch",
+            story: createValidCrimsonStory({
+              connected: [],
+              seo: {
+                title: "炎の魔女ロザリン｜モンドの記憶",
+                description: "ロザリンの物語全文と解説。",
+              },
+            }),
+          },
+        ],
+      })
+    );
+
+    expect(okResult.ok).toBe(true);
+    expect(okResult.dist?.storiesById.crimson_witch.seo).toEqual({
+      title: "炎の魔女ロザリン｜モンドの記憶",
+      description: "ロザリンの物語全文と解説。",
+    });
+    expect(okResult.dist?.storiesById.crimson_witch.entities).toEqual([
+      {
+        id: "rosalyne",
+        name: "ロザリン（淑女）",
+        kind: "character",
+        identity: "正体：炎の魔女「ロザリン」",
+        desc: "愛する人を失い炎となった魔女。",
+      },
+    ]);
+
+    const badResult = compileStories(
+      createBaseInput({
+        stories: [
+          {
+            folderCategory: "artifact",
+            fileSlug: "crimson_witch",
+            story: createValidCrimsonStory({
+              connected: [],
+              seo: {
+                title: "ツァーリツァのカタカナ",
+                description: "ロザリンの解説。",
+              },
+            }),
+          },
+        ],
+      })
+    );
+
+    expect(badResult.ok).toBe(false);
+    expect(badResult.errors.some((e) => e.includes("crimson_witch.seo.title"))).toBe(true);
+  });
 });

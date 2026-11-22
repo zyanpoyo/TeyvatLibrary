@@ -62,6 +62,14 @@ function collectBlankStoryFields(story, errors) {
       pushIfBlank(conn.reverseDesc, `${cLabel}.reverseDesc`, errors);
     }
   });
+  if (story.seo) {
+    if (story.seo.title !== undefined) {
+      pushIfBlank(story.seo.title, `${sid}.seo.title`, errors);
+    }
+    if (story.seo.description !== undefined) {
+      pushIfBlank(story.seo.description, `${sid}.seo.description`, errors);
+    }
+  }
   story.chapters.forEach((ch, cIdx) => {
     const cLabel = `${sid}.chapters[${cIdx}]`;
     pushIfBlank(ch.partLabel, `${cLabel}.partLabel`, errors);
@@ -226,6 +234,12 @@ function compileAndValidateStory(
   errors.push(...checkText(story.hook, `${sid}.hook`));
   errors.push(...checkText(story.overallTruth, `${sid}.overallTruth`));
   errors.push(...checkText(story.gameEffect, `${sid}.gameEffect`));
+  if (story.seo?.title) {
+    errors.push(...checkText(story.seo.title, `${sid}.seo.title`));
+  }
+  if (story.seo?.description) {
+    errors.push(...checkText(story.seo.description, `${sid}.seo.description`));
+  }
   story.tags.forEach((t, i) => errors.push(...checkText(t, `${sid}.tags[${i}]`)));
   story.preGuide.forEach((g, i) => errors.push(...checkText(g, `${sid}.preGuide[${i}]`)));
 
@@ -320,6 +334,20 @@ function compileAndValidateStory(
 
   warnings.push(...findEntityLinkHints(story, entities, storyEntityIds));
 
+  const storyEntities = [...storyEntityIds]
+    .map((eid) => {
+      const entity = entities[eid];
+      if (!entity) return null;
+      return {
+        id: eid,
+        name: entity.name,
+        kind: entity.kind,
+        identity: entity.defaultIdentity,
+        desc: entity.defaultDesc,
+      };
+    })
+    .filter(Boolean);
+
   const readingMinutes = Math.max(1, Math.round(totalCharCount / 550));
   return {
     id: story.id,
@@ -329,12 +357,14 @@ function compileAndValidateStory(
     region: story.region,
     era: story.era,
     ...(story.addedAt ? { addedAt: story.addedAt } : {}),
+    ...(story.seo ? { seo: story.seo } : {}),
     readingTime: `約${readingMinutes}分`,
     charCount: totalCharCount,
     chapterCount: story.chapters.length,
     hook: story.hook,
     tags: story.tags,
     entityIds: [...storyEntityIds],
+    ...(storyEntities.length > 0 ? { entities: storyEntities } : {}),
     preGuide: story.preGuide,
     overallTruth: story.overallTruth,
     gameEffect: story.gameEffect,

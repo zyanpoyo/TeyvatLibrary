@@ -7,6 +7,7 @@ import { clearStoriesCache } from "../src/api/stories";
 import { AppShell } from "../src/components/layout/AppShell";
 import { ReaderPage } from "../src/components/reader/ReaderPage";
 import { ShelfPage } from "../src/components/shelf/ShelfPage";
+import { buildStoryDocumentTitle, SHELF_DOCUMENT_TITLE } from "../src/domain/seo";
 import { useReaderSession } from "../src/hooks/useReaderSession";
 import { ANALYTICS_PREFS_KEY } from "../src/state/analytics-prefs";
 import { AppProviders } from "../src/state/AppProviders";
@@ -264,7 +265,7 @@ describe("Analytics integration with Shelf, Reader, and PrivacyDialog", () => {
     expect(pageViewSpy).toHaveBeenCalledTimes(1);
     expect(pageViewSpy).toHaveBeenLastCalledWith({
       pagePath: "/",
-      pageTitle: "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー",
+      pageTitle: SHELF_DOCUMENT_TITLE,
     });
 
     // Resume banner opens mock_elegy with source: "resume"
@@ -279,7 +280,7 @@ describe("Analytics integration with Shelf, Reader, and PrivacyDialog", () => {
     expect(pageViewSpy).toHaveBeenCalledTimes(2);
     expect(pageViewSpy).toHaveBeenLastCalledWith({
       pagePath: "/story/mock_elegy",
-      pageTitle: "終焉を嘆く詩 | テイワット文庫",
+      pageTitle: buildStoryDocumentTitle(MOCK_DETAILS.mock_elegy),
       storyId: "mock_elegy",
       storyCategory: "weapon",
     });
@@ -297,7 +298,7 @@ describe("Analytics integration with Shelf, Reader, and PrivacyDialog", () => {
     expect(pageViewSpy).toHaveBeenCalledTimes(3);
     expect(pageViewSpy).toHaveBeenLastCalledWith({
       pagePath: "/story/mock_witch",
-      pageTitle: "燃え盛る炎の魔女 | テイワット文庫",
+      pageTitle: buildStoryDocumentTitle(MOCK_DETAILS.mock_witch),
       storyId: "mock_witch",
       storyCategory: "artifact",
     });
@@ -318,7 +319,7 @@ describe("Analytics integration with Shelf, Reader, and PrivacyDialog", () => {
     expect(pageViewSpy).toHaveBeenCalledTimes(5);
     expect(pageViewSpy).toHaveBeenLastCalledWith({
       pagePath: "/",
-      pageTitle: "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー",
+      pageTitle: SHELF_DOCUMENT_TITLE,
     });
 
     // Featured card vs normal card

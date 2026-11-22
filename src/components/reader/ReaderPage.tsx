@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useParams } from "react-router";
-import { analytics, type StoryCompleteMethod } from "../../analytics/ga4";
+import { analytics, type StoryCompleteMethod, type StoryShareMethod } from "../../analytics/ga4";
 import { fetchStoryDetail } from "../../api/stories";
+import { buildStoryDocumentTitle } from "../../domain/seo";
 import { useReaderSession } from "../../hooks/useReaderSession";
 import { useSearchHighlight } from "../../hooks/useSearchHighlight";
 import { parseReaderJumpParams } from "../../router/search-params";
@@ -94,7 +95,7 @@ export function ReaderPage({
     lastTrackedViewKeyRef.current = viewKey;
     analytics.trackPageView({
       pagePath: `/story/${story.id}`,
-      pageTitle: `${story.title} | テイワット文庫`,
+      pageTitle: buildStoryDocumentTitle(story),
       storyId: story.id,
       storyCategory: story.shelfCategory,
     });
@@ -241,6 +242,18 @@ export function ReaderPage({
     [storyCategoryById]
   );
 
+  const handleShareStory = useCallback(
+    (method: StoryShareMethod) => {
+      if (!story || story.id !== storyId) return;
+      analytics.trackStoryShare({
+        storyId: story.id,
+        storyCategory: story.shelfCategory,
+        method,
+      });
+    },
+    [story, storyId]
+  );
+
   const handleBackToShelf = useCallback(() => {
     reader.leave(() => {
       setActiveTermId(null);
@@ -333,6 +346,7 @@ export function ReaderPage({
               onLoreOpened={handleLoreOpened}
               onSelectTerm={handleSelectTerm}
               onSelectConnectedStory={handleSelectConnectedStory}
+              onShareStory={handleShareStory}
             />
 
             <GlossaryDialog

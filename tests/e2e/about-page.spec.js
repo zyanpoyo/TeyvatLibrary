@@ -26,7 +26,7 @@ test.describe("About ページ（/about）とナビゲーション・設定同�
 
     await expect(page).toHaveURL(/\/about$/);
     await expect(page.locator("body")).toHaveAttribute("data-view", "about");
-    await expect(page).toHaveTitle("このサイトについて | テイワット文庫");
+    await expect(page).toHaveTitle("このサイトについて｜テイワット文庫");
     await expect(aboutLink).toHaveAttribute("aria-current", "page");
     await expect(page.locator("#about-view h1")).toHaveText("このサイトについて");
     expect(await page.evaluate(() => window.scrollY)).toBe(0);

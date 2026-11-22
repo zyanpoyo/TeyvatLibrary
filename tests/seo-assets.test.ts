@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAbsoluteUrl,
   buildCanonicalMetaTag,
   buildCanonicalUrl,
+  DEFAULT_SITE_URL,
+  getConfiguredSiteUrl,
   normalizeSiteUrl,
 } from "../src/config/site-url";
 import {
@@ -73,6 +76,15 @@ describe("site-url canonical helpers", () => {
     expect(normalizeSiteUrl("javascript:alert(1)")).toBeNull();
   });
 
+  it("resolves default site URL to https://teyvat-bunko.com and honors VITE_SITE_URL override", () => {
+    expect(DEFAULT_SITE_URL).toBe("https://teyvat-bunko.com");
+    expect(getConfiguredSiteUrl()).toBe("https://teyvat-bunko.com");
+    expect(buildAbsoluteUrl("/og/site.png")).toBe("https://teyvat-bunko.com/og/site.png");
+    expect(buildAbsoluteUrl("/story/crimson_witch", "https://staging.example/")).toBe(
+      "https://staging.example/story/crimson_witch"
+    );
+  });
+
   it("builds canonical URLs and link meta descriptors only when siteUrl is configured", () => {
     expect(buildCanonicalUrl("/", "https://teyvat.example/")).toBe(
       "https://teyvat.example/"
@@ -101,6 +113,7 @@ describe("post-build SEO asset generators", () => {
     expect(resolveSitemapOrigin("https://bunko.example.jp/")).toBe(
       "https://bunko.example.jp"
     );
+    expect(resolveSitemapOrigin("")).toBe("https://teyvat-bunko.com");
     expect(resolveSitemapOrigin("")).toBe(DEFAULT_SITEMAP_ORIGIN);
     expect(resolveSitemapOrigin("invalid-url")).toBe(DEFAULT_SITEMAP_ORIGIN);
   });

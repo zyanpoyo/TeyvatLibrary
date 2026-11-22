@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import type { Route } from "./+types/story";
 import { fetchStoryDetail, StoryFetchError } from "../api/stories";
 import { ReaderPage } from "../components/reader/ReaderPage";
-import { buildCanonicalMetaTag } from "../config/site-url";
+import { buildStoryMeta } from "../domain/seo";
 import { loadDistStoryDetail } from "../server/dist-data.server.mjs";
 import commonStyles from "../styles/common.module.css";
 
@@ -49,13 +49,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData?.story) {
-    return [{ title: "作品が見つかりません | テイワット文庫" }];
-  }
-  return [
-    { title: `${loaderData.story.title} | テイワット文庫` },
-    ...buildCanonicalMetaTag(`/story/${encodeURIComponent(loaderData.story.id)}`),
-  ];
+  return buildStoryMeta({ story: loaderData?.story ?? null });
 }
 
 export default function StoryRoute({ loaderData }: Route.ComponentProps) {

@@ -1,8 +1,8 @@
-import { ABOUT_DOCUMENT_TITLE, AboutPage } from "../components/about/AboutPage";
-import { buildCanonicalMetaTag } from "../config/site-url";
+import { AboutPage } from "../components/about/AboutPage";
+import { buildAboutMeta } from "../domain/seo";
 
 export function meta() {
-  return [{ title: ABOUT_DOCUMENT_TITLE }, ...buildCanonicalMetaTag("/about")];
+  return buildAboutMeta();
 }
 
 export default function AboutRoute() {
