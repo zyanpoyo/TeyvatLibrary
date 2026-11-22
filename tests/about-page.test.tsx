@@ -14,7 +14,6 @@ import {
   DEFAULT_OPERATOR_NAME,
   type SiteContactConfig,
 } from "../src/config/site-contact";
-import { normalizeLegacyHash } from "../src/router/routes";
 import { ANALYTICS_PREFS_KEY } from "../src/state/analytics-prefs";
 import { AppProviders, BASE_DOCUMENT_TITLE } from "../src/state/AppProviders";
 import type { StoriesIndexData } from "../src/types/story";
@@ -275,11 +274,5 @@ describe("AboutPage and footer navigation", () => {
       name: "contact@example.com",
     });
     expect(mailLink).toHaveAttribute("href", "mailto:contact@example.com");
-  });
-
-  it("normalizes legacy #about hash to #/about", () => {
-    window.history.replaceState(null, "", "/#about");
-    normalizeLegacyHash();
-    expect(window.location.hash).toBe("#/about");
   });
 });

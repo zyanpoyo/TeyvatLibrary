@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { setupMockApi } from "./fixtures/mock-data.js";
 
-test.describe("About ページ（#/about）とナビゲーション・設定同期", () => {
+test.describe("About ページ（/about）とナビゲーション・設定同期", () => {
   test("フッターから About ページへ遷移し、目次移動・オプトアウト双方向同期・書架復帰ができる", async ({
     page,
   }) => {
@@ -24,7 +24,7 @@ test.describe("About ページ（#/about）とナビゲーション・設定同�
     await expect(aboutLink).toHaveText("このサイトについて");
     await aboutLink.click();
 
-    await expect(page).toHaveURL(/#\/about$/);
+    await expect(page).toHaveURL(/\/about$/);
     await expect(page.locator("body")).toHaveAttribute("data-view", "about");
     await expect(page).toHaveTitle("このサイトについて | テイワット文庫");
     await expect(aboutLink).toHaveAttribute("aria-current", "page");
@@ -41,9 +41,9 @@ test.describe("About ページ（#/about）とナビゲーション・設定同�
       "お問い合わせ",
     ]);
 
-    // クイック目次から「お問い合わせ」へスクロールしても URL が #/about のまま維持される
+    // クイック目次から「お問い合わせ」へスクロールしても URL が /about のまま維持される
     await page.locator('button[data-target-section="about-contact"]').click();
-    await expect(page).toHaveURL(/#\/about$/);
+    await expect(page).toHaveURL(/\/about$/);
     await expect(page.locator("#about-contact-heading")).toBeInViewport();
 
     // デフォルトのお問い合わせ2窓口（GitHub Issues と専用 Google フォーム）が表示される
@@ -100,24 +100,24 @@ test.describe("About ページ（#/about）とナビゲーション・設定同�
     expect(gaRequests).toEqual([]);
   });
 
-  test("リーダー画面から About へ遷移してブラウザバックで戻れ、/#about 直アクセスも正規化される", async ({
+  test("リーダー画面から About へ遷移してブラウザバックで戻れ、/about 直アクセスも表示できる", async ({
     page,
   }) => {
     await setupMockApi(page);
-    await page.goto("/#story/mock_witch");
+    await page.goto("/story/mock_witch");
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
 
     await page.locator("#about-page-link").click();
-    await expect(page).toHaveURL(/#\/about$/);
+    await expect(page).toHaveURL(/\/about$/);
     await expect(page.locator("body")).toHaveAttribute("data-view", "about");
 
     await page.goBack();
-    await expect(page).toHaveURL(/#\/story\/mock_witch$/);
+    await expect(page).toHaveURL(/\/story\/mock_witch$/);
     await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
 
-    await page.goto("/#about");
-    await expect(page).toHaveURL(/#\/about$/);
+    await page.goto("/about");
+    await expect(page).toHaveURL(/\/about$/);
     await expect(page.locator("body")).toHaveAttribute("data-view", "about");
     await expect(page.locator("#about-view h1")).toHaveText("このサイトについて");
   });

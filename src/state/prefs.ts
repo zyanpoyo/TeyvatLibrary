@@ -56,7 +56,12 @@ export function applyDisplayPrefsToDocument(prefs: DisplayPrefs): void {
 
   const scheme = prefs.theme === "night" ? "dark" : "light";
   root.style.colorScheme = scheme;
-  const meta = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
+  let meta = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
+  if (!meta && document.head) {
+    meta = document.createElement("meta");
+    meta.name = "color-scheme";
+    document.head.appendChild(meta);
+  }
   if (meta && meta.content !== scheme) {
     meta.content = scheme;
   }

@@ -2,34 +2,51 @@ import { useEffect, type ReactNode } from "react";
 import { isRouteErrorResponse, Link, Links, Meta, Scripts, useMatch } from "react-router";
 import type { Route } from "./+types/root";
 import { AppShell } from "./components/layout/AppShell";
-import { loadDistStoriesIndex } from "./server/dist-data.server.mjs";
 import { AppProviders } from "./state/AppProviders";
 import commonStyles from "./styles/common.module.css";
 import "./styles/tokens.css";
 
 const THEME_INIT_SCRIPT = `(function () {
   var theme = "night";
+  var fontSize = "1.0625rem";
+  var proseFont = '"Shippori Mincho", serif';
+  var fontSizes = { small: "0.9375rem", medium: "1.0625rem", large: "1.2rem" };
+  var fontFamilies = {
+    mincho: '"Shippori Mincho", serif',
+    gothic: '"Noto Sans JP", sans-serif'
+  };
   try {
     var raw = localStorage.getItem("genshin-books-display-prefs-v1");
     var parsed = raw ? JSON.parse(raw) : null;
-    if (parsed && (parsed.theme === "night" || parsed.theme === "paper" || parsed.theme === "sepia")) {
-      theme = parsed.theme;
+    if (parsed) {
+      if (parsed.theme === "night" || parsed.theme === "paper" || parsed.theme === "sepia") {
+        theme = parsed.theme;
+      }
+      if (parsed.fontSize && fontSizes[parsed.fontSize]) {
+        fontSize = fontSizes[parsed.fontSize];
+      }
+      if (parsed.fontFamily && fontFamilies[parsed.fontFamily]) {
+        proseFont = fontFamilies[parsed.fontFamily];
+      }
     }
   } catch (e) {
     // Ignore storage errors
   }
-  document.documentElement.dataset.theme = theme;
+  var root = document.documentElement;
+  root.dataset.theme = theme;
+  root.style.setProperty("--reader-font-size", fontSize);
+  root.style.setProperty("--reader-prose-font", proseFont);
+  root.style.colorScheme = theme === "night" ? "dark" : "light";
   var meta = document.querySelector('meta[name="color-scheme"]');
+  if (!meta && document.head) {
+    meta = document.createElement("meta");
+    meta.name = "color-scheme";
+    document.head.appendChild(meta);
+  }
   if (meta) {
     meta.content = theme === "night" ? "dark" : "light";
   }
 })();`;
-
-export function loader() {
-  return {
-    indexData: loadDistStoriesIndex(),
-  };
-}
 
 export function Layout({ children }: { children: ReactNode }) {
   const isReaderRoute = Boolean(useMatch("/story/:storyId"));
@@ -41,7 +58,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="color-scheme" content="dark light" suppressHydrationWarning />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <Meta />
         <Links />
@@ -60,7 +77,15 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 }
 
-export default function Root({ loaderData }: Route.ComponentProps) {
+export function HydrateFallback() {
+  return (
+    <main style={{ maxWidth: "820px", margin: "4rem auto", padding: "0 1.5rem" }}>
+      <p className={commonStyles.loadingStatus}>✦ 星図の記録を読み込んでいます…</p>
+    </main>
+  );
+}
+
+export default function Root() {
   useEffect(() => {
     if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
@@ -68,10 +93,7 @@ export default function Root({ loaderData }: Route.ComponentProps) {
   }, []);
 
   return (
-    <AppProviders
-      initialIndexData={loaderData?.indexData ?? null}
-      deferStorageHydration
-    >
+    <AppProviders deferStorageHydration>
       <AppShell />
     </AppProviders>
   );

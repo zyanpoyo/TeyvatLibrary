@@ -7,7 +7,7 @@ test.describe("リーダーの読書補助UIとモバイル表示", () => {
   });
 
   test("前提ガイド・小見出し・章末補足・章目次・真相メモが正しく機能する", async ({ page }) => {
-    await page.goto("/#story/mock_byakuyakoku");
+    await page.goto("/story/mock_byakuyakoku");
 
     await expect(page.locator(".pre-guide-list li")).toHaveCount(2);
     await expect(page.locator(".prose-subhead")).toContainText("【鳩が枝を運んだ年】");
@@ -28,12 +28,12 @@ test.describe("リーダーの読書補助UIとモバイル表示", () => {
     await expect(details.locator(".lore-game-effect")).toContainText("ゲーム内書籍シリーズ");
 
     // 単一章の作品では章目次が非表示になる
-    await page.goto("/#story/mock_elegy");
+    await page.goto("/story/mock_elegy");
     await expect(page.locator("#chapter-toc")).toBeHidden();
   });
 
   test("インライン用語ガイドの開閉と用語ガイドON/OFFトグルが動作する", async ({ page }) => {
-    await page.goto("/#story/mock_witch");
+    await page.goto("/story/mock_witch");
 
     const termBtn = page.locator(".glossary-term").first();
     const popover = page.locator("#pop-mock_witch-cw_lover");

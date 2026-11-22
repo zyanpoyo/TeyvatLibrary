@@ -21,3 +21,4 @@ status: accepted
 - `VITE_GA_MEASUREMENT_ID` が設定され、かつ「本番ビルド（`PROD`）かつローカルホスト以外」または明示的デバッグ指定（`VITE_GA_DEBUG=true`）の時のみ `gtag.js` を動的読み込みする。ローカル開発・Vitest・Playwright E2E では外部通信を一切発生させない。
 - 横断検索語句（`search_term`）は 800ms デバウンス後にメールアドレス・電話番号様数値列の簡易マスクと 100 文字制限を適用して送信する。
 - GA4 管理画面側では、手動 `page_view` との重複を防ぐため拡張計測機能の「ページ変更に基づくイベント」を無効化し、イベントパラメータ用のカスタムディメンション／指標を登録する（[`docs/guides/GOOGLE_ANALYTICS_SETUP.md`](../guides/GOOGLE_ANALYTICS_SETUP.md) 参照）。
+- **追記（[ADR-0006](0006-ssg-framework-and-url-architecture.md) 移行後）**: React Router Framework Mode への移行に伴いルーティングは `HashRouter` からフラット型パス URL（`/`・`/story/<id>`・`/about`）へ変更されたが、`send_page_view: false` による手動 `page_view` 送信・仮想パス計測・サイト内オプトアウト方針は維持している（[`src/analytics/ga4.ts`](../../src/analytics/ga4.ts) の `page_location` 計算からパス二重結合を解消済み）。

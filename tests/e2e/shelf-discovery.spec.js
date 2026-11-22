@@ -92,7 +92,7 @@ test.describe("書架の探索・フィルタリング・並び替え", () => {
 
     await randomBtn.click();
     await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
-    expect(["#/story/mock_witch", "#/story/mock_elegy"]).toContain(new URL(page.url()).hash);
+    expect(["/story/mock_witch", "/story/mock_elegy"]).toContain(new URL(page.url()).pathname);
 
     // 全作品を読了済みに設定してリロード
     const dataset = createMockDataset();
@@ -112,7 +112,7 @@ test.describe("書架の探索・フィルタリング・並び替え", () => {
     await page.locator("#search-filter").fill("ろざりん 水時計");
     await expect(page.locator("#story-grid .story-card")).toHaveCount(1);
     await expect(page.locator("#story-grid .story-card").first()).toHaveAttribute("data-story-id", "mock_witch");
-    await expect(page).toHaveURL(/#\/\?q=/);
+    await expect(page).toHaveURL(/\/\?q=/);
 
     // 検索中はカテゴリータブ件数がヒット件数へ動的更新される
     await expect(page.locator(".category-tab[data-filter='all'] .tab-count")).toHaveText("1");
@@ -136,7 +136,7 @@ test.describe("書架の探索・フィルタリング・並び替え", () => {
     await chapterSnippet.click();
 
     await expect(page.locator("body")).toHaveAttribute("data-view", "reader");
-    await expect(page).toHaveURL(/#\/story\/mock_witch\?q=/);
+    await expect(page).toHaveURL(/\/story\/mock_witch\?q=/);
     await expect(page.locator("#reader-view mark").first()).toBeVisible();
     await expect(page.locator(".reader-read-btn").first()).toHaveAttribute("aria-pressed", "false");
 

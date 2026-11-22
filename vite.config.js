@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [process.env.VITEST ? react() : reactRouter()],
   build: {
     target: "es2022",
+    cssCodeSplit: false,
   },
   test: {
     environment: "jsdom",

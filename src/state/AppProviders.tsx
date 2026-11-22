@@ -15,7 +15,7 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { analytics, type AnalyticsRuntimeStatus } from "../analytics/ga4";
-import { fetchStoriesIndex } from "../api/stories";
+import { fetchStoriesIndex, seedStoriesIndexCache } from "../api/stories";
 import { DEFAULT_SHELF_FILTERS } from "../domain/catalog";
 import { useSearchIndex } from "../hooks/useSearchIndex";
 import {
@@ -85,6 +85,7 @@ export interface ShelfContextValue {
   indexData: StoriesIndexData | null;
   indexError: string | null;
   isLoadingIndex: boolean;
+  seedIndexData: (data: StoriesIndexData) => void;
   searchIndex: SearchIndexData | null;
   isLoadingSearchIndex: boolean;
   ensureSearchIndex: () => void;
@@ -260,6 +261,13 @@ export function AppProviders({
     setFilters(DEFAULT_SHELF_FILTERS);
   }, []);
 
+  const seedIndexData = useCallback((data: StoriesIndexData) => {
+    seedStoriesIndexCache(data);
+    setIndexData((prev) => prev ?? data);
+    setIsLoadingIndex(false);
+    setIndexError(null);
+  }, []);
+
   const setPref = useCallback(
     <K extends DisplayPrefSetting>(setting: K, value: DisplayPrefs[K] | (string & {})) =>
       prefsStore.set(setting, value),
@@ -321,6 +329,7 @@ export function AppProviders({
       indexData,
       indexError,
       isLoadingIndex,
+      seedIndexData,
       searchIndex,
       isLoadingSearchIndex,
       ensureSearchIndex,
@@ -333,6 +342,7 @@ export function AppProviders({
       indexData,
       indexError,
       isLoadingIndex,
+      seedIndexData,
       searchIndex,
       isLoadingSearchIndex,
       ensureSearchIndex,

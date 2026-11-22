@@ -345,6 +345,32 @@ export async function setupMockApi(page, options = {}) {
   const { dataset = createMockDataset(), failOnceIds = new Set() } = options;
   const failedAttempted = new Set();
 
+  // Route HTML document navigations through SPA fallback so mocked /data/* payloads drive E2E tests
+  await page.route("**/*", async (route) => {
+    const req = route.request();
+    if (req.resourceType() !== "document") {
+      return route.fallback();
+    }
+    const url = new URL(req.url());
+    if (
+      url.pathname.startsWith("/assets/") ||
+      url.pathname.startsWith("/data/") ||
+      url.pathname === "/__spa-fallback.html" ||
+      /\.[a-z0-9]+$/i.test(url.pathname)
+    ) {
+      return route.fallback();
+    }
+    const fallbackRes = await route.fetch({
+      url: new URL("/__spa-fallback.html", url.origin).toString(),
+    });
+    const body = await fallbackRes.body();
+    await route.fulfill({
+      status: 200,
+      contentType: "text/html; charset=utf-8",
+      body,
+    });
+  });
+
   // Prevent flaky/slow external Google Fonts requests during headless tests
   await page.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/, (route) =>
     route.abort()

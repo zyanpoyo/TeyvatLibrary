@@ -261,6 +261,58 @@ describe("analytics / ga4 core", () => {
       ]);
     });
 
+    it("does not duplicate pathname in page_location when navigating via path URLs", () => {
+      const { fakeWin, fakeDoc } = createFakeWindowAndDocument("teyvat-library.pages.dev");
+      fakeWin.location.pathname = "/story/crimson_witch";
+
+      const client = createAnalyticsClient({
+        env: {
+          measurementId: "G-3Y6JZZ21ZM",
+          isProd: true,
+          isTestMode: false,
+          isDebug: false,
+          hostname: "teyvat-library.pages.dev",
+        },
+        windowRef: fakeWin,
+        documentRef: fakeDoc,
+      });
+
+      client.trackPageView({
+        pagePath: "/story/crimson_witch",
+        pageTitle: "燃え盛る炎の魔女 | テイワット文庫",
+        storyId: "crimson_witch",
+        storyCategory: "artifact",
+      });
+
+      fakeWin.location.pathname = "/about";
+      client.trackPageView({
+        pagePath: "/about",
+        pageTitle: "このサイトについて | テイワット文庫",
+      });
+
+      const calls = (fakeWin.dataLayer || []).map((entry) => Array.from(entry as ArrayLike<unknown>));
+      expect(calls[2]).toEqual([
+        "event",
+        "page_view",
+        {
+          page_path: "/story/crimson_witch",
+          page_title: "燃え盛る炎の魔女 | テイワット文庫",
+          page_location: "https://teyvat-library.pages.dev/story/crimson_witch",
+          story_id: "crimson_witch",
+          story_category: "artifact",
+        },
+      ]);
+      expect(calls[3]).toEqual([
+        "event",
+        "page_view",
+        {
+          page_path: "/about",
+          page_title: "このサイトについて | テイワット文庫",
+          page_location: "https://teyvat-library.pages.dev/about",
+        },
+      ]);
+    });
+
     it("never injects gtag.js when opted out initially and stops tracking + expires cookies on runtime opt-out", () => {
       const { fakeWin, fakeDoc, appendedScripts, cookieWrites, setCookieJar } =
         createFakeWindowAndDocument("sub.example.com");
