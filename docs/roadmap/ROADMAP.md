@@ -42,16 +42,34 @@
 - [x] **Google Analytics によるアナリティクス追跡対応**（[ADR-0005](../adr/0005-google-analytics-and-privacy-opt-out.md) / [GA4 セットアップガイド](../guides/GOOGLE_ANALYTICS_SETUP.md)）
   - Vite 環境変数（`VITE_GA_MEASUREMENT_ID`）による有効化ガード、HashRouter 向け正規化仮想パスの手動 `page_view` 計測、7 種カスタムイベント（作品開封導線・検索・読了・用語ガイド・真相メモ・あとで読む・書架フィルタ）、およびフッター「アクセス解析について」ダイアログでの告知・即時オプトアウト切替を実装済み。
 
-### 1.5 SEO メタタグ・OGP・公開準備
-一般公開前のタイミングで方針を確定させる項目。URL 構造（`HashRouter` 維持かパス URL 化か）は公開後に変更すると共有リンクや検索評価が分散するため、**一般公開前の優先度：高**として位置づける（具体的な採用案は未確定）。
+### 1.5 【SEO 前提基盤】SSG フレームワーク移行＆URL・静的配信基盤の確立
+現行の `HashRouter` ＋クライアント SPA 構成は作品単位の検索インデックス登録・SNS OGP 配信のボトルネックとなるため、一般公開前に理想的な SSG フレームワーク構成を選定・移行し、SEO 施策および将来ページ（フェア棚・人物/用語名鑑）の土台となる「器」を確立する（**優先度：高／一般公開前・フェア棚／名鑑 UI 実装より先行推奨**）。
 
-- [ ] **SEO メタタグ・OGP 方針決定および公開前実装**（優先度：高／一般公開前・参考：[TeyvatLibrary_seo_and_share_spec.md](../spec/TeyvatLibrary_seo_and_share_spec.md)）
-  - 公開先のホスティング環境とあわせ、以下の 3 段階から採用範囲を決定・実装する：
-    - **案A（最小対応）**：現行の `HashRouter` ＋ SPA を維持し、[`index.html`](../../index.html) に `meta description`・共通 OGP / Twitter Card・ファビコン・静的 OGP 画像を追加（絶対 URL は `VITE_SITE_URL` 等の環境変数でビルド時注入）。
-    - **案B（完全静的プリレンダリング／SSG）**：`BrowserRouter`（パス URL）へ移行し、ビルド時に作品別静的 HTML（各作品の `<title>`・`description`・OGP・JSON-LD）と `sitemap.xml` / `robots.txt` を生成して、完全静的構成のまま作品単位の検索流入・SNS OGP を実現する。
-    - **案C（動的引用 OGP 拡張）**：案B に加え、Cloudflare Pages Functions で一節引用ごとの動的 OGP 画像生成を行う（※導入時は [ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) の改訂が必要）。
+- [x] **要件整理＆SSG フレームワーク選定・ADR 策定**（[ADR-0006](../adr/0006-ssg-framework-and-url-architecture.md) にて確定）
+  - **配信基盤**: Cloudflare Workers（Workers Static Assets：`build/client` 静的配信＋`not_found_handling: "404-page"`）および独自ドメイン運用（ドメイン名未定・環境変数で正規オリジン注入）を採用。
+  - **SSG フレームワーク**: React Router v8 Framework Mode（`ssr: false`＋`prerender`）を採用し、静的 HTML 出力による SEO とハイドレーション後の連続読書 UX（書架↔リーダー状態連携）を両立。
+  - **URL 設計（フラット型）**: 書架 `/`・物語 `/story/:storyId`・このサイトについて `/about` を基本とし、将来の読書コース `/courses`・`/courses/:courseId` および人物・用語名鑑 `/entities`・`/entities/:entityId` を予約（未公開のため旧ハッシュ互換は設けない）。
+- [ ] **SSG 構成への移行＆既存アプリ移植**
+  - 3 層データコンパイラ（[`build-stories.mjs`](../../scripts/build-stories.mjs)）は前段のビルド＆検証パイプラインとして維持・接続する。
+  - ルーティングのパス URL 化、`BASE_URL` 基準のデータ取得（[`stories.ts`](../../src/api/stories.ts)）、GA4 `page_location` 正規化（[`ga4.ts`](../../src/analytics/ga4.ts)）を対応する。
+  - `localStorage` 依存状態（読了記録・しおり・表示設定・テーマ初期化）の SSG／ハイドレーション安全化（初回描画ミスマッチ防止）を行う。
+  - 既存の Vitest / Playwright テストを SSG ビルド出力・新ルート向けに追従させ、全パスを確認する。
+- [ ] **最低限のクロール受入基盤の整備**
+  - 全ルート（書架・全作品・About）の静的 HTML 出力（本文が HTML に含まれる状態）と、基本 `<title>`・`<link rel="canonical">`・`robots.txt`・`sitemap.xml` 自動生成・ファビコンをビルドに組み込む。
+
+### 1.6 【SEO 最適化】メタタグ・構造化データ・OGP／引用シェア＆公開後検証
+`1.5` で確立した SSG 基盤の上で、検索流入（Google 検索・AI 検索）と SNS 拡散の訴求力を最大化するフェーズ（参考：[TeyvatLibrary_seo_and_share_spec.md](../spec/TeyvatLibrary_seo_and_share_spec.md)）。
+
+- [ ] **検索向けメタタグ設計＆JSON-LD 構造化データの実装**（優先度：高／一般公開前仕上げ）
+  - 5 分類（書籍・聖遺物・武器・風の翼・突破素材）・書架・About（および将来のフェア棚・名鑑）ごとの `<title>`・`<meta name="description">` テンプレートを策定し、`data/stories/`・`data/shared/entities.json` から自動生成する。
+  - JSON-LD 構造化データ（`Article`・`BreadcrumbList`・用語解説 `DefinedTerm`）を各静的 HTML へ出力する。
+- [ ] **OGP・SNS シェア設計と実装**（優先度：中〜高／段階的採用）
+  - **基本（完全静的・[ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) 準拠）**：サイト共通 OGP 画像、またはビルド時に全作品分の作品別 OGP 画像（`1200×630`）を静的生成して配布する。
+  - **拡張（任意）**：一節引用シェア＆動的 OGP 画像生成（Cloudflare Pages Functions＋`HTMLRewriter`）を導入する（※導入時は [ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) の改訂が必要）。
 - [ ] **公開後の検索・SNS クロール検証**（優先度：中／一般公開後）
-  - 本番ドメイン確定後の `canonical`・`og:url`・`og:image`・`sitemap.xml` 実 URL 反映、Google Search Console 登録、および OGP・構造化データのリッチリザルト表示検証を行う。
+  - 本番ドメイン確定後の `canonical`・`og:url`・`og:image`・`sitemap.xml` 実 URL 反映を確認する。
+  - Google リッチリザルトテスト・Schema Markup Validator・X / Discord 等の OGP カード実機表示検証を行う。
+  - Google Search Console 登録・サイトマップ送信および検索クエリに基づく継続改善を行う。
 
 ---
 
