@@ -58,6 +58,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#0b101c" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <Meta />

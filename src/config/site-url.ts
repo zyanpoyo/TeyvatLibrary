@@ -1,6 +1,8 @@
 /**
- * サイト基準 URL（VITE_SITE_URL）の正規化と canonical URL 生成を行うユーティリティ。
+ * サイト基準 URL（既定: https://teyvat-bunko.com / VITE_SITE_URL 上書き対応）の正規化と絶対 URL・canonical 生成を行うユーティリティ。
  */
+export const DEFAULT_SITE_URL = "https://teyvat-bunko.com";
+
 export function normalizeSiteUrl(raw?: string | null): string | null {
   if (typeof raw !== "string") return null;
   const trimmed = raw.trim();
@@ -17,16 +19,16 @@ export function normalizeSiteUrl(raw?: string | null): string | null {
   }
 }
 
-export function getConfiguredSiteUrl(): string | null {
+export function getConfiguredSiteUrl(): string {
   const viteSiteUrl = (import.meta as { env?: Record<string, string | undefined> }).env
     ?.VITE_SITE_URL;
   const nodeSiteUrl = (
     globalThis as { process?: { env?: Record<string, string | undefined> } }
   ).process?.env?.VITE_SITE_URL;
-  return normalizeSiteUrl(viteSiteUrl || nodeSiteUrl);
+  return normalizeSiteUrl(viteSiteUrl || nodeSiteUrl) ?? DEFAULT_SITE_URL;
 }
 
-export function buildCanonicalUrl(
+export function buildAbsoluteUrl(
   pathname: string,
   siteUrl: string | null = getConfiguredSiteUrl()
 ): string | null {
@@ -35,6 +37,13 @@ export function buildCanonicalUrl(
   const normalizedPath =
     pathname === "/" ? "/" : pathname.startsWith("/") ? pathname : `/${pathname}`;
   return normalizedPath === "/" ? `${base}/` : `${base}${normalizedPath}`;
+}
+
+export function buildCanonicalUrl(
+  pathname: string,
+  siteUrl: string | null = getConfiguredSiteUrl()
+): string | null {
+  return buildAbsoluteUrl(pathname, siteUrl);
 }
 
 export function buildCanonicalMetaTag(

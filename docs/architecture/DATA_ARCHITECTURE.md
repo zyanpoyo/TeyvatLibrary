@@ -197,7 +197,7 @@ genshin-books/
 ### 4.3 ストーリーJSON（`data/stories/<shelfCategory>/<id>.json`）の完全スキーマ
 
 各章（`chapters[]`）が自身の `sourceRef` を持つことで、**単一アイテムの作品**も**異種カテゴリー横断のオムニバス作品**もまったく同じスキーマで表現・検証できる。
-また、任意フィールド `"addedAt": "YYYY-MM-DD"` を設定することで、書架の「新着順」並び替えや追加から14日以内かつ未読の `NEW` バッジ表示の対象にできる（ビルド時に実在日付形式を検証し、`stories-index.json` へ引き継ぐ）。
+また、任意フィールド `"addedAt": "YYYY-MM-DD"` を設定することで、書架の「新着順」並び替えや追加から14日以内かつ未読の `NEW` バッジ表示、さらに配信 HTML の JSON-LD `datePublished` および `sitemap.xml` `<lastmod>` に反映される（既存全作品へ設定済み。ビルド時に実在日付形式を検証し `stories-index.json`・個別配信JSON へ引き継ぐ）。あわせて検索タイトル・ディスクリプションを個別調整したい場合向けに任意オブジェクト `"seo": { "title": "...", "description": "..." }` を許容しており、公式コーパス検証を経た上で配信JSONへ透過される。
 
 #### 例1：聖遺物（単一セットの時系列再構成）— `data/stories/artifact/crimson_witch.json`
 
@@ -461,9 +461,9 @@ function resolveActualPlainText(paragraphs) {
 
 ### 6.1 Story Compiler による4つの自動解決処理
 
-1. **`glossary` のマスタ継承解決**:
+1. **`glossary` と `entities` サマリーのマスタ継承解決**:
    - `glossary[key].entityId` が指定されている場合、`data/shared/entities.json` から `defaultIdentity`, `defaultDesc`, `defaultEvidence` を引き継ぎ、`identityOverride` / `descOverride` / `evidenceOverride`（または個別指定）があれば上書きしてフラットなオブジェクトに展開する。
-   - 同時に、その作品に登場するすべての `entityId` の配列（`entityIds: ["rosalyne", "rustan"]`）を抽出し、一覧画面の「登場人物・用語逆引きフィルタ」用にインデックス化する。
+   - 同時に、その作品に登場するすべての `entityId` の配列（`entityIds: ["rosalyne", "rustan"]`）を抽出し、一覧画面の「登場人物・用語逆引きフィルタ」用にインデックス化するほか、作品詳細JSON（`stories/<id>.json`）にも `entities` サマリー配列（`id`, `name`, `kind`, `identity`, `desc`）を埋め込み、リーダー画面の JSON-LD `about` 構造化データ生成時に追加 fetch なしで参照できるようにする。
 2. **双方向 `connected` リンクの自動展開**:
    - 作品 `A` の `connected` に `{ targetId: "B", relation: "...", desc: "...", reverseRelation: "...", reverseDesc: "..." }` が記述されている場合、作品 `B` の配信JSONの `connected` 配列にも自動的に `A` への逆リンクを追加する（すでに `B` 側に `targetId: "A"` が明示定義されている場合はそちらを優先し、重複させない）。
 3. **`evidence` 文字列内の収録作品タイトル自動リンク化**:

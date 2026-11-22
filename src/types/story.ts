@@ -85,7 +85,22 @@ export interface ConnectedStoryLink {
   desc: string;
 }
 
+export interface StorySeoOverride {
+  title?: string;
+  description?: string;
+}
+
+export interface StoryEntitySummary {
+  id: string;
+  name: string;
+  kind: EntityKind;
+  identity: string;
+  desc: string;
+}
+
 export interface StoryDetail extends StoryIndexItem {
+  seo?: StorySeoOverride;
+  entities?: StoryEntitySummary[];
   preGuide: string[];
   overallTruth: string;
   gameEffect: string;

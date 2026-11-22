@@ -17,6 +17,7 @@ import { useLocation, useNavigate } from "react-router";
 import { analytics, type AnalyticsRuntimeStatus } from "../analytics/ga4";
 import { fetchStoriesIndex, seedStoriesIndexCache } from "../api/stories";
 import { DEFAULT_SHELF_FILTERS } from "../domain/catalog";
+import { buildStoryDocumentTitle, SHELF_DOCUMENT_TITLE } from "../domain/seo";
 import { useSearchIndex } from "../hooks/useSearchIndex";
 import {
   buildReaderJumpParams,
@@ -47,7 +48,7 @@ import type {
 
 export { DEFAULT_SHELF_FILTERS };
 
-export const BASE_DOCUMENT_TITLE = "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー";
+export const BASE_DOCUMENT_TITLE = SHELF_DOCUMENT_TITLE;
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -561,7 +562,7 @@ export function useReaderTransition({
   // 作品データ取得完了時にタイトルを更新し、書架経由の遷移であればリーダー本文へフォーカスを移す
   useEffect(() => {
     if (!story) return;
-    document.title = `${story.title} | テイワット文庫`;
+    document.title = buildStoryDocumentTitle(story);
     if (sessionRef.current.shelfDepthInSession !== null) {
       readerViewRef.current?.focus({ preventScroll: true });
     }

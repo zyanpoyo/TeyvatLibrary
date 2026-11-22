@@ -46,7 +46,7 @@
 現行の `HashRouter` ＋クライアント SPA 構成は作品単位の検索インデックス登録・SNS OGP 配信のボトルネックとなるため、一般公開前に理想的な SSG フレームワーク構成を選定・移行し、SEO 施策および将来ページ（フェア棚・人物/用語名鑑）の土台となる「器」を確立する（**優先度：高／一般公開前・フェア棚／名鑑 UI 実装より先行推奨**）。
 
 - [x] **要件整理＆SSG フレームワーク選定・ADR 策定**（[ADR-0006](../adr/0006-ssg-framework-and-url-architecture.md) にて確定）
-  - **配信基盤**: Cloudflare Workers（Workers Static Assets：`build/client` 静的配信＋`not_found_handling: "404-page"`）および独自ドメイン運用（ドメイン名未定・環境変数で正規オリジン注入）を採用。
+  - **配信基盤**: Cloudflare Workers（Workers Static Assets：`build/client` 静的配信＋`not_found_handling: "404-page"`）および独自ドメイン運用（`https://teyvat-bunko.com` 既定・環境変数 `VITE_SITE_URL` で上書き可能）を採用。
   - **SSG フレームワーク**: React Router v8 Framework Mode（`ssr: false`＋`prerender`）を採用し、静的 HTML 出力による SEO とハイドレーション後の連続読書 UX（書架↔リーダー状態連携）を両立。
   - **URL 設計（フラット型）**: 書架 `/`・物語 `/story/:storyId`・このサイトについて `/about` を基本とし、将来の読書コース `/courses`・`/courses/:courseId` および人物・用語名鑑 `/entities`・`/entities/:entityId` を予約（未公開のため旧ハッシュ互換は設けない）。
 - [x] **SSG 構成への移行＆既存アプリ移植**
@@ -59,16 +59,17 @@
   - `VITE_SITE_URL` 注入対応の `canonical`（[`site-url.ts`](../../src/config/site-url.ts)）・`robots.txt`・`sitemap.xml` 自動生成（[`post-build-seo.mjs`](../../scripts/lib/post-build-seo.mjs)）・[`public/favicon.svg`](../../public/favicon.svg) をビルドに組み込み。
 
 ### 1.6 【SEO 最適化】メタタグ・構造化データ・OGP／引用シェア＆公開後検証
-`1.5` で確立した SSG 基盤の上で、検索流入（Google 検索・AI 検索）と SNS 拡散の訴求力を最大化するフェーズ（参考：[TeyvatLibrary_seo_and_share_spec.md](../spec/TeyvatLibrary_seo_and_share_spec.md)）。
+`1.5` で確立した SSG 基盤の上で、検索流入（Google 検索・AI 検索）と SNS 拡散の訴求力を最大化するフェーズ（確定仕様：[ADR-0007](../adr/0007-seo-metadata-structured-data-and-static-ogp.md) / 公開・検証手順：[SEO_AND_DEPLOY_SETUP.md](../guides/SEO_AND_DEPLOY_SETUP.md) / 参考：[TeyvatLibrary_seo_and_share_spec.md](../spec/TeyvatLibrary_seo_and_share_spec.md)）。
 
-- [ ] **検索向けメタタグ設計＆JSON-LD 構造化データの実装**（優先度：高／一般公開前仕上げ）
-  - 5 分類（書籍・聖遺物・武器・風の翼・突破素材）・書架・About（および将来のフェア棚・名鑑）ごとの `<title>`・`<meta name="description">` テンプレートを策定し、`data/stories/`・`data/shared/entities.json` から自動生成する。
-  - JSON-LD 構造化データ（`Article`・`BreadcrumbList`・用語解説 `DefinedTerm`）を各静的 HTML へ出力する。
-- [ ] **OGP・SNS シェア設計と実装**（優先度：中〜高／段階的採用）
-  - **基本（完全静的・[ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) 準拠）**：サイト共通 OGP 画像、またはビルド時に全作品分の作品別 OGP 画像（`1200×630`）を静的生成して配布する。
-  - **拡張（任意）**：一節引用シェア＆動的 OGP 画像生成（Cloudflare Pages Functions＋`HTMLRewriter`）を導入する（※導入時は [ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) の改訂が必要）。
-- [ ] **公開後の検索・SNS クロール検証**（優先度：中／一般公開後）
-  - 本番ドメイン確定後の `canonical`・`og:url`・`og:image`・`sitemap.xml` 実 URL 反映を確認する。
+- [x] **検索向けメタタグ設計＆JSON-LD 構造化データの実装**（優先度：高／一般公開前仕上げ）
+  - 5 分類（書籍・聖遺物・武器・風の翼・突破／育成素材）・書架 `/`・About `/about`・404 `/404`（`noindex`）の `<title>`・`<meta name="description">` ビルダー（[`src/domain/seo.ts`](../../src/domain/seo.ts)）および任意 `seo` 上書きフィールドを実装し、`document.title` 同期を統一。
+  - JSON-LD 構造化データ（`WebSite` + `SearchAction`、`CollectionPage`、`BreadcrumbList`、`Article`、`Person` / `Organization` / `Place` / `DefinedTerm`、`AboutPage`）を各静的 HTML へ出力し、初期 9 作品へ `addedAt`（`2026-11-01`）を補完。
+- [x] **静的 OGP・作品単位 SNS シェア設計と実装**（完全静的・[ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) 準拠）
+  - `satori` + `@resvg/resvg-js` + `@fontsource/shippori-mincho` により、ビルド時に書架・About・全作品の `1200×630` OGP PNG（`build/client/og/`）を自動生成（キャッシュ付き）し、`og:image` / `twitter:card` へ接続。
+  - リーダー末尾へ作品単位の「X でシェア」「URL をコピー」導線（[`StoryShareBar.tsx`](../../src/components/reader/StoryShareBar.tsx)）と GA4 `story_share` イベント計測を実装。
+  - [ ] **（任意・将来拡張）一節引用シェア＆動的 OGP 画像生成**：Cloudflare Workers ランタイム＋`HTMLRewriter` による段落単位の動的 OGP カード生成（※導入時は [ADR-0001](../adr/0001-static-site-and-localstorage-persistence.md) の改訂が必要）。
+- [ ] **公開後の検索・SNS クロール検証**（優先度：中／一般公開後 — [`SEO_AND_DEPLOY_SETUP.md`](../guides/SEO_AND_DEPLOY_SETUP.md) に沿って実施）
+  - Cloudflare Workers（`teyvat-bunko.com`、`workers_dev: false`）デプロイおよび `www` → apex 301 リダイレクト設定後の `canonical`・`og:url`・`og:image`・`sitemap.xml` 実 URL 反映を確認する。
   - Google リッチリザルトテスト・Schema Markup Validator・X / Discord 等の OGP カード実機表示検証を行う。
   - Google Search Console 登録・サイトマップ送信および検索クエリに基づく継続改善を行う。
 

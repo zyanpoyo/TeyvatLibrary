@@ -1,8 +1,9 @@
 import { Link } from "react-router";
+import { buildNotFoundMeta } from "../domain/seo";
 import commonStyles from "../styles/common.module.css";
 
 export function meta() {
-  return [{ title: "ページが見つかりません | テイワット文庫" }];
+  return buildNotFoundMeta("page");
 }
 
 export default function NotFoundRoute() {

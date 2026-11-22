@@ -216,6 +216,7 @@ describe("analytics / ga4 core", () => {
       client.trackTruthMemoOpen({ storyId: "crimson_witch" });
       client.trackBookmarkToggle({ storyId: "crimson_witch", action: "add", surface: "reader" });
       client.trackShelfFilterChange({ filterType: "category", filterValue: "artifact" });
+      client.trackStoryShare({ storyId: "crimson_witch", storyCategory: "artifact", method: "copy" });
 
       expect(appendedScripts).toHaveLength(1);
       expect(gtagSpy.mock.calls).toEqual([
@@ -242,6 +243,11 @@ describe("analytics / ga4 core", () => {
           { story_id: "crimson_witch", action: "add", surface: "reader" },
         ],
         ["event", "shelf_filter_change", { filter_type: "category", filter_value: "artifact" }],
+        [
+          "event",
+          "story_share",
+          { story_id: "crimson_witch", story_category: "artifact", method: "copy" },
+        ],
       ]);
 
       // Verify initial config call stored in dataLayer used send_page_view: false

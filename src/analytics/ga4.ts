@@ -21,6 +21,8 @@ export type StoryOpenSource =
 
 export type StoryCompleteMethod = "auto_scroll" | "auto_lore" | "manual";
 
+export type StoryShareMethod = "x" | "copy";
+
 export type BookmarkSurface = "shelf" | "reader";
 
 export type ShelfFilterTrackType =
@@ -92,6 +94,12 @@ export interface ShelfFilterChangeParams {
   filterValue: string | ShelfCategoryId;
 }
 
+export interface StoryShareParams {
+  storyId: string;
+  storyCategory: StoryCategoryId;
+  method: StoryShareMethod;
+}
+
 export interface AnalyticsClient {
   getStatus(): AnalyticsRuntimeStatus;
   isOptedOut(): boolean;
@@ -105,6 +113,7 @@ export interface AnalyticsClient {
   trackTruthMemoOpen(params: TruthMemoOpenParams): void;
   trackBookmarkToggle(params: BookmarkToggleParams): void;
   trackShelfFilterChange(params: ShelfFilterChangeParams): void;
+  trackStoryShare(params: StoryShareParams): void;
 }
 
 const MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/i;
@@ -415,6 +424,14 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
       sendEvent("shelf_filter_change", {
         filter_type: filterType,
         filter_value: filterValue,
+      });
+    },
+
+    trackStoryShare({ storyId, storyCategory, method }) {
+      sendEvent("story_share", {
+        story_id: storyId,
+        story_category: storyCategory,
+        method,
       });
     },
   };

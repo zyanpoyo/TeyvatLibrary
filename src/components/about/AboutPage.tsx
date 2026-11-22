@@ -5,11 +5,12 @@ import {
   readDefaultSiteContactConfig,
   type SiteContactConfig,
 } from "../../config/site-contact";
+import { ABOUT_DOCUMENT_TITLE } from "../../domain/seo";
 import { BASE_DOCUMENT_TITLE } from "../../state/AppProviders";
 import { AnalyticsOptOutControl } from "../layout/AnalyticsOptOutControl";
 import styles from "./AboutPage.module.css";
 
-export const ABOUT_DOCUMENT_TITLE = "このサイトについて | テイワット文庫";
+export { ABOUT_DOCUMENT_TITLE };
 
 interface AboutTocItem {
   readonly id: string;

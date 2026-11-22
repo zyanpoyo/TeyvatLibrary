@@ -1,10 +1,12 @@
 import { Fragment, type MouseEvent, type RefObject } from "react";
 import { Link } from "react-router";
+import type { StoryShareMethod } from "../../analytics/ga4";
 import { formatRegion, parseParagraphTokens } from "../../domain/text-parser";
 import commonStyles from "../../styles/common.module.css";
 import type { StoryDetail } from "../../types/story";
 import { AppIcon } from "../common/AppIcon";
 import { HighlightedText } from "../common/HighlightedText";
+import { StoryShareBar } from "./StoryShareBar";
 import styles from "./ReaderArticle.module.css";
 
 function getReadButtonLabel(isRead: boolean, isCompletionBtn: boolean): string {
@@ -94,6 +96,7 @@ export interface ReaderArticleProps {
   onLoreOpened: () => void;
   onSelectTerm: (termId: string) => void;
   onSelectConnectedStory?: (targetId: string) => void;
+  onShareStory?: (method: StoryShareMethod) => void;
 }
 
 export function ReaderArticle({
@@ -109,6 +112,7 @@ export function ReaderArticle({
   onLoreOpened,
   onSelectTerm,
   onSelectConnectedStory,
+  onShareStory,
 }: ReaderArticleProps) {
   const regionLabel = formatRegion(story.region);
   const chapters = story.chapters || [];
@@ -326,6 +330,8 @@ export function ReaderArticle({
           >
             <span className="reader-read-btn-label">{getReadButtonLabel(isRead, true)}</span>
           </button>
+
+          <StoryShareBar story={story} onShare={onShareStory} />
         </div>
       </div>
 

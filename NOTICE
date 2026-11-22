@@ -282,6 +282,34 @@ Repository: https://github.com/microsoft/playwright.git
 Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 詳細は node_modules/@playwright/test/LICENSE および node_modules/@playwright/test/NOTICE を参照してください。
 
+--------------------------------------------------------------------------------
+satori (v0.63.2 / package.json: ^0.63.2)
+License: MPL-2.0
+Author: Shu Ding <g@shud.in>
+Homepage: https://github.com/vercel/satori#readme
+Repository: https://github.com/vercel/satori.git
+--------------------------------------------------------------------------------
+Mozilla Public License Version 2.0 (https://www.mozilla.org/MPL/2.0/)
+詳細は node_modules/satori/LICENSE を参照してください。
+
+--------------------------------------------------------------------------------
+@resvg/resvg-js (v2.6.2 / package.json: ^2.6.2)
+License: MPL-2.0
+Repository: git@github.com:yisibl/resvg-js.git
+--------------------------------------------------------------------------------
+Mozilla Public License Version 2.0 (https://www.mozilla.org/MPL/2.0/)
+詳細は node_modules/@resvg/resvg-js/LICENSE を参照してください。
+
+--------------------------------------------------------------------------------
+@fontsource/shippori-mincho (v5.3.0 / package.json: ^5.3.0)
+License: OFL-1.1
+Copyright 2021 The Shippori Mincho Project Authors (https://github.com/fontdasu/ShipporiMincho)
+Homepage: https://fontsource.org/fonts/shippori-mincho
+Repository: https://github.com/fontsource/font-files.git
+--------------------------------------------------------------------------------
+SIL Open Font License, Version 1.1 (http://scripts.sil.org/OFL)
+詳細は node_modules/@fontsource/shippori-mincho/LICENSE を参照してください。
+
 ================================================================================
 4. 外部サービス・データ取得元
 ================================================================================
