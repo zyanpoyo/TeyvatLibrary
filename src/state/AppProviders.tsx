@@ -15,7 +15,7 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { analytics, type AnalyticsRuntimeStatus } from "../analytics/ga4";
-import { fetchStoriesIndex } from "../api/stories";
+import { fetchStoriesIndex, seedStoriesIndexCache } from "../api/stories";
 import { DEFAULT_SHELF_FILTERS } from "../domain/catalog";
 import { useSearchIndex } from "../hooks/useSearchIndex";
 import {
@@ -29,6 +29,7 @@ import {
   type AnalyticsPrefsStore,
 } from "./analytics-prefs";
 import {
+  applyDisplayPrefsToDocument,
   createDisplayPrefsState,
   useDocumentThemeEffect,
   type DisplayPrefSetting,
@@ -47,6 +48,9 @@ import type {
 export { DEFAULT_SHELF_FILTERS };
 
 export const BASE_DOCUMENT_TITLE = "テイワット文庫 — 原神 聖遺物・武器・書籍リーダー";
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 function getHistoryIndex(): number | null {
   if (typeof window === "undefined") return null;
@@ -81,6 +85,7 @@ export interface ShelfContextValue {
   indexData: StoriesIndexData | null;
   indexError: string | null;
   isLoadingIndex: boolean;
+  seedIndexData: (data: StoriesIndexData) => void;
   searchIndex: SearchIndexData | null;
   isLoadingSearchIndex: boolean;
   ensureSearchIndex: () => void;
@@ -107,18 +112,31 @@ const TransitionSessionContext = createContext<RefObject<TransitionSessionState>
 
 export interface AppProvidersProps {
   children: ReactNode;
+  initialIndexData?: StoriesIndexData | null;
+  deferStorageHydration?: boolean;
 }
 
-export function AppProviders({ children }: AppProvidersProps) {
+export function AppProviders({
+  children,
+  initialIndexData = null,
+  deferStorageHydration = false,
+}: AppProvidersProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [readingStore] = useState<ReadingStateStore>(() => createReadingState());
-  const [prefsStore] = useState(() => createDisplayPrefsState());
+  const [readingStore] = useState<ReadingStateStore>(() =>
+    createReadingState({ deferInitialLoad: deferStorageHydration })
+  );
+  const [prefsStore] = useState(() =>
+    createDisplayPrefsState({ deferInitialLoad: deferStorageHydration })
+  );
   const [analyticsPrefsStore] = useState<AnalyticsPrefsStore>(() => {
-    const store = createAnalyticsPrefsState();
-    analytics.setOptOut(store.getSnapshot().optOut);
+    const store = createAnalyticsPrefsState({ deferInitialLoad: deferStorageHydration });
+    if (!deferStorageHydration) {
+      analytics.setOptOut(store.getSnapshot().optOut);
+    }
     return store;
   });
+  const [isStorageHydrated, setIsStorageHydrated] = useState(!deferStorageHydration);
 
   const readingSnapshot = useSyncExternalStore(
     readingStore.subscribe,
@@ -136,23 +154,36 @@ export function AppProviders({ children }: AppProvidersProps) {
     analyticsPrefsStore.getSnapshot
   );
 
-  useDocumentThemeEffect(displayPrefs);
+  useIsomorphicLayoutEffect(() => {
+    if (!deferStorageHydration) return;
+    readingStore.load();
+    prefsStore.load();
+    applyDisplayPrefsToDocument(prefsStore.getSnapshot());
+    analyticsPrefsStore.load();
+    analytics.setOptOut(analyticsPrefsStore.getSnapshot().optOut);
+    setIsStorageHydrated(true);
+  }, [deferStorageHydration, readingStore, prefsStore, analyticsPrefsStore]);
+
+  useDocumentThemeEffect(displayPrefs, isStorageHydrated);
 
   useEffect(() => {
+    if (!isStorageHydrated) return;
     analytics.setOptOut(analyticsPrefs.optOut);
-  }, [analyticsPrefs.optOut]);
+  }, [analyticsPrefs.optOut, isStorageHydrated]);
 
   useEffect(() => {
-    if (location.pathname !== "/") return;
+    if (!isStorageHydrated || location.pathname !== "/") return;
     analytics.trackPageView({
       pagePath: "/",
       pageTitle: BASE_DOCUMENT_TITLE,
     });
-  }, [location.pathname]);
+  }, [location.pathname, isStorageHydrated]);
 
-  const [indexData, setIndexData] = useState<StoriesIndexData | null>(null);
+  const [indexData, setIndexData] = useState<StoriesIndexData | null>(
+    () => initialIndexData ?? null
+  );
   const [indexError, setIndexError] = useState<string | null>(null);
-  const [isLoadingIndex, setIsLoadingIndex] = useState<boolean>(true);
+  const [isLoadingIndex, setIsLoadingIndex] = useState<boolean>(() => !initialIndexData);
   const [filters, setFilters] = useState<ShelfFilters>(() => {
     if (location.pathname !== "/") return DEFAULT_SHELF_FILTERS;
     const parsed = parseShelfSearchParams(location.search);
@@ -190,6 +221,13 @@ export function AppProviders({ children }: AppProvidersProps) {
   });
 
   useEffect(() => {
+    if (initialIndexData) {
+      setIndexData(initialIndexData);
+      setIsLoadingIndex(false);
+      setIndexError(null);
+      return;
+    }
+
     let cancelled = false;
     setIsLoadingIndex(true);
     setIndexError(null);
@@ -212,7 +250,7 @@ export function AppProviders({ children }: AppProvidersProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialIndexData]);
 
   const validStoryIds = useMemo<ReadonlySet<string>>(
     () => new Set((indexData?.stories || []).map((s) => s.id)),
@@ -221,6 +259,13 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   const resetFilters = useCallback(() => {
     setFilters(DEFAULT_SHELF_FILTERS);
+  }, []);
+
+  const seedIndexData = useCallback((data: StoriesIndexData) => {
+    seedStoriesIndexCache(data);
+    setIndexData((prev) => prev ?? data);
+    setIsLoadingIndex(false);
+    setIndexError(null);
   }, []);
 
   const setPref = useCallback(
@@ -284,6 +329,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       indexData,
       indexError,
       isLoadingIndex,
+      seedIndexData,
       searchIndex,
       isLoadingSearchIndex,
       ensureSearchIndex,
@@ -296,6 +342,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       indexData,
       indexError,
       isLoadingIndex,
+      seedIndexData,
       searchIndex,
       isLoadingSearchIndex,
       ensureSearchIndex,
@@ -380,7 +427,7 @@ export function useShelfTransition(
   }, [sessionRef]);
 
   // 書架データの準備完了時に1回だけスクロール位置とカードフォーカスを復元し、以後のスクロール位置を常時追跡する
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!indexData) return;
     const session = sessionRef.current;
 

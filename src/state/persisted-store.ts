@@ -2,6 +2,7 @@ export interface PersistedStoreOptions<T> {
   key: string;
   createDefault: () => T;
   deserialize: (raw: unknown) => T;
+  deferInitialLoad?: boolean;
 }
 
 export interface PersistedStoreCore<T> {
@@ -18,6 +19,7 @@ export function createPersistedStore<T>({
   key,
   createDefault,
   deserialize,
+  deferInitialLoad = false,
 }: PersistedStoreOptions<T>): PersistedStoreCore<T> {
   const listeners = new Set<() => void>();
 
@@ -45,7 +47,7 @@ export function createPersistedStore<T>({
     }
   }
 
-  let state: T = readFromStorage();
+  let state: T = deferInitialLoad ? createDefault() : readFromStorage();
 
   function emit(): void {
     for (const listener of listeners) {

@@ -34,6 +34,7 @@ test.describe("表示設定・異常系再試行・実データ結合スモー�
 
     // リロード後も全設定が保持されていること（書架テーマボタンのaria-pressedも同期）
     await page.reload();
+    await expect(page.locator("#reader-view")).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "sepia");
     const reloadedVars = await page.evaluate(() => ({
       fontSize: document.documentElement.style.getPropertyValue("--reader-font-size"),

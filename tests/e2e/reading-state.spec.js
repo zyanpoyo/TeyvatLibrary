@@ -39,7 +39,7 @@ test.describe("読書状態・しおり・再開バナー・スクロール連�
   });
 
   test("途中スクロールで自動しおりが保存され、再開バナーから位置復元・バナー消去ができる", async ({ page }) => {
-    await page.goto("/#story/mock_witch");
+    await page.goto("/story/mock_witch");
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
 
     // mount直後の400ms記録抑制期間が過ぎるまで待機
@@ -66,7 +66,7 @@ test.describe("読書状態・しおり・再開バナー・スクロール連�
     await expect(resumeBanner).toBeVisible();
     await resumeBanner.locator('[data-action="resume-story"]').click();
 
-    await expect(page).toHaveURL(/#\/story\/mock_witch$/);
+    await expect(page).toHaveURL(/\/story\/mock_witch$/);
     await expect
       .poll(async () => page.evaluate(() => window.scrollY))
       .toBeGreaterThan(targetY * 0.7);
@@ -83,7 +83,7 @@ test.describe("読書状態・しおり・再開バナー・スクロール連�
 
   test("90%スクロールと真相メモ展開で自動読了になり、手動未読戻し後は自動読了が抑制される", async ({ page }) => {
     // 1. 90%以上スクロールによる自動読了
-    await page.goto("/#story/mock_witch");
+    await page.goto("/story/mock_witch");
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
     await page.waitForTimeout(450);
 
@@ -107,7 +107,7 @@ test.describe("読書状態・しおり・再開バナー・スクロール連�
     await expect(topReadBtn).toHaveAttribute("aria-pressed", "false");
 
     // 2. 真相メモ（<details>）展開による自動読了
-    await page.goto("/#story/mock_elegy");
+    await page.goto("/story/mock_elegy");
     await expect(page.locator(".reader-title")).toHaveText("終焉を嘆く詩（テスト版）");
     await expect(page.locator(".reader-state-bar .reader-read-btn")).toHaveAttribute("aria-pressed", "false");
 
@@ -116,7 +116,7 @@ test.describe("読書状態・しおり・再開バナー・スクロール連�
   });
 
   test("リーダーで下スクロールすると操作バーが格納され、上スクロールで再表示される", async ({ page }) => {
-    await page.goto("/#story/mock_witch");
+    await page.goto("/story/mock_witch");
     await expect(page.locator(".reader-title")).toHaveText("燃え盛る炎の魔女（テスト版）");
 
     const navRow = page.locator(".reader-nav-row");

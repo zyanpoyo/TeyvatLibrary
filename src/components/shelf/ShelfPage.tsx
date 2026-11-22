@@ -7,7 +7,11 @@ import {
   useShelfTransition,
 } from "../../state/AppProviders";
 import commonStyles from "../../styles/common.module.css";
-import type { SearchJumpTarget, ShelfCategoryId } from "../../types/story";
+import type {
+  SearchJumpTarget,
+  ShelfCategoryId,
+  StoriesIndexData,
+} from "../../types/story";
 import { ObservatoryHeader } from "./ObservatoryHeader";
 import { ResumeBanner } from "./ResumeBanner";
 import { ShelfToolbar } from "./ShelfToolbar";
@@ -16,13 +20,18 @@ import styles from "./StoryCard.module.css";
 
 const SEARCH_TRACK_DEBOUNCE_MS = 800;
 
-export function ShelfPage() {
+export interface ShelfPageProps {
+  initialIndexData?: StoriesIndexData | null;
+}
+
+export function ShelfPage({ initialIndexData = null }: ShelfPageProps = {}) {
   const shelfRef = useRef<HTMLElement | null>(null);
   const { store: readingStore, snapshot: readingSnapshot } = useReadingStateStore();
   const {
     indexData,
     indexError,
     isLoadingIndex,
+    seedIndexData,
     searchIndex,
     isLoadingSearchIndex,
     ensureSearchIndex,
@@ -37,7 +46,16 @@ export function ShelfPage() {
     setLastTrackedSearchKey,
   } = useShelfTransition(shelfRef);
 
-  const stories = indexData?.stories ?? [];
+  const effectiveIndexData = indexData ?? initialIndexData ?? null;
+  const effectiveIsLoadingIndex = !effectiveIndexData && isLoadingIndex;
+
+  useEffect(() => {
+    if (initialIndexData && !indexData) {
+      seedIndexData(initialIndexData);
+    }
+  }, [initialIndexData, indexData, seedIndexData]);
+
+  const stories = effectiveIndexData?.stories ?? [];
   const storyMap = useMemo(
     () => new Map(stories.map((story) => [story.id, story])),
     [stories]
@@ -46,12 +64,12 @@ export function ShelfPage() {
   const shelfView = useMemo(
     () =>
       deriveShelfView({
-        indexData,
+        indexData: effectiveIndexData,
         searchIndex,
         filters,
         readingState: readingSnapshot,
       }),
-    [indexData, searchIndex, filters, readingSnapshot]
+    [effectiveIndexData, searchIndex, filters, readingSnapshot]
   );
 
   const allCategoryHitCount =
@@ -245,7 +263,7 @@ export function ShelfPage() {
       />
 
       <div className={styles.storyGrid} id="story-grid">
-        {isLoadingIndex ? (
+        {effectiveIsLoadingIndex ? (
           <p className={commonStyles.loadingStatus}>✦ 書架データを読み込んでいます…</p>
         ) : indexError ? (
           <div className={commonStyles.emptyState}>

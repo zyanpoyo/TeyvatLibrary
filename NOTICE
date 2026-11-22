@@ -53,7 +53,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router (v8.5.1 / package.json: ^8.5.1)
+react-router (v8.5.2 / package.json: ^8.5.2)
 License: MIT
 Repository: https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
@@ -213,6 +213,16 @@ Repository: https://github.com/vitejs/vite-plugin-react.git
 MIT License (条文は上記参照。詳細は node_modules/@vitejs/plugin-react/LICENSE を参照)
 
 --------------------------------------------------------------------------------
+@react-router/dev (v8.5.2 / package.json: ^8.5.2)
+License: MIT
+Copyright (c) React Training LLC 2015-2019
+Copyright (c) Remix Software Inc. 2020-2021
+Copyright (c) Shopify Inc. 2022-2023
+Repository: https://github.com/remix-run/react-router
+--------------------------------------------------------------------------------
+MIT License (条文は上記 react-router を参照。詳細は node_modules/@react-router/dev/LICENSE.md を参照)
+
+--------------------------------------------------------------------------------
 typescript (v7.0.2 / package.json: ^7.0.2)
 License: Apache-2.0
 Author: Microsoft Corp.
@@ -279,7 +289,7 @@ Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 - Yatta API (https://gi.yatta.moe/api/v2/jp/)
   scripts/extract-raw.mjs における書籍データの原典取得時に利用しています。
 - Google Fonts (Noto Sans JP / Shippori Mincho)
-  index.html にて外部スタイルシートとして読み込んでいます。
+  src/root.tsx にて外部スタイルシートとして読み込んでいます。
 
 ================================================================================
 5. 開発支援スキル（.agents/skills/）

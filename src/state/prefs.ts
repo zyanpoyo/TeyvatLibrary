@@ -56,7 +56,12 @@ export function applyDisplayPrefsToDocument(prefs: DisplayPrefs): void {
 
   const scheme = prefs.theme === "night" ? "dark" : "light";
   root.style.colorScheme = scheme;
-  const meta = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
+  let meta = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
+  if (!meta && document.head) {
+    meta = document.createElement("meta");
+    meta.name = "color-scheme";
+    document.head.appendChild(meta);
+  }
   if (meta && meta.content !== scheme) {
     meta.content = scheme;
   }
@@ -65,10 +70,11 @@ export function applyDisplayPrefsToDocument(prefs: DisplayPrefs): void {
 /**
  * 表示設定スナップショットの変化を監視して DOM のテーマ属性と CSS カスタムプロパティへ同期する。
  */
-export function useDocumentThemeEffect(prefs: DisplayPrefs): void {
+export function useDocumentThemeEffect(prefs: DisplayPrefs, enabled = true): void {
   useEffect(() => {
+    if (!enabled) return;
     applyDisplayPrefsToDocument(prefs);
-  }, [prefs]);
+  }, [prefs, enabled]);
 }
 
 export interface DisplayPrefsStore {
@@ -78,11 +84,14 @@ export interface DisplayPrefsStore {
   subscribe(listener: () => void): () => void;
 }
 
-export function createDisplayPrefsState(): DisplayPrefsStore {
+export function createDisplayPrefsState(
+  options?: { deferInitialLoad?: boolean }
+): DisplayPrefsStore {
   const core = createPersistedStore<DisplayPrefs>({
     key: DISPLAY_PREFS_KEY,
     createDefault: () => ({ ...DEFAULT_PREFS }),
     deserialize: normalizeDisplayPrefs,
+    deferInitialLoad: options?.deferInitialLoad,
   });
 
   function load(): void {

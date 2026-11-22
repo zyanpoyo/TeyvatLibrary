@@ -18,7 +18,15 @@ import { ReaderArticle } from "./ReaderArticle";
 import { ReaderNavBar } from "./ReaderNavBar";
 import styles from "./ReaderPage.module.css";
 
-export function ReaderPage() {
+export interface ReaderPageProps {
+  initialStory?: StoryDetail | null;
+  initialError?: string | null;
+}
+
+export function ReaderPage({
+  initialStory = null,
+  initialError = null,
+}: ReaderPageProps = {}) {
   const { storyId = "" } = useParams<{ storyId: string }>();
 
   const { store: readingStore } = useReadingStateStore();
@@ -45,12 +53,28 @@ export function ReaderPage() {
     [indexData]
   );
 
-  const [story, setStory] = useState<StoryDetail | null>(null);
+  const [fetchedStory, setFetchedStory] = useState<StoryDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState(0);
+  const hasMatchingInitialStory = Boolean(
+    initialStory && initialStory.id === storyId && retryCount === 0
+  );
+  const hasInitialError = Boolean(
+    !hasMatchingInitialStory && initialError && retryCount === 0
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(
+    () => !hasMatchingInitialStory && !hasInitialError
+  );
   const [activeTermId, setActiveTermId] = useState<string | null>(null);
   const [isDisplayPopoverOpen, setIsDisplayPopoverOpen] = useState(false);
+
+  const story = hasMatchingInitialStory
+    ? (initialStory ?? null)
+    : fetchedStory && fetchedStory.id === storyId
+      ? fetchedStory
+      : null;
+  const effectiveError = hasInitialError ? (initialError ?? null) : error;
+  const effectiveIsLoading = !hasMatchingInitialStory && !hasInitialError && isLoading;
 
   const transition = useReaderTransition({
     story,
@@ -126,12 +150,31 @@ export function ReaderPage() {
     onScrollSettled: reader.syncAfterExternalScroll,
   });
 
+  useEffect(() => {
+    setRetryCount(0);
+    setFetchedStory(null);
+    setError(null);
+    setActiveTermId(null);
+    setIsDisplayPopoverOpen(false);
+  }, [storyId]);
+
   // Fetch story detail when storyId or retryCount changes
   useEffect(() => {
     if (!storyId || isInvalidStoryId) return;
+    if (hasMatchingInitialStory) {
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+    if (hasInitialError) {
+      setFetchedStory(null);
+      setError(initialError ?? null);
+      setIsLoading(false);
+      return;
+    }
 
     let cancelled = false;
-    setStory(null);
+    setFetchedStory(null);
     setError(null);
     setIsLoading(true);
     setActiveTermId(null);
@@ -140,7 +183,7 @@ export function ReaderPage() {
     fetchStoryDetail(storyId)
       .then((data) => {
         if (!cancelled) {
-          setStory(data);
+          setFetchedStory(data);
           setIsLoading(false);
         }
       })
@@ -154,7 +197,7 @@ export function ReaderPage() {
     return () => {
       cancelled = true;
     };
-  }, [storyId, isInvalidStoryId, retryCount]);
+  }, [storyId, isInvalidStoryId, retryCount, hasMatchingInitialStory, hasInitialError, initialError]);
 
   const handleLoreOpened = useCallback(() => {
     if (story && story.id === storyId && !hasReportedTruthOpenRef.current) {
@@ -253,17 +296,17 @@ export function ReaderPage() {
           onDisplayPopoverOpenChange={setIsDisplayPopoverOpen}
         />
 
-        {isLoading ? (
+        {effectiveIsLoading ? (
           <header id="reader-header">
             <p className={commonStyles.loadingStatus}>✦ 星図の記録を読み込んでいます…</p>
           </header>
-        ) : error ? (
+        ) : effectiveError ? (
           <header id="reader-header">
             <div className={commonStyles.emptyState}>
               <p className={`${commonStyles.emptyTitle} shelf-empty-title`}>
                 作品の読み込みに失敗しました
               </p>
-              <p className={`${commonStyles.emptyDesc} shelf-empty-desc`}>{error}</p>
+              <p className={`${commonStyles.emptyDesc} shelf-empty-desc`}>{effectiveError}</p>
               <button
                 type="button"
                 className={commonStyles.controlPill}

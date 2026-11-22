@@ -169,11 +169,14 @@ export interface ReadingStateStore extends ReadingStateSnapshotReader {
   clearLastSession(): boolean;
 }
 
-export function createReadingState(): ReadingStateStore {
+export function createReadingState(
+  options?: { deferInitialLoad?: boolean }
+): ReadingStateStore {
   const core = createPersistedStore<ReadingStateSnapshot>({
     key: READING_STATE_KEY,
     createDefault: createEmptyReadingState,
     deserialize: normalizeState,
+    deferInitialLoad: options?.deferInitialLoad,
   });
 
   function load(): void {

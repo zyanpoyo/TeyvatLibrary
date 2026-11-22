@@ -31,11 +31,14 @@ export interface AnalyticsPrefsStore {
 /**
  * Google Analytics オプトアウト設定を localStorage へ永続化し、別タブ間同期を提供するストア。
  */
-export function createAnalyticsPrefsState(): AnalyticsPrefsStore {
+export function createAnalyticsPrefsState(
+  options?: { deferInitialLoad?: boolean }
+): AnalyticsPrefsStore {
   const core = createPersistedStore<AnalyticsPrefs>({
     key: ANALYTICS_PREFS_KEY,
     createDefault: () => ({ ...DEFAULT_ANALYTICS_PREFS }),
     deserialize: normalizeAnalyticsPrefs,
+    deferInitialLoad: options?.deferInitialLoad,
   });
 
   function load(): void {

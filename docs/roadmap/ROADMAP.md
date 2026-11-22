@@ -49,13 +49,14 @@
   - **配信基盤**: Cloudflare Workers（Workers Static Assets：`build/client` 静的配信＋`not_found_handling: "404-page"`）および独自ドメイン運用（ドメイン名未定・環境変数で正規オリジン注入）を採用。
   - **SSG フレームワーク**: React Router v8 Framework Mode（`ssr: false`＋`prerender`）を採用し、静的 HTML 出力による SEO とハイドレーション後の連続読書 UX（書架↔リーダー状態連携）を両立。
   - **URL 設計（フラット型）**: 書架 `/`・物語 `/story/:storyId`・このサイトについて `/about` を基本とし、将来の読書コース `/courses`・`/courses/:courseId` および人物・用語名鑑 `/entities`・`/entities/:entityId` を予約（未公開のため旧ハッシュ互換は設けない）。
-- [ ] **SSG 構成への移行＆既存アプリ移植**
-  - 3 層データコンパイラ（[`build-stories.mjs`](../../scripts/build-stories.mjs)）は前段のビルド＆検証パイプラインとして維持・接続する。
-  - ルーティングのパス URL 化、`BASE_URL` 基準のデータ取得（[`stories.ts`](../../src/api/stories.ts)）、GA4 `page_location` 正規化（[`ga4.ts`](../../src/analytics/ga4.ts)）を対応する。
-  - `localStorage` 依存状態（読了記録・しおり・表示設定・テーマ初期化）の SSG／ハイドレーション安全化（初回描画ミスマッチ防止）を行う。
-  - 既存の Vitest / Playwright テストを SSG ビルド出力・新ルート向けに追従させ、全パスを確認する。
-- [ ] **最低限のクロール受入基盤の整備**
-  - 全ルート（書架・全作品・About）の静的 HTML 出力（本文が HTML に含まれる状態）と、基本 `<title>`・`<link rel="canonical">`・`robots.txt`・`sitemap.xml` 自動生成・ファビコンをビルドに組み込む。
+- [x] **SSG 構成への移行＆既存アプリ移植**
+  - [`react-router.config.ts`](../../react-router.config.ts)・[`src/routes.ts`](../../src/routes.ts)・[`src/root.tsx`](../../src/root.tsx)・[`src/routes/`](../../src/routes/story.tsx)・[`src/server/dist-data.server.mjs`](../../src/server/dist-data.server.mjs) を構築し、3 層データコンパイラ（[`build-stories.mjs`](../../scripts/build-stories.mjs)）の前段出力をそのまま接続。
+  - パス URL 化・`vite.config.js`（`base: "/"`・`cssCodeSplit: false`）・`BASE_URL` 基準取得（[`stories.ts`](../../src/api/stories.ts)）・GA4 `page_location` 正規化（[`ga4.ts`](../../src/analytics/ga4.ts)）を対応。
+  - `localStorage` 依存状態（読了記録・しおり・表示設定・テーマ／フォント初期化・GA4 オプトアウト）のハイドレーション安全化、および本番静的配信サーバー（[`scripts/preview-static.mjs`](../../scripts/preview-static.mjs)）を導入。
+  - 既存の単体テスト・Playwright E2E 全 7 スペックをパス URL へ追従させ、ハイドレーション警告ゼロ検証（[`ssg-prerender.spec.js`](../../tests/e2e/ssg-prerender.spec.js)）を追加。
+- [x] **最低限のクロール受入基盤の整備**
+  - 書架 `/`・全 35 物語 `/story/:storyId`・`/about` の静的 HTML 出力、および静的 `404.html` ＋ [`wrangler.jsonc`](../../wrangler.jsonc)（`not_found_handling: "404-page"`）による HTTP 404 配信を構築。
+  - `VITE_SITE_URL` 注入対応の `canonical`（[`site-url.ts`](../../src/config/site-url.ts)）・`robots.txt`・`sitemap.xml` 自動生成（[`post-build-seo.mjs`](../../scripts/lib/post-build-seo.mjs)）・[`public/favicon.svg`](../../public/favicon.svg) をビルドに組み込み。
 
 ### 1.6 【SEO 最適化】メタタグ・構造化データ・OGP／引用シェア＆公開後検証
 `1.5` で確立した SSG 基盤の上で、検索流入（Google 検索・AI 検索）と SNS 拡散の訴求力を最大化するフェーズ（参考：[TeyvatLibrary_seo_and_share_spec.md](../spec/TeyvatLibrary_seo_and_share_spec.md)）。

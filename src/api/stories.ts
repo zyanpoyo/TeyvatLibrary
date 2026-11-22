@@ -1,5 +1,15 @@
 import type { SearchIndexData, StoriesIndexData, StoryDetail } from "../types/story";
 
+export class StoryFetchError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "StoryFetchError";
+    this.status = status;
+  }
+}
+
 interface CachedEntry<T> {
   data: T | null;
   promise: Promise<T> | null;
@@ -16,7 +26,7 @@ function createSingletonFetcher<T>(url: string, errorLabel: string) {
       entry.promise = fetch(url)
         .then((res) => {
           if (!res.ok) {
-            throw new Error(`${errorLabel} (HTTP ${res.status})`);
+            throw new StoryFetchError(`${errorLabel} (HTTP ${res.status})`, res.status);
           }
           return res.json() as Promise<T>;
         })
@@ -30,6 +40,11 @@ function createSingletonFetcher<T>(url: string, errorLabel: string) {
 
       return entry.promise;
     },
+    seed(data: T): void {
+      if (!entry.data) {
+        entry.data = data;
+      }
+    },
     clear(): void {
       entry.data = null;
       entry.promise = null;
@@ -37,12 +52,14 @@ function createSingletonFetcher<T>(url: string, errorLabel: string) {
   };
 }
 
+const DATA_BASE = `${import.meta.env.BASE_URL.replace(/\/?$/, "/")}data`;
+
 const storiesIndexFetcher = createSingletonFetcher<StoriesIndexData>(
-  "./data/stories-index.json",
+  `${DATA_BASE}/stories-index.json`,
   "書架インデックスの読み込みに失敗しました"
 );
 const searchIndexFetcher = createSingletonFetcher<SearchIndexData>(
-  "./data/search-index.json",
+  `${DATA_BASE}/search-index.json`,
   "検索インデックスの読み込みに失敗しました"
 );
 const storyCache = new Map<string, StoryDetail>();
@@ -52,6 +69,10 @@ export function clearStoriesCache(): void {
   storiesIndexFetcher.clear();
   searchIndexFetcher.clear();
   storyCache.clear();
+}
+
+export function seedStoriesIndexCache(data: StoriesIndexData): void {
+  storiesIndexFetcher.seed(data);
 }
 
 export function fetchStoriesIndex(): Promise<StoriesIndexData> {
@@ -67,10 +88,13 @@ export async function fetchStoryDetail(storyId: string): Promise<StoryDetail> {
   if (cached) {
     return cached;
   }
-  const url = `./data/stories/${encodeURIComponent(storyId)}.json`;
+  const url = `${DATA_BASE}/stories/${encodeURIComponent(storyId)}.json`;
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`作品「${storyId}」の読み込みに失敗しました (HTTP ${res.status})`);
+    throw new StoryFetchError(
+      `作品「${storyId}」の読み込みに失敗しました (HTTP ${res.status})`,
+      res.status
+    );
   }
   const data = (await res.json()) as StoryDetail;
   storyCache.set(storyId, data);

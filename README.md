@@ -22,17 +22,18 @@
   - **読書状態の保存（`localStorage`）**: スクロール90%到達または真相メモ展開での自動読了マーク、手動読了／あとで読むトグル、途中位置の自動しおり保存（別タブ同期対応）
   - **章目次・読了進捗・関連作品リンク**: 読書進捗バーと章末の関連作品カード表示
 - **アクセス解析・サイト案内・プライバシー管理**
-  - Google Analytics 4（GA4）による仮想パス `page_view`（`/`・`/story/<id>`・`/about`）および読書・検索・回遊イベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
-  - フッターの「アクセス解析について」ダイアログおよび「このサイトについて」（`#/about`）ページからの収集概要確認とサイト内オプトアウト切替（`localStorage` 保存・別タブ同期対応）
-  - 「このサイトについて」ページ（`#/about`）での非公式ファンサイト表記、著作権・引用方針、`localStorage` 保存データの説明、免責事項、およびお問い合わせ案内（GitHub Issues・専用フォーム・運営者 X アカウント＋任意で連絡用メールアドレス）
+  - Google Analytics 4（GA4）によるパス単位 `page_view`（`/`・`/story/<id>`・`/about`）および読書・検索・回遊イベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
+  - フッターの「アクセス解析について」ダイアログおよび「このサイトについて」（`/about`）ページからの収集概要確認とサイト内オプトアウト切替（`localStorage` 保存・別タブ同期対応）
+  - 「このサイトについて」ページ（`/about`）での非公式ファンサイト表記、著作権・引用方針、`localStorage` 保存データの説明、免責事項、およびお問い合わせ案内（GitHub Issues・専用フォーム・運営者 X アカウント＋任意で連絡用メールアドレス）
 - **データ検証・ビルドパイプライン**
   - 原典層（`data/raw/`）・編集層（`data/stories/`, `data/shared/`）・配信層（`public/data/`）の3層構造を採用
   - ビルド時に原典データと本文の1文字完全一致チェックや各種整合性検証を実行
 
 ### 主な技術構成
 
-- **フロントエンド**: React 19 / TypeScript / React Router（`createHashRouter`）/ Radix UI（`@radix-ui/react-popover`, `@radix-ui/react-dialog`）/ CSS Modules / Vite
-- **テスト / 品質保証**: `tsc --noEmit`、`Vitest` + React Testing Library、`Playwright`（Chromium E2E）
+- **フロントエンド / SSG**: React 19 / TypeScript / React Router v8 Framework Mode（`ssr: false` ＋ 静的プリレンダリング）/ Radix UI（`@radix-ui/react-popover`, `@radix-ui/react-dialog`）/ CSS Modules / Vite
+- **ホスティング想定**: Cloudflare Workers Static Assets（`wrangler.jsonc`、`build/client/` 完全静的配信、`not_found_handling: "404-page"`）
+- **テスト / 品質保証**: `react-router typegen` + `tsc --noEmit`、`Vitest` + React Testing Library、`Playwright`（Chromium E2E）
 - **原典データソース / CLI**: `Node.js`、`genshin-db`、`genshin-data`
 
 ---
@@ -52,7 +53,7 @@ npm install
 
 ### 環境変数の設定（任意）
 
-Google Analytics 4（GA4）を有効にする場合や、About ページのお問い合わせ窓口（GitHub Issues・専用フォーム・X URL の上書きや連絡用メールアドレスの追加）を設定する場合は、`.env.example` をコピーして `.env.local` を作成します（未設定時は外部通信を行わず、お問い合わせ欄は既定の GitHub Issues・専用お問い合わせフォーム・運営者 X アカウントを表示します。GA4 詳細は [`docs/guides/GOOGLE_ANALYTICS_SETUP.md`](docs/guides/GOOGLE_ANALYTICS_SETUP.md) を参照）。
+Google Analytics 4（GA4）の有効化、本番ドメインの注入（`VITE_SITE_URL` による `canonical`・`sitemap.xml`・`robots.txt` 反映）、または About ページのお問い合わせ窓口（GitHub Issues・専用フォーム・X URL の上書きや連絡用メールアドレスの追加）を設定する場合は、`.env.example` をコピーして `.env.local` を作成します（未設定時は外部通信を行わず、お問い合わせ欄は既定の GitHub Issues・専用お問い合わせフォーム・運営者 X アカウントを表示します。GA4 詳細は [`docs/guides/GOOGLE_ANALYTICS_SETUP.md`](docs/guides/GOOGLE_ANALYTICS_SETUP.md) を参照）。
 
 ```bash
 cp .env.example .env.local
@@ -64,7 +65,7 @@ cp .env.example .env.local
 
 ### 開発サーバーの起動
 
-データビルド（`npm run build:data`）を実行したあと、Vite の開発サーバーを起動します。
+データビルド（`npm run build:data`）を実行したあと、React Router の開発サーバーを起動します。
 
 ```bash
 npm run dev
@@ -78,7 +79,7 @@ npm run dev
 
 ### 本番用ビルド
 
-配信用 JSON の生成（`npm run build:data`）、TypeScript 型チェック（`tsc --noEmit`）、および Vite による静的アセットのビルドを実行し、`dist/` へ出力します。
+配信用 JSON の生成（`npm run build:data`）、ルート型生成（`react-router typegen`）、TypeScript 型チェック（`tsc --noEmit`）、および React Router による静的プリレンダリング＆SEOアセット生成（`react-router build`）を実行し、`build/client/` へ出力します（全作品の静的 HTML・`404.html`・`robots.txt`・`sitemap.xml` を含む）。
 
 ```bash
 npm run build
@@ -86,7 +87,7 @@ npm run build
 
 ### ビルド結果のローカルプレビュー
 
-`npm run build` で生成された `dist/` をローカルで確認します。
+`npm run build` で生成された `build/client/` を、`404.html`（HTTP 404）解決付きの本番相当静的サーバー（`scripts/preview-static.mjs`）でローカル確認します。
 
 ```bash
 npm run preview
@@ -102,9 +103,9 @@ npm run preview
 | :--- | :--- |
 | `npm run build:data` | `data/` の原典・編集データ・共通マスタを検証し、フロントエンド配信用 JSON を `public/data/` に生成します |
 | `npm run validate` | 配信用ファイルは出力せず、データ構造や原文一致などのバリデーションのみを実行します |
-| `npm run typecheck` | `tsc --noEmit` による TypeScript の静的型チェックを実行します |
+| `npm run typecheck` | `react-router typegen` と `tsc --noEmit` による TypeScript の静的型チェックを実行します |
 | `npm test` | Vitest + React Testing Library によるドメインロジック・状態管理・UI コンポーネントの単体/結合テストを実行します |
-| `npm run test:e2e` | Playwright（Chromium）による UI リグレッションテストを実行します（開発サーバー自動起動込み） |
+| `npm run test:e2e` | Playwright（Chromium）による UI リグレッションテストを実行します（`build/client/` 本番ビルド＋静的プレビューサーバー自動起動込み） |
 | `npm run test:all` | 単体テスト（`npm test`）と UI リグレッションテスト（`npm run test:e2e`）を一括実行します |
 | `npm run extract-raw -- --type <sourceType> --id <rawId>` | `genshin-db` / `genshin-data`（書籍本文は Yatta API）から指定アイテムの原典スナップショットを `data/raw/` へ抽出します |
 | `npm run lore:inspect -- --type <sourceType> --id <rawId>` | 記事化前に対象アイテムの文字数・段落構成・コーパス未登録カタカナ語を事前検査します |
@@ -117,27 +118,33 @@ npm run preview
 
 ```text
 .
-├── index.html          # Vite エントリーHTML（ルートマウント・フォント読み込み）
-├── tsconfig.json       # TypeScript コンパイラ設定
-├── vite.config.js      # Vite / React / Vitest 設定
-├── package.json        # スクリプト・依存関係定義
-├── src/                # React + TypeScript フロントエンドソース
-│   ├── analytics/      # GA4 クライアント（環境ガード・仮想PV・イベント計測・PIIサニタイズ）
-│   ├── api/            # 作品一覧・詳細 JSON フェッチ
-│   ├── components/     # layout / shelf / reader / about / common の React コンポーネント & CSS Modules
-│   ├── config/         # 連絡先 URL・メールアドレス等の環境設定解決＆サニタイズ
-│   ├── domain/         # 書架表示状態導出・横断検索エンジン（正規化/AND/スニペット）・テキスト構文トークナイザの純粋ロジック
-│   ├── hooks/          # リーダー閲覧セッション統合・検索コーパス遅延取得・検索ハイライト着地・テーマ同期フック
-│   ├── router/         # HashRouter ルート定義・検索URLクエリ同期・旧ハッシュ互換（#story/<id>）
-│   ├── state/          # reading-state / prefs / analytics-prefs ストア＆ Context Provider
-│   ├── styles/         # カラートークン（tokens.css）＆共通 CSS Module
-│   └── types/          # ストーリー・状態型定義
-├── tests/              # Vitest テスト（*.test.ts, *.test.tsx）および Playwright UIテスト（e2e/）
-├── scripts/            # 原典抽出・コーパス同期・検証＆配信データビルドスクリプト
-├── data/               # 原典スナップショット（raw）・編集データ（stories）・共通マスタ（shared）・スキーマ（schemas）
-├── public/             # ビルド時に生成される配信用データ（public/data/）
-├── GLOSSARY.md         # ドメイン用語集（ユビキタス言語の正本）
-└── docs/               # 設計書・ADR・ロードマップ索引（docs/README.md 参照）
+├── react-router.config.ts  # React Router Framework Mode（静的プリレンダリング・SEOアセット生成）設定
+├── wrangler.jsonc          # Cloudflare Workers Static Assets 配信設定（build/client・404-page）
+├── tsconfig.json           # TypeScript コンパイラ設定
+├── vite.config.js          # Vite / Vitest 設定（cssCodeSplit: false）
+├── package.json            # スクリプト・依存関係定義
+├── src/                    # React + TypeScript フロントエンドソース（appDirectory）
+│   ├── root.tsx            # ルート HTML シェル（テーマ初期化・favicon・HydrateFallback・ErrorBoundary）
+│   ├── routes.ts           # パス URL ルート定義（/, /story/:storyId, /about, /404, *）
+│   ├── routes/             # 各ルートの loader / clientLoader / meta / 画面エントリ
+│   ├── server/             # ビルド・プリレンダリング専用の配信 JSON ローダー（*.server.mjs）
+│   ├── analytics/          # GA4 クライアント（環境ガード・PV・イベント計測・PIIサニタイズ）
+│   ├── api/                # 作品一覧・詳細 JSON フェッチ & キャッシュシード
+│   ├── components/         # layout / shelf / reader / about / common の React コンポーネント & CSS Modules
+│   ├── config/             # 連絡先設定（site-contact.ts）・正規URL/canonical生成（site-url.ts）
+│   ├── domain/             # 書架表示状態導出・横断検索エンジン（正規化/AND/スニペット）・テキスト構文トークナイザの純粋ロジック
+│   ├── hooks/              # リーダー閲覧セッション統合・検索コーパス遅延取得・検索ハイライト着地・テーマ同期フック
+│   ├── router/             # 検索・ジャンプURLクエリパラメータ同期（search-params.ts）
+│   ├── state/              # reading-state / prefs / analytics-prefs ストア＆ Context Provider
+│   ├── styles/             # カラートークン（tokens.css）＆共通 CSS Module
+│   └── types/              # ストーリー・状態型定義
+├── tests/                  # Vitest テスト（*.test.ts, *.test.tsx）および Playwright UIテスト（e2e/）
+├── scripts/                # 原典抽出・コーパス同期・検証＆配信データビルド・静的プレビュー・SEO生成スクリプト
+├── data/                   # 原典スナップショット（raw）・編集データ（stories）・共通マスタ（shared）・スキーマ（schemas）
+├── public/                 # 静的公開アセット（favicon.svg・ビルド生成される public/data/）
+├── build/                  # react-router build による静的プリレンダリング成果物（build/client/）
+├── GLOSSARY.md             # ドメイン用語集（ユビキタス言語の正本）
+└── docs/                   # 設計書・ADR・ロードマップ索引（docs/README.md 参照）
 ```
 
 ---
