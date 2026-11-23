@@ -83,6 +83,7 @@ export interface AnalyticsPrefsContextValue {
 }
 
 export interface ShelfContextValue {
+  isStorageHydrated: boolean;
   indexData: StoriesIndexData | null;
   indexError: string | null;
   isLoadingIndex: boolean;
@@ -155,6 +156,8 @@ export function AppProviders({
     analyticsPrefsStore.getSnapshot
   );
 
+  const initialLocationRef = useRef(location);
+
   useIsomorphicLayoutEffect(() => {
     if (!deferStorageHydration) return;
     readingStore.load();
@@ -162,6 +165,16 @@ export function AppProviders({
     applyDisplayPrefsToDocument(prefsStore.getSnapshot());
     analyticsPrefsStore.load();
     analytics.setOptOut(analyticsPrefsStore.getSnapshot().optOut);
+    if (initialLocationRef.current.pathname === "/") {
+      const parsed = parseShelfSearchParams(initialLocationRef.current.search);
+      if (parsed.query || parsed.includeTruth) {
+        setFilters((prev) => ({
+          ...prev,
+          query: parsed.query,
+          includeTruth: parsed.includeTruth,
+        }));
+      }
+    }
     setIsStorageHydrated(true);
   }, [deferStorageHydration, readingStore, prefsStore, analyticsPrefsStore]);
 
@@ -186,7 +199,7 @@ export function AppProviders({
   const [indexError, setIndexError] = useState<string | null>(null);
   const [isLoadingIndex, setIsLoadingIndex] = useState<boolean>(() => !initialIndexData);
   const [filters, setFilters] = useState<ShelfFilters>(() => {
-    if (location.pathname !== "/") return DEFAULT_SHELF_FILTERS;
+    if (deferStorageHydration || location.pathname !== "/") return DEFAULT_SHELF_FILTERS;
     const parsed = parseShelfSearchParams(location.search);
     if (!parsed.query && !parsed.includeTruth) return DEFAULT_SHELF_FILTERS;
     return {
@@ -201,7 +214,7 @@ export function AppProviders({
   );
 
   useEffect(() => {
-    if (location.pathname !== "/") return;
+    if (!isStorageHydrated || location.pathname !== "/") return;
     const nextQuery = buildShelfSearchParams(
       filters.query,
       Boolean(filters.includeTruth)
@@ -210,7 +223,7 @@ export function AppProviders({
     if (location.search !== expectedSearch) {
       navigate({ pathname: "/", search: expectedSearch }, { replace: true });
     }
-  }, [location.pathname, location.search, filters.query, filters.includeTruth, navigate]);
+  }, [isStorageHydrated, location.pathname, location.search, filters.query, filters.includeTruth, navigate]);
 
   const transitionStateRef = useRef<TransitionSessionState>({
     hasVisitedShelf: false,
@@ -327,6 +340,7 @@ export function AppProviders({
 
   const shelfContextValue = useMemo<ShelfContextValue>(
     () => ({
+      isStorageHydrated,
       indexData,
       indexError,
       isLoadingIndex,
@@ -340,6 +354,7 @@ export function AppProviders({
       resetFilters,
     }),
     [
+      isStorageHydrated,
       indexData,
       indexError,
       isLoadingIndex,

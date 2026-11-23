@@ -11,6 +11,7 @@ export interface UseSearchHighlightOptions {
   loreDetailsRef: RefObject<HTMLDetailsElement | null>;
   isProgrammaticLoreOpenRef: RefObject<boolean>;
   onScrollSettled?: () => void;
+  isHydrated?: boolean;
 }
 
 export interface UseSearchHighlightResult {
@@ -66,12 +67,14 @@ export function useSearchHighlight({
   loreDetailsRef,
   isProgrammaticLoreOpenRef,
   onScrollSettled,
+  isHydrated = true,
 }: UseSearchHighlightOptions): UseSearchHighlightResult {
   const location = useLocation();
+  const effectiveSearch = isHydrated ? location.search : "";
 
   const searchTarget = useMemo(
-    () => parseReaderJumpParams(location.search),
-    [location.search]
+    () => parseReaderJumpParams(effectiveSearch),
+    [effectiveSearch]
   );
   const handledKeyRef = useRef<string | null>(null);
 

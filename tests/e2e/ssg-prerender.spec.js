@@ -259,4 +259,56 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     expect(consoleErrors).toEqual([]);
     expect(hydrationWarnings).toEqual([]);
   });
+
+  test("ビルド日時と異なる閲覧日時（翌日以降・タイムゾーン差）やクエリ付き URL（/?q=, /story/...?course=）へ直アクセスしても React error #418 を出さずに起動する", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    // ビルド日から 30 日後の日付へ固定し、日替わりピックアップ・NEW バッジ判定が変化する状況を再現
+    await page.clock.install({ time: new Date("2026-12-25T12:00:00+09:00") });
+    await page.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/css; charset=utf-8",
+        body: "",
+      })
+    );
+
+    const pageErrors = [];
+    const consoleErrors = [];
+    const hydrationWarnings = [];
+
+    page.on("pageerror", (err) => pageErrors.push(err.message));
+    page.on("console", (msg) => {
+      const text = msg.text();
+      if (msg.type() === "error") {
+        consoleErrors.push(text);
+      }
+      if (/hydrat/i.test(text) || /React error #418/i.test(text)) {
+        hydrationWarnings.push(text);
+      }
+    });
+
+    try {
+      // 1. ビルド日と異なる未来日での書架トップ直アクセス
+      await page.goto("/");
+      await expect(page.locator("#story-grid .story-card").first()).toBeVisible();
+
+      // 2. 検索クエリ付き URL への直アクセス
+      await page.goto("/?q=%E3%83%AD%E3%82%B6%E3%83%AA%E3%83%B3&truth=1");
+      await expect(page.locator("#search-filter")).toHaveValue("ロザリン");
+      await expect(page.locator("#truth-search-toggle")).toHaveAttribute("aria-pressed", "true");
+
+      // 3. コース文脈クエリ付きリーダー URL への直アクセス
+      await page.goto("/story/crimson_witch?course=rosalyne_chronicle");
+      await expect(page.locator("#reader-course-banner")).toBeVisible();
+
+      expect(pageErrors).toEqual([]);
+      expect(consoleErrors).toEqual([]);
+      expect(hydrationWarnings).toEqual([]);
+    } finally {
+      await context.close();
+    }
+  });
 });

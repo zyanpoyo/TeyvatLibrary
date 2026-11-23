@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { analytics, type ShelfFilterTrackType } from "../../analytics/ga4";
-import { deriveShelfView, pickRandomStory } from "../../domain/catalog";
+import {
+  deriveShelfView,
+  pickRandomStory,
+  resolveHydrationSafeNow,
+} from "../../domain/catalog";
 import { selectFeaturedCourses } from "../../domain/courses";
 import {
   useReadingStateStore,
@@ -30,6 +34,7 @@ export function ShelfPage({ initialIndexData = null }: ShelfPageProps = {}) {
   const shelfRef = useRef<HTMLElement | null>(null);
   const { store: readingStore, snapshot: readingSnapshot } = useReadingStateStore();
   const {
+    isStorageHydrated,
     indexData,
     indexError,
     isLoadingIndex,
@@ -72,8 +77,11 @@ export function ShelfPage({ initialIndexData = null }: ShelfPageProps = {}) {
         searchIndex,
         filters,
         readingState: readingSnapshot,
+        now: isStorageHydrated
+          ? new Date()
+          : resolveHydrationSafeNow(effectiveIndexData?.generatedAt),
       }),
-    [effectiveIndexData, searchIndex, filters, readingSnapshot]
+    [effectiveIndexData, searchIndex, filters, readingSnapshot, isStorageHydrated]
   );
 
   const allCategoryHitCount =

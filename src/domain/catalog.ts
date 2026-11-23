@@ -114,6 +114,32 @@ function getLocalDateKey(now: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+/**
+ * SSG プリレンダリング時とクライアント初回ハイドレーション時で、
+ * 実行環境のタイムゾーンや閲覧日時に左右されず同一のローカル日付（YYYY-MM-DD）となる基準 Date を返す。
+ */
+export function resolveHydrationSafeNow(
+  generatedAt: string | null | undefined,
+  fallback: Date = new Date()
+): Date {
+  if (typeof generatedAt === "string" && generatedAt.length >= 10) {
+    const utcMs = parseIsoDateUtcMs(generatedAt.slice(0, 10));
+    if (utcMs !== null) {
+      const utcDate = new Date(utcMs);
+      return new Date(
+        utcDate.getUTCFullYear(),
+        utcDate.getUTCMonth(),
+        utcDate.getUTCDate(),
+        12,
+        0,
+        0,
+        0
+      );
+    }
+  }
+  return fallback;
+}
+
 function hashDateSeed(dateKey: string): number {
   let hash = 2166136261;
   for (let i = 0; i < dateKey.length; i += 1) {

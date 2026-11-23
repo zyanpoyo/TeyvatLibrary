@@ -1,7 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearStoriesCache } from "../src/api/stories";
 import { AppShell } from "../src/components/layout/AppShell";
 import { ReaderPage } from "../src/components/reader/ReaderPage";
@@ -358,5 +360,148 @@ describe("Shelf & Reader integration (MemoryRouter + Radix UI)", () => {
     // 検索ジャンプによるプログラム展開では読了済みにしない
     expect(screen.queryByText("✦ 読了済み")).not.toBeInTheDocument();
     expect(document.querySelectorAll("#reader-view mark").length).toBeGreaterThan(0);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("hydrates SSG shelf HTML without React error #418 even when client date differs from build date, then updates to client date", async () => {
+    vi.useFakeTimers();
+    // ビルド時は 2026-11-15（mock_witch の addedAt: 2026-11-14 が NEW 対象、featured は mock_witch）
+    vi.setSystemTime(new Date("2026-11-15T08:00:00.000Z"));
+
+    const buildShelfTree = (initialEntries: string[]) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        <AppProviders deferStorageHydration>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route index element={<ShelfPage initialIndexData={MOCK_INDEX} />} />
+            </Route>
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>
+    );
+
+    const ssrHtml = renderToString(buildShelfTree(["/"]));
+    expect(ssrHtml).toContain("new-badge");
+
+    // クライアント閲覧時は 20 日後の 2026-12-05（mock_witch の NEW が期限切れになり、featured も変わる日付）
+    vi.setSystemTime(new Date("2026-12-05T12:00:00.000Z"));
+
+    const container = document.createElement("div");
+    container.innerHTML = ssrHtml;
+    document.body.appendChild(container);
+
+    const recoverableErrors: unknown[] = [];
+    let root: ReturnType<typeof hydrateRoot> | null = null;
+    try {
+      await act(async () => {
+        root = hydrateRoot(container, buildShelfTree(["/"]), {
+          onRecoverableError: (err) => {
+            recoverableErrors.push(err);
+          },
+        });
+      });
+
+      expect(recoverableErrors).toEqual([]);
+      // ハイドレーション完了後はクライアント現在日（2026-12-05）に基づき NEW バッジが消えていること
+      expect(container.querySelector(".new-badge")).toBeNull();
+    } finally {
+      await act(async () => {
+        root?.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  it("hydrates SSG shelf and reader HTML without React error #418 when accessed directly with query parameters (?q=, ?course=)", async () => {
+    const storyWithCourse: StoryDetail = {
+      ...MOCK_DETAILS.mock_witch,
+      courses: [
+        {
+          courseId: "rosalyne_chronicle",
+          kind: "character",
+          badge: "キャラ別",
+          title: "ロザリンの軌跡",
+          stepIndex: 0,
+          totalSteps: 2,
+          prevStep: null,
+          nextStep: { storyId: "mock_elegy", title: "終焉を嘆く詩" },
+          steps: [
+            { storyId: "mock_witch", title: "燃え盛る炎の魔女" },
+            { storyId: "mock_elegy", title: "終焉を嘆く詩" },
+          ],
+        },
+      ],
+    };
+
+    const buildTree = (initialEntries: string[]) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        <AppProviders deferStorageHydration>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route index element={<ShelfPage initialIndexData={MOCK_INDEX} />} />
+              <Route
+                path="story/:storyId"
+                element={<ReaderPage initialStory={storyWithCourse} />}
+              />
+            </Route>
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>
+    );
+
+    // 1. 書架 /?q=ロザリン&truth=1 への直アクセス
+    const shelfSsrHtml = renderToString(buildTree(["/"]));
+    const shelfContainer = document.createElement("div");
+    shelfContainer.innerHTML = shelfSsrHtml;
+    document.body.appendChild(shelfContainer);
+
+    const shelfErrors: unknown[] = [];
+    let shelfRoot: ReturnType<typeof hydrateRoot> | null = null;
+    try {
+      await act(async () => {
+        shelfRoot = hydrateRoot(shelfContainer, buildTree(["/?q=%E3%83%AD%E3%82%B6%E3%83%AA%E3%83%B3&truth=1"]), {
+          onRecoverableError: (err) => shelfErrors.push(err),
+        });
+      });
+      expect(shelfErrors).toEqual([]);
+      const searchInput = shelfContainer.querySelector("#search-filter") as HTMLInputElement | null;
+      expect(searchInput?.value).toBe("ロザリン");
+    } finally {
+      await act(async () => {
+        shelfRoot?.unmount();
+      });
+      shelfContainer.remove();
+    }
+
+    // 2. リーダー /story/mock_witch?course=rosalyne_chronicle&q=水時計&f=body&c=0 への直アクセス
+    const readerSsrHtml = renderToString(buildTree(["/story/mock_witch"]));
+    const readerContainer = document.createElement("div");
+    readerContainer.innerHTML = readerSsrHtml;
+    document.body.appendChild(readerContainer);
+
+    const readerErrors: unknown[] = [];
+    let readerRoot: ReturnType<typeof hydrateRoot> | null = null;
+    try {
+      await act(async () => {
+        readerRoot = hydrateRoot(
+          readerContainer,
+          buildTree(["/story/mock_witch?course=rosalyne_chronicle&q=%E6%B0%B4%E6%99%82%E8%A8%88&f=body&c=0"]),
+          {
+            onRecoverableError: (err) => readerErrors.push(err),
+          }
+        );
+      });
+      expect(readerErrors).toEqual([]);
+      expect(readerContainer.querySelector("#reader-course-banner")).not.toBeNull();
+      expect(readerContainer.querySelectorAll("#reader-view mark").length).toBeGreaterThan(0);
+    } finally {
+      await act(async () => {
+        readerRoot?.unmount();
+      });
+      readerContainer.remove();
+    }
   });
 });

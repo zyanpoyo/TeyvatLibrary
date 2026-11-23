@@ -42,7 +42,7 @@ export function ReaderPage({
     annotationsEnabled,
     toggleAnnotations,
   } = useDisplayPrefsStore();
-  const { indexData, validStoryIds } = useShelfContext();
+  const { isStorageHydrated, indexData, validStoryIds } = useShelfContext();
 
   const readerViewRef = useRef<HTMLElement | null>(null);
   const loreDetailsRef = useRef<HTMLDetailsElement | null>(null);
@@ -50,13 +50,14 @@ export function ReaderPage({
   const lastTrackedViewKeyRef = useRef<string | null>(null);
   const hasReportedTruthOpenRef = useRef(false);
   const location = useLocation();
+  const effectiveSearch = isStorageHydrated ? location.search : "";
   const hasSearchTarget = useMemo(
-    () => Boolean(parseReaderJumpParams(location.search)),
-    [location.search]
+    () => Boolean(parseReaderJumpParams(effectiveSearch)),
+    [effectiveSearch]
   );
   const activeCourseId = useMemo(
-    () => parseReaderCourseParam(location.search),
-    [location.search]
+    () => parseReaderCourseParam(effectiveSearch),
+    [effectiveSearch]
   );
 
   const storyCategoryById = useMemo(
@@ -159,6 +160,7 @@ export function ReaderPage({
     loreDetailsRef,
     isProgrammaticLoreOpenRef,
     onScrollSettled: reader.syncAfterExternalScroll,
+    isHydrated: isStorageHydrated,
   });
 
   useEffect(() => {
