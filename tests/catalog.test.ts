@@ -3,6 +3,7 @@ import {
   DEFAULT_SHELF_FILTERS,
   deriveShelfView,
   pickRandomStory,
+  resolveHydrationSafeNow,
   type ReadingStateReader,
 } from "../src/domain/catalog";
 import type { LastSessionSnapshot, StoriesIndexData, StoryIndexItem } from "../src/types/story";
@@ -367,5 +368,17 @@ describe("catalog domain", () => {
       ["attire", 0],
       ["chronicle", 0],
     ]);
+  });
+
+  it("resolveHydrationSafeNow anchors generatedAt UTC date to local calendar date regardless of late UTC hours", () => {
+    // UTC 20:00（JST では翌日 05:00 になる時刻）でも generatedAt の UTC 日付（2026-11-22）をローカル暦日として返す
+    const anchored = resolveHydrationSafeNow("2026-11-22T20:00:00.000Z");
+    expect(anchored.getFullYear()).toBe(2026);
+    expect(anchored.getMonth()).toBe(10);
+    expect(anchored.getDate()).toBe(22);
+
+    const fallback = new Date(2026, 11, 1, 9, 0, 0);
+    expect(resolveHydrationSafeNow(null, fallback)).toBe(fallback);
+    expect(resolveHydrationSafeNow("invalid-date", fallback)).toBe(fallback);
   });
 });
