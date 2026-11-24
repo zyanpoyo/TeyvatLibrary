@@ -23,10 +23,15 @@ export interface CompiledGlossaryEntry {
   evidenceLinks?: EvidenceLink[];
 }
 
-export interface CompiledStoryDetail extends Omit<StoryDetail, "glossary" | "chapters"> {
+export interface CompiledStoryDetail extends Omit<StoryDetail, "glossary" | "chapters" | "unreleasedVolumes"> {
   glossary: Record<string, CompiledGlossaryEntry>;
   chapters: Array<
     StoryDetail["chapters"][number] & {
+      sourceRef: RawSourceRef;
+    }
+  >;
+  unreleasedVolumes?: Array<
+    NonNullable<StoryDetail["unreleasedVolumes"]>[number] & {
       sourceRef: RawSourceRef;
     }
   >;

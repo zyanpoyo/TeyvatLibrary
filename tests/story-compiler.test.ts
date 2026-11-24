@@ -773,4 +773,118 @@ describe("StoryCompiler (compileStories)", () => {
       )
     ).toBe(true);
   });
+
+  it("validates unreleasedVolumes against raw book descriptions, excludes them from charCount, and indexes them for search", () => {
+    const bookRaw = {
+      id: "pale_princess_mock",
+      volumes: [
+        {
+          id: 100215,
+          name: "白姫と六人の小人·1",
+          description: "夜の国と月光の森を語る1冊目。",
+          text: "昔々、夜ノ国があった。",
+        },
+        {
+          id: 100216,
+          name: "白姫と六人の小人·2",
+          description: "白の姫と光の王子の出会いを語る一冊。",
+        },
+      ],
+    };
+
+    const validBookStory = createValidElegyStory({
+      id: "pale_book",
+      title: "白姫（第一巻）",
+      shelfCategory: "book",
+      categoryLabel: "書籍",
+      tags: ["ロザリン"],
+      glossary: {},
+      chapters: [
+        {
+          sourceRef: {
+            package: "yatta",
+            sourceType: "book",
+            rawId: "pale_princess_mock",
+            volumeId: 100215,
+            field: "text",
+          },
+          partLabel: "第一章",
+          heading: "夜ノ国",
+          epigraph: "夜の国と月光の森を語る1冊目。",
+          paragraphs: ["昔々、夜ノ国があった。"],
+        },
+      ],
+      unreleasedVolumes: [
+        {
+          sourceRef: {
+            package: "yatta",
+            sourceType: "book",
+            rawId: "pale_princess_mock",
+            volumeId: 100216,
+            field: "description",
+          },
+          partLabel: "第二巻",
+          description: "白の姫と光の王子の出会いを語る一冊。",
+        },
+      ],
+    });
+
+    const okRes = compileStories(
+      createBaseInput({
+        stories: [
+          { folderCategory: "book", fileSlug: "pale_book", story: validBookStory },
+        ],
+        readRawSnapshot: createStubSnapshotReader({
+          "book/pale_princess_mock": bookRaw,
+        }),
+      })
+    );
+
+    expect(okRes.ok).toBe(true);
+    const compiled = okRes.dist?.storiesById.pale_book;
+    expect(compiled?.chapterCount).toBe(1);
+    expect(compiled?.charCount).toBe("昔々、夜ノ国があった。".length);
+    expect(compiled?.unreleasedVolumes).toHaveLength(1);
+    expect(compiled?.unreleasedVolumes?.[0].partLabel).toBe("第二巻");
+    expect(okRes.dist?.searchIndex.stories.pale_book.unreleasedVolumes).toEqual([
+      {
+        volumeIndex: 0,
+        partLabel: "第二巻",
+        description: "白の姫と光の王子の出会いを語る一冊。",
+      },
+    ]);
+
+    const invalidBookStory = {
+      ...validBookStory,
+      unreleasedVolumes: [
+        {
+          sourceRef: {
+            package: "yatta",
+            sourceType: "book",
+            rawId: "pale_princess_mock",
+            volumeId: 100216,
+            field: "description",
+          },
+          partLabel: "   ",
+          description: "ツァーリツァと未登録カタカナを含む改変テキスト。",
+        },
+      ],
+    };
+
+    const errRes = compileStories(
+      createBaseInput({
+        stories: [
+          { folderCategory: "book", fileSlug: "pale_book", story: invalidBookStory },
+        ],
+        readRawSnapshot: createStubSnapshotReader({
+          "book/pale_princess_mock": bookRaw,
+        }),
+      })
+    );
+    expect(errRes.ok).toBe(false);
+    expect(errRes.errors.some((e) => e.includes("空でない文字列"))).toBe(true);
+    expect(errRes.errors.some((e) => e.includes("[原文不一致]"))).toBe(true);
+    expect(errRes.errors.some((e) => e.includes("[NG固有名詞検出]"))).toBe(true);
+    expect(errRes.errors.some((e) => e.includes("[公式コーパス未登録カタカナ]"))).toBe(true);
+  });
 });

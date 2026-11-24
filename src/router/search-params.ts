@@ -1,13 +1,18 @@
 import type { SearchJumpTarget, SearchMatchKind } from "../types/story";
 
-const VALID_JUMP_KINDS = new Set<SearchMatchKind>([
-  "title",
-  "meta",
-  "chapter",
-  "preGuide",
-  "glossary",
-  "truth",
-]);
+const JUMP_KIND_MAP: Record<SearchMatchKind, true> = {
+  title: true,
+  meta: true,
+  chapter: true,
+  preGuide: true,
+  unreleased: true,
+  glossary: true,
+  truth: true,
+};
+
+function isValidJumpKind(raw: string | null): raw is SearchMatchKind {
+  return raw !== null && Object.prototype.hasOwnProperty.call(JUMP_KIND_MAP, raw);
+}
 
 const VALID_COURSE_ID_PATTERN = /^[a-z0-9_]+$/;
 
@@ -54,12 +59,12 @@ export function parseReaderJumpParams(search: string): SearchJumpTarget | null {
   const query = (params.get("q") || "").trim();
   if (!query) return null;
 
-  const rawKind = params.get("kind") as SearchMatchKind | null;
-  const kind: SearchMatchKind =
-    rawKind && VALID_JUMP_KINDS.has(rawKind) ? rawKind : "chapter";
+  const rawKind = params.get("kind");
+  const kind: SearchMatchKind = isValidJumpKind(rawKind) ? rawKind : "chapter";
 
   const chapterIndex = parseNonNegativeInt(params.get("ch"));
   const paragraphIndex = parseNonNegativeInt(params.get("p"));
+  const volumeIndex = parseNonNegativeInt(params.get("vol"));
   const termId = params.get("term") || undefined;
 
   return {
@@ -67,6 +72,7 @@ export function parseReaderJumpParams(search: string): SearchJumpTarget | null {
     kind,
     ...(chapterIndex !== undefined ? { chapterIndex } : {}),
     ...(paragraphIndex !== undefined ? { paragraphIndex } : {}),
+    ...(volumeIndex !== undefined ? { volumeIndex } : {}),
     ...(termId ? { termId } : {}),
   };
 }
@@ -117,6 +123,9 @@ export function buildReaderJumpParams(target?: SearchJumpTarget | null): string 
   }
   if (target.paragraphIndex !== undefined) {
     params.set("p", String(target.paragraphIndex));
+  }
+  if (target.volumeIndex !== undefined) {
+    params.set("vol", String(target.volumeIndex));
   }
   if (target.termId) {
     params.set("term", target.termId);

@@ -25,23 +25,45 @@ function findJumpTargetElement(
   chaptersContainer: HTMLDivElement | null,
   loreDetails: HTMLDetailsElement | null
 ): HTMLElement | null {
-  if (target.kind === "truth") {
-    return loreDetails;
-  }
+  switch (target.kind) {
+    case "truth":
+      return loreDetails;
 
-  if (target.kind === "preGuide") {
-    return document.getElementById("reader-pre-guide");
-  }
+    case "preGuide":
+      return document.getElementById("reader-pre-guide");
 
-  if (target.kind === "glossary" && target.termId && chaptersContainer) {
-    const escapedTermId =
-      typeof CSS !== "undefined" && typeof CSS.escape === "function"
-        ? CSS.escape(target.termId)
-        : target.termId;
-    const termEl = chaptersContainer.querySelector<HTMLElement>(
-      `[data-term-id="${escapedTermId}"]`
-    );
-    if (termEl) return termEl;
+    case "unreleased": {
+      if (target.volumeIndex !== undefined) {
+        const volEl = document.getElementById(`unreleased-volume-${target.volumeIndex}`);
+        if (volEl) return volEl;
+      }
+      return document.getElementById("unreleased-volumes");
+    }
+
+    case "glossary": {
+      if (target.termId && chaptersContainer) {
+        const escapedTermId =
+          typeof CSS !== "undefined" && typeof CSS.escape === "function"
+            ? CSS.escape(target.termId)
+            : target.termId;
+        const termEl = chaptersContainer.querySelector<HTMLElement>(
+          `[data-term-id="${escapedTermId}"]`
+        );
+        if (termEl) return termEl;
+      }
+      break;
+    }
+
+    case "chapter":
+    case "title":
+    case "meta":
+      break;
+
+    default: {
+      const exhaustive: never = target.kind;
+      void exhaustive;
+      break;
+    }
   }
 
   if (chaptersContainer && target.chapterIndex !== undefined) {

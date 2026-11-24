@@ -122,6 +122,12 @@ export interface StoryChapter {
   sourceRef?: ChapterSourceRef;
 }
 
+export interface UnreleasedVolumeSummary {
+  partLabel: string;
+  description: string;
+  sourceRef?: ChapterSourceRef;
+}
+
 export interface ConnectedStoryLink {
   targetId?: string;
   id?: string;
@@ -153,6 +159,7 @@ export interface StoryDetail extends StoryIndexItem {
   courses?: StoryCourseMembership[];
   glossary: Record<string, GlossaryEntry>;
   chapters: StoryChapter[];
+  unreleasedVolumes?: UnreleasedVolumeSummary[];
 }
 
 export interface ShelfFilters {
@@ -172,6 +179,12 @@ export interface SearchChapterEntry {
   epigraph: string;
   paragraphs: string[];
   chapterNote?: string;
+}
+
+export interface SearchUnreleasedVolumeEntry {
+  volumeIndex: number;
+  partLabel: string;
+  description: string;
 }
 
 export interface SearchGlossaryEntry {
@@ -194,6 +207,7 @@ export interface SearchStoryDocument {
   entityNames: string[];
   preGuide: string[];
   chapters: SearchChapterEntry[];
+  unreleasedVolumes?: SearchUnreleasedVolumeEntry[];
   glossary: SearchGlossaryEntry[];
   truth: {
     overallTruth: string;
@@ -211,6 +225,7 @@ export type SearchMatchKind =
   | "meta"
   | "chapter"
   | "preGuide"
+  | "unreleased"
   | "glossary"
   | "truth";
 
@@ -219,6 +234,7 @@ export interface SearchJumpTarget {
   kind: SearchMatchKind;
   chapterIndex?: number;
   paragraphIndex?: number;
+  volumeIndex?: number;
   termId?: string;
 }
 

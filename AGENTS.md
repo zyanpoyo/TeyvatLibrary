@@ -8,6 +8,7 @@
 - **TypeScript 型境界と `.mjs` 宣言規約**: `tsconfig.json` はブラウザ実行コード（`src/`）専用（`"types": []`）で Node 型を含まない。Node API を使うテストは `tests/tsconfig.json`（`node` 型あり）配下に配置し、[`scripts/`](scripts/) の `.mjs` を TypeScript から参照する場合は隣接する `.d.mts` を維持・更新する。
 - **UI/UX 変更の回帰検証**: フロントエンドの UI/UX を追加・修正した際は必ず `npm run test:e2e`（または `npm run test:all`）を実行し、既存操作のリグレッションがないことを確認する。
 - **データ変更の必須検証**: [`data/stories/`](data/stories/)・[`data/shared/`](data/shared/)・[`data/schemas/`](data/schemas/) を編集した際は `npm run validate` を実行する（`addedAt` は必須、`official-corpus.json` 整合チェックを含む）。
+- **ゲーム内未実装テキストの収録禁止**: ゲーム本編で正式に入手・閲覧できない未実装書籍や未実装巻の本文は、原典層（`data/raw/`）・編集層（`data/stories/`）のいずれにも収録しない（一部巻のみ実装された書籍の扱いは [`.agents/skills/genshin-story-curator/SKILL.md`](.agents/skills/genshin-story-curator/SKILL.md) を参照）。
 - **ドキュメント同期**: 機能追加・仕様変更・`/plan` 時は [`.agents/skills/doc-sync/SKILL.md`](.agents/skills/doc-sync/SKILL.md) に従って関連ドキュメントを精査する。
 
 ## Context Pointers

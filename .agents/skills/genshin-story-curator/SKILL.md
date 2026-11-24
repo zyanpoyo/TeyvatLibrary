@@ -25,18 +25,21 @@ description: >-
 | `book` | `book` | `node_modules/genshin-data` ＋ **Yatta Readable API** | 同上（`https://gi.yatta.moe/api/v2/jp/...` への外部HTTP通信が発生するため、実行前にネットワーク利用可否を確認する） |
 
 ### 実行ルール
-1. **`rawId` とクロスリファレンスの事前調査（`lore:search` / `lore:inspect`）**: 執筆着手前に以下の CLI で正式 `rawId`・関連装備横断・文字数・段落構造・カタカナ未登録語を確認する。
+1. **ゲーム内実装状態の事前確認（未実装書籍・未実装巻の収録禁止）**:
+   - ゲーム本編で正式に入手・閲覧できない**未実装の書籍（全巻未実装の書籍を含む）や未実装巻の本文は、本プロダクトに収録しない**（`data/raw/` への未実装本文の保持も禁止）。
+   - シリーズの一部巻数のみゲーム内で入手・閲覧でき、残りの巻は書籍概要のみ確認できる場合（例：『白姫と六人の小人』）は、入手可能な巻のみ `chapters[]` に収録し、未実装巻は `data/raw/` から `text` を削除した上で `unreleasedVolumes[]` として書籍概要（`description`）のみを併載する。
+2. **`rawId` とクロスリファレンスの事前調査（`lore:search` / `lore:inspect`）**: 執筆着手前に以下の CLI で正式 `rawId`・関連装備横断・文字数・段落構造・カタカナ未登録語を確認する。
    ```bash
    npm run lore:search -- <キーワード>
    npm run lore:inspect -- --type <sourceType> --id <rawId>
    ```
-2. **本文長トリアージ（事前確認）**: 公式データには `story` が未収録（0字）や 100字未満の極短文アイテム（例：`静水流転の輝き` 0字、`水仙十字の剣` 93字）が存在する。`lore:inspect` が警告を出した場合は別作品の章へ統合するか同シリーズの他長文作品へ構成を見直す。
-3. **コーパス更新**: 新しい書籍（Yatta API 経由）を追加した時や `genshin-db` / `genshin-data` を更新した時は、以下を実行して [`data/shared/official-corpus.json`](../../../data/shared/official-corpus.json) に反映する。
+3. **本文長トリアージ（事前確認）**: 公式データには `story` が未収録（0字）や 100字未満の極短文アイテム（例：`静水流転の輝き` 0字、`水仙十字の剣` 93字）が存在する。`lore:inspect` が警告を出した場合は別作品の章へ統合するか同シリーズの他長文作品へ構成を見直す。
+4. **コーパス更新**: 新しい書籍（Yatta API 経由）を追加した時や `genshin-db` / `genshin-data` を更新した時は、以下を実行して [`data/shared/official-corpus.json`](../../../data/shared/official-corpus.json) に反映する。
    ```bash
    npm run sync-corpus
    ```
 
-- **完了条件**: 対象アイテムの無加工JSONが `data/raw/<sourceType>/<rawId>.json` に保存され、収録に足る本文・`description` が欠落なく存在すること。
+- **完了条件**: 対象アイテムがゲーム本編で正式に入手・閲覧可能な実装済みテキストであることが確認され、無加工JSONが `data/raw/<sourceType>/<rawId>.json` に保存されていること（未実装巻の本文を含まないこと）。
 
 ---
 
@@ -46,7 +49,7 @@ description: >-
 
 1. **聖遺物（全5章）**: 部位順（花→羽→砂→杯→冠）に固定せず、5部位を読んで「発端→転機→結末」の時系列順、またはオムニバスとして最も明快な順に並べる。`partLabel` に元の部位名（例：`第一章（死の羽：守護の印）`）を残す。
 2. **突破・育成素材（`chronicle`）**: 突破素材4段階または週ボス素材3種を、レア度順または時系列順に各幕へ配置する。
-3. **書籍（`book`）**: 長大な巻は `sourceRef.paragraphSlice: [start, end]` で前半・後半へ分割して読了負荷を下げる。
+3. **書籍（`book`）**: 長大な巻は `sourceRef.paragraphSlice: [start, end]` で前半・後半へ分割して読了負荷を下げる。また、ゲーム内で一部巻数のみ正式入手・閲覧できる書籍（例：『白姫と六人の小人』）は、入手可能な巻のみを `chapters[]` に収録し、未収録の続巻は `unreleasedVolumes[]`（`sourceRef` に `field: "description"` を指定）として各巻の書籍概要説明のみを併載する。
 
 ### 原文一致のための記述ルール
 - **誤字・旧字体・装飾タグの扱い**: 原典に誤字・脱字（例：`悪を追い払っい、`）や旧字体（`惡`・`蠟燭`）があっても修正せずそのまま保持し、読み方の補足が必要な場合は `glossary` や `chapterNote` で補う。また `<br/>`・`<color>`・`<span>` はビルド検証時に自動正規化されるため、`paragraphs` 側へHTMLタグを書かない。
