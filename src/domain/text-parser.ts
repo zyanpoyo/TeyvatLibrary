@@ -148,7 +148,14 @@ export function parseParagraphTokens(text: string): ParagraphToken[] {
 
     if (subheadLabel !== undefined) {
       const isLineStart = matchIndex === 0 || input[matchIndex - 1] === "\n";
-      if (isLineStart) {
+      // 短く完結した単一行の見出しのみを小見出しとして扱い、長文の訳注ブロックやインライン注釈を含む【...】は通常本文として展開する
+      const isProseSubhead =
+        isLineStart &&
+        !subheadLabel.includes("\n") &&
+        !subheadLabel.includes("。") &&
+        !subheadLabel.includes("{{") &&
+        subheadLabel.length <= 60;
+      if (isProseSubhead) {
         tokens.push({
           type: "subhead",
           label: formatGenderPlaceholders(subheadLabel),
@@ -156,7 +163,7 @@ export function parseParagraphTokens(text: string): ParagraphToken[] {
         tokens.push({ type: "br" });
         cursor = matchIndex + full.length;
       } else {
-        // 文中の【...】は小見出しにせず、内部に{{...}}が含まれる可能性も残すため「【」1文字だけ進める
+        // 通常テキスト扱いの【...】は内部に{{...}}や改行が含まれる可能性があるため「【」1文字だけ進める
         appendTextToken(tokens, "【");
         cursor = matchIndex + 1;
         pattern.lastIndex = cursor;

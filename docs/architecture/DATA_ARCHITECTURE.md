@@ -124,7 +124,7 @@ genshin-books/
 │   │
 │   ├── shared/                           # 【② 編集層：共通マスタ】
 │   │   ├── entities.json                 # 作品横断の人物・神・組織・歴史用語マスタ
-│   │   ├── courses.json                  # フェア棚・読書コース定義（全10コース）
+│   │   ├── courses.json                  # フェア棚・読書コース定義（全11コース）
 │   │   ├── official-entities.json        # NG表記・メディア出典語・一般カタカナ辞書
 │   │   └── official-corpus.json          # genshin-db + genshin-data 全量から生成した公式カタカナ辞書
 │   │
