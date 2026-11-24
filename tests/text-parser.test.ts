@@ -48,6 +48,20 @@ describe("text-parser", () => {
     ]);
   });
 
+  it("parseParagraphTokens parses long or annotated leading 【...】 comment blocks as plain text with inner terms", () => {
+    const tokens = parseParagraphTokens(
+      "【ハルヴァタット学院のハーバッド、{{sss_scholars|タファッツォーリ}}のコメント——ここには誤訳がある。\n二行目の補足。】"
+    );
+
+    expect(tokens).toEqual([
+      { type: "text", value: "【ハルヴァタット学院のハーバッド、" },
+      { type: "term", termId: "sss_scholars", surface: "タファッツォーリ" },
+      { type: "text", value: "のコメント——ここには誤訳がある。" },
+      { type: "br" },
+      { type: "text", value: "二行目の補足。】" },
+    ]);
+  });
+
   it("formatGenderPlaceholders formats {M#...}{F#...} placeholders into readable text", () => {
     expect(formatGenderPlaceholders("{M#彼女}{F#彼}は微笑んだ。")).toBe(
       "彼女／彼は微笑んだ。"

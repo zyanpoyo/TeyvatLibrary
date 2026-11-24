@@ -8,12 +8,12 @@
 
 ## 3.1 キュレーション棚・コース定義データ（`data/shared/courses.json` & `data/schemas/courses.schema.json`）
 
-目的別（初心者向け入門・キャラクター別・地域・歴史別）で複数作品を推奨順と 1 行順路ガイド（`note`）付きで束ねる定義ファイルを `data/shared/courses.json` に配置し、収録済み全 39 作品を網羅する初期 10 コースを定義している。
+目的別（初心者向け入門・キャラクター別・地域・歴史別）で複数作品を推奨順と 1 行順路ガイド（`note`）付きで束ねる定義ファイルを `data/shared/courses.json` に配置し、収録済み全 46 作品を網羅する全 11 コース（初期 10 コース＋第7バッチ追加分）を定義している。
 
 - **`kind` の分類**:
   - `"beginner"`（**入門・必読**）: 厳選 4 選（`must_read_essentials`）・短編＆風の翼（`short_masterpieces`）
   - `"character"`（**キャラクター別**）: ロザリンとルースタン（`rosalyne_chronicle`）・アルレッキーノと赤月王朝（`arlecchino_crimson_moon`）・放浪者と稲妻の記憶（`wanderer_inazuma`）
-  - `"arc"`（**地域・歴史別**）: テイワット創世記（`teyvat_genesis`）・水仙十字院（`narcissenkreuz_arc`）・白夜国とオロバシ（`watatsumi_orobashi`）・ナド・クライ編（`nod_krai_moonlight`）・スネージナヤ王朝史（`snezhnaya_chronicle`）
+  - `"arc"`（**地域・歴史別**）: テイワット創世記（`teyvat_genesis`）・水仙十字院（`narcissenkreuz_arc`）・白夜国とオロバシ（`watatsumi_orobashi`）・ナド・クライ編（`nod_krai_moonlight`）・スネージナヤ王朝史（`snezhnaya_chronicle`）・スメール砂漠編（`sumeru_desert_three_gods`）
 - **`featured`**: `true` の代表 3 コース（`must_read_essentials`, `rosalyne_chronicle`, `narcissenkreuz_arc`）を書架トップのフェア棚へ展示する。
 
 ```json
@@ -60,7 +60,7 @@
 
 1. **書架フェア棚＆常設ナビゲーション**:
    - ヘッダー上部に `SiteNavBar`（`書架` `/` ・ `読書コース` `/courses`、将来の名鑑も見据えた常設ナビ）と `ThemeSwitcher`、フッターに `#courses-page-link` を配置。
-   - 書架トップ（`ResumeBanner` 直下・`ShelfToolbar` 直上）に `FairShelf`（`#fair-shelf`）を配置し、代表 3 コースのカード（`/courses/:courseId` への単一リンク＋読了進捗 `M / N 篇 読了`）と「すべてのコースを見る（全10コース）→」リンクを表示。検索・タブ／各種フィルタ適用中は自動で非表示にする。
+   - 書架トップ（`ResumeBanner` 直下・`ShelfToolbar` 直上）に `FairShelf`（`#fair-shelf`）を配置し、代表 3 コースのカード（`/courses/:courseId` への単一リンク＋読了進捗 `M / N 篇 読了`）と「すべてのコースを見る（全11コース）→」リンクを表示。検索・タブ／各種フィルタ適用中は自動で非表示にする。
 2. **専用静的プリレンダリングルート（`/courses` & `/courses/:courseId`）**:
    - `/courses`（[`CoursesPage.tsx`](../../../src/components/courses/CoursesPage.tsx)）: 種別フィルタピル（`すべて` / `入門・必読` / `キャラクター別` / `地域・歴史別`）と種別ごとのグループ見出し付きコース一覧。
    - `/courses/:courseId`（[`CourseDetailPage.tsx`](../../../src/components/courses/CourseDetailPage.tsx)）: コースヘッダー、全体進捗バー、未読状況に応じた動的 CTA（「第1話から読む」 / 「続き（第X話）から読む」 / 「第1話から読み直す」）、収録順ステップ一覧（ネタバレなし 1 行ガイド `note`・読了/次に読むバッジ）、コース専用シェアバー（`ShareBar`）、関連コースカード、および不正 `courseId` 向け `noindex` Not Found フォールバック。
