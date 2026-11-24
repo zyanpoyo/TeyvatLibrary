@@ -19,6 +19,40 @@
     "chapters"
   ],
   "additionalProperties": false,
+  "$defs": {
+    "sourceRef": {
+      "type": "object",
+      "required": ["package", "sourceType", "rawId"],
+      "additionalProperties": false,
+      "properties": {
+        "package": {
+          "type": "string",
+          "enum": ["genshin-db", "genshin-data", "yatta"]
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["artifact", "weapon", "windglider", "book", "material"]
+        },
+        "rawId": { "type": "string", "minLength": 1 },
+        "piece": {
+          "type": "string",
+          "enum": ["flower", "plume", "sands", "goblet", "circlet"]
+        },
+        "volumeId": { "type": "integer" },
+        "field": {
+          "type": "string",
+          "enum": ["story", "description", "text"]
+        },
+        "stripPrefix": { "type": "string" },
+        "paragraphSlice": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    }
+  },
   "properties": {
     "$schema": { "type": "string" },
     "id": {
@@ -106,38 +140,7 @@
         "required": ["sourceRef", "partLabel", "heading", "epigraph", "paragraphs"],
         "additionalProperties": false,
         "properties": {
-          "sourceRef": {
-            "type": "object",
-            "required": ["package", "sourceType", "rawId"],
-            "additionalProperties": false,
-            "properties": {
-              "package": {
-                "type": "string",
-                "enum": ["genshin-db", "genshin-data", "yatta"]
-              },
-              "sourceType": {
-                "type": "string",
-                "enum": ["artifact", "weapon", "windglider", "book", "material"]
-              },
-              "rawId": { "type": "string", "minLength": 1 },
-              "piece": {
-                "type": "string",
-                "enum": ["flower", "plume", "sands", "goblet", "circlet"]
-              },
-              "volumeId": { "type": "integer" },
-              "field": {
-                "type": "string",
-                "enum": ["story", "description", "text"]
-              },
-              "stripPrefix": { "type": "string" },
-              "paragraphSlice": {
-                "type": "array",
-                "items": { "type": "integer", "minimum": 0 },
-                "minItems": 2,
-                "maxItems": 2
-              }
-            }
-          },
+          "sourceRef": { "$ref": "#/$defs/sourceRef" },
           "partLabel": { "type": "string", "minLength": 1 },
           "heading": { "type": "string", "minLength": 1 },
           "epigraph": { "type": "string" },
@@ -147,6 +150,20 @@
             "items": { "type": "string", "minLength": 1 }
           },
           "chapterNote": { "type": "string" }
+        }
+      }
+    },
+    "unreleasedVolumes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["sourceRef", "partLabel", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "sourceRef": { "$ref": "#/$defs/sourceRef" },
+          "partLabel": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 }
         }
       }
     }

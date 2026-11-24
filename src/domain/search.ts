@@ -415,6 +415,20 @@ function collectCorpusCandidates(
     }
   });
 
+  (doc.unreleasedVolumes || []).forEach((vol) => {
+    const volLabel = vol.partLabel || `続巻${vol.volumeIndex + 1}`;
+    const volText = [vol.partLabel, vol.description].filter(Boolean).join(" ");
+    pushCandidate({
+      id: `${doc.id}:unreleased:${vol.volumeIndex}`,
+      kind: "unreleased",
+      label: `${volLabel}（書籍概要）`,
+      text: volText,
+      weight: 28,
+      emitSnippet: true,
+      target: { kind: "unreleased", volumeIndex: vol.volumeIndex },
+    });
+  });
+
   if (includeStoryTruth) {
     const truthText = [doc.truth.overallTruth, doc.truth.gameEffect].filter(Boolean).join(" ");
     pushCandidate({

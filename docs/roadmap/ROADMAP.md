@@ -69,7 +69,7 @@
 | :---: | :--- | :---: | :--- |
 | ✅ | **白夜国館蔵**（全5巻 / 特に第2巻『日月前事』） | ★★★ | [`byakuyakoku.json`](../../data/stories/book/byakuyakoku.json) として収録済み。天理・七龍・四つの影などテイワット創世の起点となる最重要書籍。 |
 | ✅ | **ペリンヘリ**（全2巻） | ★★★ | [`perinheri.json`](../../data/stories/book/perinheri.json) として第3バッチで収録済み。カーンルイア「赤月王朝」や壁炉の家、外の世界からの漂流者を扱う重要書。 |
-| ✅ | **白姫と六人の小人**（全7巻 ※ゲーム本編は第1巻のみ入手） | ★★★ | [`pale_princess.json`](../../data/stories/book/pale_princess.json) として第4バッチで収録済み。アビス・月の三姉妹・罪人や、夜の国と月光の森を舞台にした天理勢力との対峙構図の暗喩として考察需要が高い童話。 |
+| ✅ | **白姫と六人の小人**（第1巻収録／第2〜7巻は書籍概要のみ掲載） | ★★★ | [`pale_princess.json`](../../data/stories/book/pale_princess.json) として第4バッチで収録済み。ゲーム内入手可能な第1巻を本編として収録し、第2〜7巻は書籍概要を併載。アビス・月の三姉妹・夜の国と月光の森を巡る暗喩として考察需要が高い古童話。 |
 | ✅ | **スネージナヤ通史**（全2巻） | ★★★ | [`general_history_of_snezhnaya.json`](../../data/stories/book/general_history_of_snezhnaya.json) として第5バッチで収録済み。氷の女皇アナスターシャへ献上された正史であり、ヒュペルボレイア伝説と先代皇帝モノマフ（ツァーリ・ベールイ）および盟友フィリポフの旅路を描く。 |
 | ✅ | **スネージナヤ通史補編**（全3巻） | ★★★ | [`general_history_of_snezhnaya_supplement.json`](../../data/stories/book/general_history_of_snezhnaya_supplement.json) として第5バッチで収録済み。モノマフ皇帝の宿敵ミスティスラフ王と異怪の獣連盟の興亡、および敗者側の一次史料『諸獣王公列伝』を収録。 |
 | ✅ | **蒼星フェイ史略**（全1巻） | ★★★ | [`pale_starborn_history.json`](../../data/stories/book/pale_starborn_history.json) として第5バッチで収録済み。キーテジ会戦でのツァーリ・ベールイ誕生から、第七百九十九紀の女皇アナスターシャ戴冠・ファデュイ創設・妖精大公から人間への政権移行を描く年代記。 |

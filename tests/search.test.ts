@@ -131,6 +131,13 @@ const SEARCH_INDEX: SearchIndexData = {
           paragraphs: ["大日御輿の光が民を照らし、白夜と常夜が巡る。"],
         },
       ],
+      unreleasedVolumes: [
+        {
+          volumeIndex: 0,
+          partLabel: "第二巻",
+          description: "白の姫と光の王子の出会いを語る未収録の続巻概要。",
+        },
+      ],
       glossary: [],
       truth: {
         overallTruth: "大蛇オロバシはイスタロトの導きで民を救った。",
@@ -212,5 +219,24 @@ describe("search domain", () => {
       query: "るーすたん",
     });
     expect(Array.from(fallback.matchesByStoryId.keys())).toEqual(["crimson_witch"]);
+  });
+
+  it("matches unreleasedVolumes descriptions and emits unreleased jump targets", () => {
+    const result = evaluateCatalogSearch({
+      indexData: INDEX_DATA,
+      searchIndex: SEARCH_INDEX,
+      query: "光の王子",
+      includeTruth: false,
+    });
+
+    expect(Array.from(result.matchesByStoryId.keys())).toEqual(["byakuyakoku"]);
+    const snippet = result.matchesByStoryId.get("byakuyakoku")?.snippets[0];
+    expect(snippet?.kind).toBe("unreleased");
+    expect(snippet?.label).toBe("第二巻（書籍概要）");
+    expect(snippet?.target).toEqual({
+      kind: "unreleased",
+      volumeIndex: 0,
+      query: "光の王子",
+    });
   });
 });

@@ -60,6 +60,12 @@ function buildMockSearchIndex(storiesIndex, storyDetails) {
       .map((eid) => storiesIndex.entitiesIndex?.[eid]?.name || "")
       .filter(Boolean);
 
+    const unreleasedVolumes = (detail.unreleasedVolumes || []).map((vol, volumeIndex) => ({
+      volumeIndex,
+      partLabel: toPlainMockText(vol.partLabel),
+      description: toPlainMockText(vol.description),
+    }));
+
     stories[storyId] = {
       id: storyId,
       title: detail.title,
@@ -71,6 +77,7 @@ function buildMockSearchIndex(storiesIndex, storyDetails) {
       entityNames,
       preGuide: (detail.preGuide || []).map((line) => toPlainMockText(line)),
       chapters,
+      ...(unreleasedVolumes.length > 0 ? { unreleasedVolumes } : {}),
       glossary,
       truth: {
         overallTruth: toPlainMockText(detail.overallTruth),

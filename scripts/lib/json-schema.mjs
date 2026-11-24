@@ -14,7 +14,30 @@ function matchesSchemaType(value, expectedType) {
   return typeof value === expectedType;
 }
 
-function validateObjectSchema(value, schema, label, errors) {
+function decodeJsonPointerSegment(segment) {
+  return segment.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
+function resolveLocalSchemaRef(rootSchema, ref) {
+  if (typeof ref !== "string" || !ref.startsWith("#/")) {
+    return null;
+  }
+  const segments = ref.slice(2).split("/").map(decodeJsonPointerSegment);
+  let current = rootSchema;
+  for (const seg of segments) {
+    if (
+      current === null ||
+      typeof current !== "object" ||
+      !Object.prototype.hasOwnProperty.call(current, seg)
+    ) {
+      return null;
+    }
+    current = current[seg];
+  }
+  return current && typeof current === "object" && !Array.isArray(current) ? current : null;
+}
+
+function validateObjectSchema(value, schema, label, errors, rootSchema, refStack) {
   for (const key of schema.required || []) {
     if (!Object.prototype.hasOwnProperty.call(value, key)) {
       errors.push(`[JSONスキーマ] ${label}: 必須フィールド '${key}' が欠落しています。`);
@@ -23,7 +46,14 @@ function validateObjectSchema(value, schema, label, errors) {
 
   if (schema.propertyNames && typeof schema.propertyNames === "object") {
     for (const key of Object.keys(value)) {
-      collectSchemaErrors(key, schema.propertyNames, `${label} のキー '${key}'`, errors);
+      collectSchemaErrors(
+        key,
+        schema.propertyNames,
+        `${label} のキー '${key}'`,
+        errors,
+        rootSchema,
+        refStack
+      );
     }
   }
 
@@ -31,19 +61,26 @@ function validateObjectSchema(value, schema, label, errors) {
   for (const [key, propValue] of Object.entries(value)) {
     const childLabel = `${label}.${key}`;
     if (Object.prototype.hasOwnProperty.call(properties, key)) {
-      collectSchemaErrors(propValue, properties[key], childLabel, errors);
+      collectSchemaErrors(propValue, properties[key], childLabel, errors, rootSchema, refStack);
       continue;
     }
 
     if (schema.additionalProperties === false) {
       errors.push(`[JSONスキーマ] ${label}: スキーマ未定義のプロパティ '${key}' は許可されていません。`);
     } else if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
-      collectSchemaErrors(propValue, schema.additionalProperties, childLabel, errors);
+      collectSchemaErrors(
+        propValue,
+        schema.additionalProperties,
+        childLabel,
+        errors,
+        rootSchema,
+        refStack
+      );
     }
   }
 }
 
-function validateArraySchema(value, schema, label, errors) {
+function validateArraySchema(value, schema, label, errors, rootSchema, refStack) {
   if (typeof schema.minItems === "number" && value.length < schema.minItems) {
     errors.push(`[JSONスキーマ] ${label}: 要素数は ${schema.minItems} 以上必要です（現在 ${value.length}）。`);
   }
@@ -52,7 +89,7 @@ function validateArraySchema(value, schema, label, errors) {
   }
   if (schema.items) {
     value.forEach((item, index) => {
-      collectSchemaErrors(item, schema.items, `${label}[${index}]`, errors);
+      collectSchemaErrors(item, schema.items, `${label}[${index}]`, errors, rootSchema, refStack);
     });
   }
 }
@@ -81,36 +118,63 @@ function validateNumberSchema(value, schema, label, errors) {
   }
 }
 
-function collectSchemaErrors(value, schema, label, errors) {
+function collectSchemaErrors(
+  value,
+  schema,
+  label,
+  errors,
+  rootSchema = schema,
+  refStack = new Set()
+) {
   if (!schema || typeof schema !== "object") return;
 
-  if (schema.type && !matchesSchemaType(value, schema.type)) {
-    errors.push(`[JSONスキーマ] ${label}: 型 '${schema.type}' が期待されています。`);
+  let activeSchema = schema;
+  if (Object.prototype.hasOwnProperty.call(schema, "$ref")) {
+    const ref = schema.$ref;
+    if (refStack.has(ref)) {
+      errors.push(`[JSONスキーマ] ${label}: スキーマ参照 '${ref}' が循環しています。`);
+      return;
+    }
+    const resolved = resolveLocalSchemaRef(rootSchema, ref);
+    if (!resolved) {
+      errors.push(`[JSONスキーマ] ${label}: スキーマ参照 '${ref}' を解決できません。`);
+      return;
+    }
+    const nextStack = new Set(refStack);
+    nextStack.add(ref);
+    collectSchemaErrors(value, resolved, label, errors, rootSchema, nextStack);
+
+    const { $ref: _ignored, ...remaining } = schema;
+    activeSchema = remaining;
+  }
+
+  if (activeSchema.type && !matchesSchemaType(value, activeSchema.type)) {
+    errors.push(`[JSONスキーマ] ${label}: 型 '${activeSchema.type}' が期待されています。`);
     return;
   }
 
-  if (Array.isArray(schema.enum) && !schema.enum.includes(value)) {
+  if (Array.isArray(activeSchema.enum) && !activeSchema.enum.includes(value)) {
     errors.push(
-      `[JSONスキーマ] ${label}: 許可された値 (${schema.enum.join(" / ")}) のいずれかである必要があります（現在: ${JSON.stringify(value)}）。`
+      `[JSONスキーマ] ${label}: 許可された値 (${activeSchema.enum.join(" / ")}) のいずれかである必要があります（現在: ${JSON.stringify(value)}）。`
     );
   }
 
-  if (schema.type === "object") {
-    validateObjectSchema(value, schema, label, errors);
-  } else if (schema.type === "array") {
-    validateArraySchema(value, schema, label, errors);
-  } else if (schema.type === "string") {
-    validateStringSchema(value, schema, label, errors);
-  } else if (schema.type === "integer" || schema.type === "number") {
-    validateNumberSchema(value, schema, label, errors);
+  if (activeSchema.type === "object") {
+    validateObjectSchema(value, activeSchema, label, errors, rootSchema, refStack);
+  } else if (activeSchema.type === "array") {
+    validateArraySchema(value, activeSchema, label, errors, rootSchema, refStack);
+  } else if (activeSchema.type === "string") {
+    validateStringSchema(value, activeSchema, label, errors);
+  } else if (activeSchema.type === "integer" || activeSchema.type === "number") {
+    validateNumberSchema(value, activeSchema, label, errors);
   }
 }
 
 /**
- * 依存パッケージを使わずに data/schemas/*.schema.json の主要制約を検証し、エラー一覧を値で返す軽量 JSON Schema バリデータ。
+ * 依存パッケージを使わずに data/schemas/*.schema.json の主要制約（ローカル $defs/$ref を含む）を検証し、エラー一覧を値で返す軽量 JSON Schema バリデータ。
  */
 export function validateAgainstJsonSchema(value, schema, label = "value") {
   const errors = [];
-  collectSchemaErrors(value, schema, label, errors);
+  collectSchemaErrors(value, schema, label, errors, schema, new Set());
   return errors;
 }

@@ -79,6 +79,12 @@ function collectBlankStoryFields(story, errors) {
       pushIfBlank(p, `${cLabel}.paragraphs[${pIdx}]`, errors);
     });
   });
+  (story.unreleasedVolumes || []).forEach((vol, vIdx) => {
+    const vLabel = `${sid}.unreleasedVolumes[${vIdx}]`;
+    pushIfBlank(vol.partLabel, `${vLabel}.partLabel`, errors);
+    pushIfBlank(vol.description, `${vLabel}.description`, errors);
+    pushIfBlank(vol.sourceRef.rawId, `${vLabel}.sourceRef.rawId`, errors);
+  });
 }
 
 function collectBlankCourseFields(course, errors) {
@@ -287,6 +293,23 @@ function resolveGlossaryItem(termId, rawItem, entities, sid, errors) {
   return resolved;
 }
 
+function verifyRawSourceMatch(ref, paragraphs, contextLabel, { loadSnapshot, errors }) {
+  try {
+    const rawJson = loadSnapshot(ref);
+    const expected = resolveExpectedRawText(rawJson, ref);
+    const actual = resolveActualPlainText(paragraphs);
+    if (expected !== actual) {
+      const diff = findFirstDiffContext(expected, actual);
+      errors.push(
+        `[原文不一致] ${contextLabel} (${ref.sourceType}/${ref.rawId}): raw(len=${expected.length}) と paragraphs(len=${actual.length}) が位置 ${diff?.index} で不一致です。` +
+        ` raw=${JSON.stringify(diff?.expectedSnippet)} vs actual=${JSON.stringify(diff?.actualSnippet)}`
+      );
+    }
+  } catch (err) {
+    errors.push(`[原典解決エラー] ${contextLabel}: ${err.message}`);
+  }
+}
+
 function compileAndValidateStory(
   story,
   { entities, storyIds, storyById, titleLookup, checkText, loadSnapshot, errors, warnings }
@@ -359,20 +382,7 @@ function compileAndValidateStory(
     }
 
     const ref = ch.sourceRef;
-    try {
-      const rawJson = loadSnapshot(ref);
-      const expected = resolveExpectedRawText(rawJson, ref);
-      const actual = resolveActualPlainText(ch.paragraphs);
-      if (expected !== actual) {
-        const diff = findFirstDiffContext(expected, actual);
-        errors.push(
-          `[原文不一致] ${cLabel} (${ref.sourceType}/${ref.rawId}): raw(len=${expected.length}) と paragraphs(len=${actual.length}) が位置 ${diff?.index} で不一致です。` +
-          ` raw=${JSON.stringify(diff?.expectedSnippet)} vs actual=${JSON.stringify(diff?.actualSnippet)}`
-        );
-      }
-    } catch (err) {
-      errors.push(`[原典解決エラー] ${cLabel}: ${err.message}`);
-    }
+    verifyRawSourceMatch(ref, ch.paragraphs, cLabel, { loadSnapshot, errors });
 
     ch.paragraphs.forEach((p, pIdx) => {
       errors.push(...checkText(p, `${cLabel}.paragraphs[${pIdx}]`));
@@ -386,6 +396,13 @@ function compileAndValidateStory(
         }
       }
     });
+  });
+
+  (story.unreleasedVolumes || []).forEach((vol, vIdx) => {
+    const vLabel = `${sid}.unreleasedVolumes[${vIdx}]`;
+    errors.push(...checkText(vol.partLabel, `${vLabel}.partLabel`));
+    errors.push(...checkText(vol.description, `${vLabel}.description`));
+    verifyRawSourceMatch(vol.sourceRef, [vol.description], vLabel, { loadSnapshot, errors });
   });
 
   for (const gKey of glossaryKeys) {
@@ -445,6 +462,15 @@ function compileAndValidateStory(
       ...(ch.chapterNote ? { chapterNote: ch.chapterNote } : {}),
       sourceRef: ch.sourceRef,
     })),
+    ...(Array.isArray(story.unreleasedVolumes) && story.unreleasedVolumes.length > 0
+      ? {
+          unreleasedVolumes: story.unreleasedVolumes.map((vol) => ({
+            partLabel: vol.partLabel,
+            description: vol.description,
+            sourceRef: vol.sourceRef,
+          })),
+        }
+      : {}),
   };
 }
 
@@ -679,6 +705,12 @@ function buildSearchIndexPayload(compiledMap, entities, generatedAt) {
       .map((eid) => entities[eid]?.name || "")
       .filter(Boolean);
 
+    const unreleasedVolumes = (compiled.unreleasedVolumes || []).map((vol, volumeIndex) => ({
+      volumeIndex,
+      partLabel: toPlainSearchText(vol.partLabel),
+      description: toPlainSearchText(vol.description),
+    }));
+
     stories[compiled.id] = {
       id: compiled.id,
       title: compiled.title,
@@ -690,6 +722,7 @@ function buildSearchIndexPayload(compiledMap, entities, generatedAt) {
       entityNames,
       preGuide: (compiled.preGuide || []).map((line) => toPlainSearchText(line)),
       chapters,
+      ...(unreleasedVolumes.length > 0 ? { unreleasedVolumes } : {}),
       glossary,
       truth: {
         overallTruth: toPlainSearchText(compiled.overallTruth),

@@ -504,4 +504,54 @@ describe("Shelf & Reader integration (MemoryRouter + Radix UI)", () => {
       readerContainer.remove();
     }
   });
+
+  it("renders unreleasedVolumes below chapters and above lore-details, and highlights on unreleased search jump", async () => {
+    const storyWithUnreleased: StoryDetail = {
+      ...MOCK_DETAILS.mock_elegy,
+      title: "白姫と六人の小人（第一巻）",
+      shelfCategory: "book",
+      categoryLabel: "書籍（古童話・暗喩譚）",
+      unreleasedVolumes: [
+        {
+          partLabel: "第二巻",
+          description: "白の姫と光の王子の出会いを語る一冊。",
+        },
+        {
+          partLabel: "第七巻",
+          description: "全ての終りと夜ノ母の予言を語る一冊。",
+        },
+      ],
+    };
+
+    render(
+      <MemoryRouter initialEntries={["/story/mock_elegy?q=%E5%85%89%E3%81%AE%E7%8E%8B%E5%AD%90&kind=unreleased&vol=0"]}>
+        <AppProviders>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route
+                path="story/:storyId"
+                element={<ReaderPage initialStory={storyWithUnreleased} />}
+              />
+            </Route>
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>
+    );
+
+    const section = await screen.findByRole("region", { name: /続巻の書籍概要/ });
+    expect(section).toBeInTheDocument();
+    expect(screen.getByText("第二巻")).toBeInTheDocument();
+    expect(screen.getByText("第七巻")).toBeInTheDocument();
+
+    // 第1章の後ろ、真相メモ（.lore-details）の前に配置されている
+    const chapterEl = document.getElementById("chapter-1")!;
+    const loreEl = document.querySelector(".lore-details")!;
+    expect(Boolean(chapterEl.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(Boolean(section.compareDocumentPosition(loreEl) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+
+    // 検索ジャンプ対象要素がフォーカス強調され、検索語がハイライトされる
+    const volItem0 = document.getElementById("unreleased-volume-0");
+    expect(volItem0).toHaveAttribute("data-search-focus", "true");
+    expect(volItem0?.querySelector("mark")?.textContent).toBe("光の王子");
+  });
 });

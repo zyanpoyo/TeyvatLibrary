@@ -122,6 +122,7 @@ export function ReaderArticle({
 }: ReaderArticleProps) {
   const regionLabel = formatRegion(story.region);
   const chapters = story.chapters || [];
+  const unreleasedVolumes = story.unreleasedVolumes || [];
   const hasMultipleChapters = chapters.length > 1;
   const connected = story.connected || [];
 
@@ -288,6 +289,48 @@ export function ReaderArticle({
             ) : null}
           </section>
         ))}
+
+        {unreleasedVolumes.length > 0 ? (
+          <section
+            className={`${styles.unreleasedVolumesSection} unreleased-volumes-section`}
+            id="unreleased-volumes"
+            aria-labelledby="unreleased-volumes-heading"
+          >
+            <div className={styles.unreleasedVolumesHeader}>
+              <h2 className={styles.unreleasedVolumesHeading} id="unreleased-volumes-heading">
+                <AppIcon name="books" className={styles.inlineLeadIcon} />
+                <span>続巻の書籍概要（ゲーム内未収録）</span>
+              </h2>
+              <p className={styles.unreleasedVolumesLead}>
+                ゲーム本編で未収録の巻については、各巻の書籍概要のみ掲載しています。
+              </p>
+            </div>
+            <ul className={styles.unreleasedVolumesList}>
+              {unreleasedVolumes.map((vol, idx) => (
+                <li
+                  key={`unreleased-vol-${idx}`}
+                  id={`unreleased-volume-${idx}`}
+                  className={`${styles.unreleasedVolumeItem} unreleased-volume-item`}
+                >
+                  <span className={styles.unreleasedVolumeBadge}>
+                    <HighlightedText
+                      text={vol.partLabel}
+                      query={highlightQuery}
+                      markClassName={styles.searchMark}
+                    />
+                  </span>
+                  <p className={styles.unreleasedVolumeDesc}>
+                    <HighlightedText
+                      text={vol.description}
+                      query={highlightQuery}
+                      markClassName={styles.searchMark}
+                    />
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <details
           key={`lore-${story.id}`}

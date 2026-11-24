@@ -269,6 +269,84 @@
   display: none;
 }
 
+.unreleasedVolumesSection {
+  max-width: 36em;
+  margin: 2.5rem auto 0;
+  background: var(--pre-guide-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+.unreleasedVolumesHeader {
+  margin-bottom: 0.85rem;
+}
+
+.unreleasedVolumesHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.3rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  letter-spacing: 0.03em;
+}
+
+.unreleasedVolumesLead {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.unreleasedVolumesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.unreleasedVolumeItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--epigraph-divider);
+}
+
+.unreleasedVolumeBadge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+  white-space: nowrap;
+}
+
+.unreleasedVolumeDesc {
+  margin: 0;
+  font-size: 0.84375rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+}
+
+@media (max-width: 600px) {
+  .unreleasedVolumeItem {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+  .unreleasedVolumeBadge {
+    justify-self: start;
+  }
+}
+
 .loreDetails {
   max-width: 36em;
   margin: 2.5rem auto 0;

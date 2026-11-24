@@ -68,6 +68,64 @@ describe("validateAgainstJsonSchema", () => {
     expect(badErrors.some((e) => e.includes("許可された値"))).toBe(true);
     expect(badErrors.some((e) => e.includes("unexpected"))).toBe(true);
   });
+
+  it("resolves local $defs/$ref pointers and detects missing or cyclic $ref definitions", () => {
+    const schemaWithRefs = {
+      type: "object",
+      required: ["items"],
+      additionalProperties: false,
+      $defs: {
+        entry: {
+          type: "object",
+          required: ["kind", "id"],
+          additionalProperties: false,
+          properties: {
+            kind: { type: "string", enum: ["book", "weapon"] },
+            id: { type: "string", minLength: 1 },
+          },
+        },
+        cycleA: { $ref: "#/$defs/cycleB" },
+        cycleB: { $ref: "#/$defs/cycleA" },
+      },
+      properties: {
+        items: {
+          type: "array",
+          items: { $ref: "#/$defs/entry" },
+        },
+      },
+    };
+
+    expect(
+      validateAgainstJsonSchema({ items: [{ kind: "book", id: "pale_princess" }] }, schemaWithRefs, "ok")
+    ).toEqual([]);
+
+    const refValidationErrors = validateAgainstJsonSchema(
+      { items: [{ kind: "invalid", extra: true }] },
+      schemaWithRefs,
+      "bad_ref"
+    );
+    expect(refValidationErrors.some((e) => e.includes("必須フィールド 'id'"))).toBe(true);
+    expect(refValidationErrors.some((e) => e.includes("許可された値"))).toBe(true);
+    expect(refValidationErrors.some((e) => e.includes("extra"))).toBe(true);
+
+    const missingRefErrors = validateAgainstJsonSchema(
+      { field: "x" },
+      { type: "object", properties: { field: { $ref: "#/$defs/not_found" } } },
+      "missing_ref"
+    );
+    expect(missingRefErrors.some((e) => e.includes("解決できません"))).toBe(true);
+
+    const cyclicRefErrors = validateAgainstJsonSchema(
+      { field: "x" },
+      {
+        type: "object",
+        $defs: schemaWithRefs.$defs,
+        properties: { field: { $ref: "#/$defs/cycleA" } },
+      },
+      "cyclic_ref"
+    );
+    expect(cyclicRefErrors.some((e) => e.includes("循環しています"))).toBe(true);
+  });
 });
 
 describe("validator text, corpus, and link checks", () => {

@@ -10,7 +10,7 @@
 | :--- | :--- |
 | **① 収録カテゴリーとオムニバス編成** | 基本の長文5種（書籍・聖遺物・武器・突破素材・風の翼）に加え、短〜中文カテゴリーは **`material`（武器突破素材・週ボス素材・突破宝石・精錬素材 等）のみ**を対象とし、**「複数アイテムを1冊の連作（章）として束ねる形式」**として収録可能にする。 |
 | **② 書架UIカテゴリー（5分類）と原典種別の分離** | 書架（一覧画面）のUIタブは **`book`（書籍）/ `artifact`（聖遺物）/ `weapon`（武器）/ `attire`（風の翼）/ `chronicle`（突破・育成素材）** の5分類とし、章ごとの原典データ種別（`chapters[].sourceRef.sourceType`）と分離する。 |
-| **③ 原典データ（Layer 1）の取得とスナップショット管理** | GitHub Raw への直接HTTP通信を廃止し、`devDependencies` の **`genshin-db` と `genshin-data` からローカル抽出**する（書籍の Readable 本文のみ Yatta API から取得）。作品で使用した原典データのみを無加工のまま `data/raw/<sourceType>/<rawId>.json` に切り出して Git 管理する。 |
+| **③ 原典データ（Layer 1）の取得とスナップショット管理** | GitHub Raw への直接HTTP通信を廃止し、`devDependencies` の **`genshin-db` と `genshin-data` からローカル抽出**する（書籍の Readable 本文のみ Yatta API から取得）。**ゲーム本編で正式に入手・閲覧可能な実装済みテキストのみを収録対象とし**、未実装書籍および未実装巻の本文は `data/raw/`・`data/stories/` ともに収録しない。作品で使用した原典データのみを無加工のまま `data/raw/<sourceType>/<rawId>.json` に切り出して Git 管理する。 |
 | **④ 定型文・制御タグの宣言的クレンジングと1文字一致検証** | `data/raw/` には無加工データを保存し、検証時に **「① 装飾タグ（`<br/>`, `<color>` 等）の標準正規化 → ② `sourceRef` で宣言した定型プレフィックス除去（`stripPrefix`）または段落スライス（`paragraphSlice`）」** を経た文字列と、本文（`paragraphs` の注釈タグ除去後）が **100%完全一致** することを機械検証する。 |
 | **⑤ 共通人物マスタ・双方向リンク・出典自動リンク化** | 人物・用語マスタ（`entities.json`）を `entityId` で参照可能にし（文脈に応じた `descOverride` 可）、`connected` は片方向記述からビルド時に双方向リンクを自動展開する。`evidence` は執筆しやすい文字列形式を維持しつつ、収録済み作品名『〇〇』が含まれる場合はビルド時に自動リンク化する。 |
 
@@ -200,7 +200,7 @@ genshin-books/
 
 ### 4.3 ストーリーJSON（`data/stories/<shelfCategory>/<id>.json`）の完全スキーマ
 
-各章（`chapters[]`）が自身の `sourceRef` を持つことで、**単一アイテムの作品**も**異種カテゴリー横断のオムニバス作品**もまったく同じスキーマで表現・検証できる。
+各章（`chapters[]`）が自身の `sourceRef` を持つことで、**単一アイテムの作品**も**異種カテゴリー横断のオムニバス作品**もまったく同じスキーマで表現・検証できる。ゲーム内で第1巻のみ正式実装されている書籍等向けに、任意配列 `"unreleasedVolumes"`（各要素 `sourceRef`（`field: "description"`）・`partLabel`・`description`）を定義でき、本編文字数・読了目安・章数からは除外しつつ原典1文字一致・公式コーパス検証および横断検索の対象となる。
 また、必須フィールド `"addedAt": "YYYY-MM-DD"` を設定することで、書架の「新着順」並び替えや追加から14日以内かつ未読の `NEW` バッジ表示、さらに配信 HTML の JSON-LD `datePublished` および `sitemap.xml` `<lastmod>` に反映される（`story.schema.json` の必須項目。ビルド時に実在日付形式を検証し `stories-index.json`・個別配信JSON へ引き継ぐ）。あわせて検索タイトル・ディスクリプションを個別調整したい場合向けに任意オブジェクト `"seo": { "title": "...", "description": "..." }` を許容しており、公式コーパス検証を経た上で配信JSONへ透過される。
 
 #### 例1：聖遺物（単一セットの時系列再構成）— `data/stories/artifact/crimson_witch.json`
@@ -460,7 +460,7 @@ function resolveActualPlainText(paragraphs) {
 - インラインタグ構文（`stripInlineTags` / `extractInlineTagReferences`）は `src/domain/text-parser.ts` とビルド検証パイプライン（`scripts/lib/validator.mjs` / `story-compiler.mjs`）間で共有されており、`{{term_id|{M#...}{F#...}}}` のように用語タグ内に性別分岐記法を含めた場合も、検証（1文字一致・`glossary` 参照チェック）と描画時展開（`彼女／彼` 形式）が一貫して動作する。
 
 ### 5.4 JSON スキーマ・確度区分・出典リンク整合性・エンティティ候補・コース検証
-- **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json`、`story.schema.json`、`courses.schema.json` の必須項目・正規表現パターン・列挙値・キー名制約（`propertyNames`）・未定義プロパティ禁止（`additionalProperties: false`）を厳密に検査する。あわせてコース ID の一意性・同一コース内 `steps[].storyId` の重複・空白文字列の禁止もスキーマゲートで検証した上で後段の `StoryCompiler`（`scripts/lib/story-compiler.mjs`）へ進む。
+- **JSON Schema 検証 (`scripts/lib/json-schema.mjs`)**: ビルドおよび `npm run validate` 時に、`entities.schema.json`、`story.schema.json`、`courses.schema.json` の必須項目・正規表現パターン・列挙値・キー名制約（`propertyNames`）・未定義プロパティ禁止（`additionalProperties: false`）・ローカル JSON Pointer（`$defs` / `$ref`、循環参照ガード付き）を厳密に検査する。あわせてコース ID の一意性・同一コース内 `steps[].storyId` の重複・空白文字列の禁止もスキーマゲートで検証した上で後段の `StoryCompiler`（`scripts/lib/story-compiler.mjs`）へ進む。
 - **確度区分・用語必須チェック (`VALID_IDENTITY_PREFIXES` / `StoryCompiler`)**: `glossary` の `identity` / `identityOverride` および `entities.json` の `defaultIdentity` は、情報の性質・確度を表す 3 種プレフィックス（**`正体：` / `解説：` / `有力説：`**）のいずれかで始まることを強制し、マスタ解決後の `term` / `desc` / `evidence` が空でないこともあわせて検証する。
 - **出典リンク表記チェック (`findSubtitleLinkErrors`)**: `evidence` / `evidenceOverride` / `defaultEvidence` に収録済み他作品のタイトルが含まれるにもかかわらず `『作品名（補足）』` のように括弧を内側へ含めたため `evidenceLinks` が不発になっている記述をエラーとして検出する（部位・巻の補足は必ず `『作品名』（補足）` のように外へ配置する）。
 - **コース実在参照＆コーパス検査**: `courses[].steps[].storyId` が実在する作品 ID であることを検証し、`badge`・`title`・`subtitle`・`hook`・`seo`・`steps[].note` の全テキストに対して公式コーパス／NG 表記チェックを実施する。
@@ -551,7 +551,7 @@ function resolveActualPlainText(paragraphs) {
 
 ### 6.4 配信ファイル③：横断全文検索用コーパス（`public/data/search-index.json`）
 書架の検索欄フォーカスまたは検索語入力時に 1 回だけ遅延取得する全文検索専用データ。初期表示用の `stories-index.json` を肥大化させずに本文・用語解説・真相メモを横断検索でき、検索対象外の出典（`evidence`）や関連リンク（`connected`）による連鎖誤ヒットを除外している。
-- 本文・見出し・注釈・前提ガイド・真相メモは `stripInlineTags` および `formatGenderPlaceholders` を適用した可読テキストとして格納する。
+- 本文・見出し・注釈・続巻の書籍概要（`unreleasedVolumes`）・前提ガイド・真相メモは `stripInlineTags` および `formatGenderPlaceholders` を適用した可読テキストとして格納する。
 - `glossary[]` には `term`, `identity`, `desc` とともに、本文中で最初に参照される `firstChapterIndex` / `firstParagraphIndex` を付与し、スニペットクリック時に該当位置へ直接スクロールできるようにする。
 
 ---
