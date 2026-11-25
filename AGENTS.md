@@ -4,7 +4,7 @@
 「テイワット文庫」— 原神の聖遺物・武器・書籍・風の翼・突破育成素材ストーリーを原文改変なしで通読できる完全静的 Web リーダー（React 19 + TypeScript + React Router v8 / Cloudflare Workers Static Assets）。
 
 ## Workflow & Guardrails
-- **作業ブランチと PR 運用**: コード変更を始める前に最新の `master` からトピックブランチ（`feat/...`, `fix/...`, `docs/...`, `chore/...`）を作成し、PR 経由でマージする（`master` への直接コミット禁止）。
+- **作業ブランチと PR 運用**: `develop` を開発最新、`master` を本番（Cloudflare 連携）とする。通常の開発・修正は最新の `develop` からトピックブランチ（`feat/...`, `fix/...`, `docs/...`, `chore/...`）を作成し、`develop` 宛の PR 経由でマージする（`develop` / `master` への直接コミット禁止）。本番反映は `develop` → `master` の PR を経由して行う。
 - **TypeScript 型境界と `.mjs` 宣言規約**: `tsconfig.json` はブラウザ実行コード（`src/`）専用（`"types": []`）で Node 型を含まない。Node API を使うテストは `tests/tsconfig.json`（`node` 型あり）配下に配置し、[`scripts/`](scripts/) の `.mjs` を TypeScript から参照する場合は隣接する `.d.mts` を維持・更新する。
 - **UI/UX 変更の回帰検証**: フロントエンドの UI/UX を追加・修正した際は必ず `npm run test:e2e`（または `npm run test:all`）を実行し、既存操作のリグレッションがないことを確認する。
 - **データ変更の必須検証**: [`data/stories/`](data/stories/)・[`data/shared/`](data/shared/)・[`data/schemas/`](data/schemas/) を編集した際は `npm run validate` を実行する（`addedAt` は必須、`official-corpus.json` 整合チェックを含む）。
