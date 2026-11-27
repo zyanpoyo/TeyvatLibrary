@@ -9,7 +9,7 @@
 
 - **フレームワーク / UI**: React 19 / TypeScript / React Router v8 Framework Mode（`ssr: false` によるビルド時静的プリレンダリング）/ Radix UI（`@radix-ui/react-popover`, `@radix-ui/react-dialog`）/ CSS Modules / Vite
 - **静的ホスティング**: Cloudflare Workers Static Assets（[`wrangler.jsonc`](../../wrangler.jsonc)、[`public/_headers`](../../public/_headers)）
-  - 配信ルート: `build/client/`、`not_found_handling: "404-page"`、`workers_dev: false`、`preview_urls: false`、`teyvat-bunko.com` カスタムドメイン運用
+  - 配信ルート: `build/client/`、`html_handling: "drop-trailing-slash"`、`not_found_handling: "404-page"`、`workers_dev: false`、`preview_urls: false`、`teyvat-bunko.com` カスタムドメイン運用
 - **ビルド後処理設定**: [`react-router.config.ts`](../../react-router.config.ts)（全ルートプリレンダリング＋`buildEnd` での SEO アセット・静的 OGP PNG 生成）
 
 ---

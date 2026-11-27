@@ -13,7 +13,7 @@
 - `"name": "teyvat-library"`
 - `"workers_dev": false`・`"preview_urls": false`（`*.workers.dev` での重複インデックス防止）
 - `"routes": [{ "pattern": "teyvat-bunko.com", "custom_domain": true }]`
-- `"assets": { "directory": "./build/client", "not_found_handling": "404-page" }`
+- `"assets": { "directory": "./build/client", "html_handling": "drop-trailing-slash", "not_found_handling": "404-page" }`（`sitemap.xml` / `canonical` の末尾スラッシュなし URL と一致させ、`307` リダイレクトによるインデックス未登録を防止）
 - `"previews": {}`（Workers Builds 非本番ブランチ用 `npx wrangler preview` 対応）
 
 Cloudflare ダッシュボードまたは Wrangler CLI からデプロイする際のビルド設定は以下を指定する。
@@ -46,6 +46,7 @@ Cloudflare ダッシュボードまたは Wrangler CLI からデプロイする�
 公開直後にブラウザまたは `curl -I` 等で以下を確認する。
 
 - [ ] `https://teyvat-bunko.com/` が HTTP `200` で返る
+- [ ] `https://teyvat-bunko.com/story/crimson_witch`・`/courses`・`/about` がリダイレクトなし（HTTP `200`）で返る
 - [ ] `https://www.teyvat-bunko.com/`（および `/story/crimson_witch`）が HTTP `301` で `https://teyvat-bunko.com/...` へリダイレクトされる
 - [ ] `https://teyvat-bunko.com/nonexistent-check` が HTTP `404`（ソフト 404 ではなく 404 ステータス）で返り、`<meta name="robots" content="noindex, nofollow">` を含む
 - [ ] `https://teyvat-bunko.com/robots.txt` が `Sitemap: https://teyvat-bunko.com/sitemap.xml` を返す
