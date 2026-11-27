@@ -8,8 +8,8 @@
     "license": "MIT",
     "copyright": "Copyright (c) 2026 Matt Pocock"
   },
-  "lastSyncedCommit": "3a05171775a49076900759e0dd1b3ef8e2671323",
-  "lastSyncedAt": "2026-11-19",
+  "lastSyncedCommit": "6f7f7831a625f040a8e06a0e7954826b87ce775a",
+  "lastSyncedAt": "2026-11-27",
   "localConventions": [
     "フロントマター description 末尾の日本語トリガー説明を維持する",
     "タスク・仕様書・チケットの保存先はローカルの .scratch/<feature-slug>/ を標準とする",
