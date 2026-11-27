@@ -25,14 +25,16 @@ npm run skills:check
 
 ---
 
-## 2. 取り込み判断（ユーザー合意）
+## 2. 取り込み判断（分岐ルール）
 
-`.scratch/skills-sync/report.md` を読み、以下を簡潔に報告して取り込み範囲をユーザーと合意する。
+`.scratch/skills-sync/report.md` を読み、変更種別に応じて以下で進める。
 
-- **採用中スキルの更新**: どのスキルにどんな意図の変更が入ったか
-- **採用中スキル配下の未マッピングファイル**: 新規リファレンス等が追加されていれば `references/` に取り込むか
-- **新規・未分類スキル候補**: 採用するか、`ignoredUpstreamSkills` に追加するか
-- **廃止・移動 / LICENSE 変更**: 該当があれば対処方針を確認
+- **すべて 0 件の場合**: リポジトリファイルは変更せず、「更新なし」と報告して終了する。
+- **採用中スキルの更新のみの場合**: そのままセクション 3 の 3-way マージへ進む。
+- **以下のいずれかが 1 件以上ある場合**: 取り込み前に簡潔に報告し、対処方針をユーザーと合意する。
+  - **採用中スキル配下の未マッピングファイル**: 新規リファレンス等を `references/` に取り込むか
+  - **新規・未分類スキル候補**: 採用するか、`ignoredUpstreamSkills` に追加するか
+  - **廃止・移動 / LICENSE 変更**: 該当スキルの扱い・[`NOTICE`](../../../NOTICE) 更新方針
 
 ---
 
@@ -40,13 +42,7 @@ npm run skills:check
 
 ローカル版と上流最新版を全文比較して上書きするのではなく、**`.scratch/skills-sync/patches/<skill>.patch` の変更意図だけをローカルの該当ファイルへ反映**する。
 
-適用時、[`.agents/skills-upstream.json`](../../skills-upstream.json) の `localConventions` をすべて維持する：
-
-- フロントマター `description` 末尾の日本語トリガー説明を消さない
-- 保存先やチケット管理はローカルの `.scratch/<feature-slug>/` 運用を維持する
-- 補助ファイルは `./references/` 配下のパス・リンクを維持する
-- Antigravity のツール名・サブエージェント表記（`invoke_subagent` / `manage_subagents` 等）を維持する
-- `TeyvatLibrary` 固有の注記（`doc-sync` / `genshin-story-curator` / `GLOSSARY.md` / `docs/adr/` 等）を消さない
+適用時は [`.agents/skills-upstream.json`](../../skills-upstream.json) の `localConventions`（および `.scratch/skills-sync/report.md` のチェック項目）をすべて維持する。
 
 ---
 
@@ -65,6 +61,7 @@ npm run skills:check
 3. **検証コマンドを実行**:
    ```powershell
    npm run skills:validate
+   npm run typecheck
    npm test
    ```
-4. 差分を確認し、ユーザーへ結果を報告する。
+4. 差分を確認し、ユーザーへ結果を報告する（GitHub 書き込み操作は事前承認を得てから行う）。
