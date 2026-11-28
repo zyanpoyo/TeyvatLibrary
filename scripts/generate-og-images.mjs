@@ -8,7 +8,7 @@ const USAGE_TEXT = `使用法: node scripts/generate-og-images.mjs [オプショ
 オプション:
   --out <dir>          出力先クライアントディレクトリ（既定: build/client）
   --site-url <url>     フッター等に表示する公開基準 URL（既定: VITE_SITE_URL）
-  --only <id[,id...]>  生成対象を絞り込む（site, about, courses, course/<id>, または story.id。複数回・カンマ区切り可）
+  --only <id[,id...]>  生成対象を絞り込む（site, about, courses, course/<id>, entities, entity/<id>, または story.id。複数回・カンマ区切り可）
   --force, -f          .cache/og/ のキャッシュを無視して強制再生成する
   --help, -h           このヘルプを表示する`;
 
@@ -18,7 +18,7 @@ function appendOnlyTokens(targets, rawValue) {
     .map((token) => token.trim())
     .filter(Boolean);
   if (tokens.length === 0) {
-    throw new Error("--only には 1 件以上の対象 ID（site, about, courses, course/<id>, または story.id）を指定してください。");
+    throw new Error("--only には 1 件以上の対象 ID（site, about, courses, course/<id>, entities, entity/<id>, または story.id）を指定してください。");
   }
   targets.push(...tokens);
 }

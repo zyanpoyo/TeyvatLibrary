@@ -474,9 +474,9 @@ function resolveActualPlainText(paragraphs) {
 
 ### 6.1 Story Compiler による5つの自動解決処理
 
-1. **`glossary` と `entities` サマリーのマスタ継承解決**:
+1. **`glossary` と `entities` サマリー・名鑑インデックスのマスタ継承解決**:
    - `glossary[key].entityId` が指定されている場合、`data/shared/entities.json` から `defaultIdentity`, `defaultDesc`, `defaultEvidence` を引き継ぎ、`identityOverride` / `descOverride` / `evidenceOverride`（または個別指定）があれば上書きしてフラットなオブジェクトに展開する。
-   - 同時に、その作品に登場するすべての `entityId` の配列（`entityIds: ["rosalyne", "rustan"]`）を抽出し、一覧画面の「登場人物・用語逆引きフィルタ」用にインデックス化するほか、作品詳細JSON（`stories/<id>.json`）にも `entities` サマリー配列（`id`, `name`, `kind`, `identity`, `desc`）を埋め込み、リーダー画面の JSON-LD `about` 構造化データ生成時に追加 fetch なしで参照できるようにする。
+   - 同時に、その作品に登場するすべての `entityId` の配列（`entityIds: ["rosalyne", "rustan"]`）を抽出し、`stories-index.json` の `entitiesIndex` へ `name`・`kind`・`defaultIdentity`・`defaultDesc`・`defaultEvidence`・解決済み `evidenceLinks`・`storyIds` を出力して、書架フィルタと人物・用語名鑑ビュー（`/entities`, `/entities/:entityId`）の両方を追加 fetch なしで駆動する。さらに作品詳細JSON（`stories/<id>.json`）にも `entities` サマリー配列（`id`, `name`, `kind`, `identity`, `desc`）を埋め込み、リーダー画面の JSON-LD `about` 構造化データおよび真相メモ内チップ生成でそのまま参照できるようにする。
 2. **双方向 `connected` リンクの自動展開**:
    - 作品 `A` の `connected` に `{ targetId: "B", relation: "...", desc: "...", reverseRelation: "...", reverseDesc: "..." }` が記述されている場合、作品 `B` の配信JSONの `connected` 配列にも自動的に `A` への逆リンクを追加する（すでに `B` 側に `targetId: "A"` が明示定義されている場合はそちらを優先し、重複させない）。
 3. **`evidence` 文字列内の収録作品タイトル自動リンク化**:
@@ -489,8 +489,8 @@ function resolveActualPlainText(paragraphs) {
 
 ---
 
-### 6.2 配信ファイル①：書架・コース・検索用軽量インデックス（`public/data/stories-index.json`）
-書架（一覧画面）の初期表示、フェア棚・読書コース一覧・詳細ページ（`/courses`, `/courses/:courseId`）、5分類タブ切り替え、登場人物・用語・地域フィルタリング専用の軽量ファイル（本文・用語辞書を含まない）。
+### 6.2 配信ファイル①：書架・コース・名鑑・検索用軽量インデックス（`public/data/stories-index.json`）
+書架（一覧画面）の初期表示、フェア棚・読書コース（`/courses`, `/courses/:courseId`）、人物・用語名鑑（`/entities`, `/entities/:entityId`）、5分類タブ切り替え、登場人物・用語・地域フィルタリング専用の軽量ファイル（本文・個別用語辞書を含まない）。
 
 ```json
 {
@@ -504,8 +504,29 @@ function resolveActualPlainText(paragraphs) {
     "chronicle": 2
   },
   "entitiesIndex": {
-    "rosalyne": { "name": "ロザリン（淑女）", "kind": "character", "storyIds": ["crimson_witch", "pale_flame", "signora_chronicle"] },
-    "rustan": { "name": "ルースタン", "kind": "character", "storyIds": ["crimson_witch", "elegy"] }
+    "rosalyne": {
+      "name": "ロザリン（淑女）",
+      "kind": "character",
+      "defaultIdentity": "正体：ファデュイ執行官第八位『淑女』...",
+      "defaultDesc": "500年前のモンド出身の魔女...",
+      "defaultEvidence": "聖遺物『燃え盛る炎の魔女』・『蒼白の炎』...",
+      "evidenceLinks": [
+        { "title": "燃え盛る炎の魔女", "storyId": "crimson_witch" },
+        { "title": "蒼白の炎", "storyId": "pale_flame" }
+      ],
+      "storyIds": ["crimson_witch", "pale_flame", "signora_chronicle"]
+    },
+    "rustan": {
+      "name": "ルースタン",
+      "kind": "character",
+      "defaultIdentity": "正体：西風騎士団の騎士「ルースタン」（幼い狼）",
+      "defaultDesc": "500年前の西風騎士団を実質的に支えていた騎士...",
+      "defaultEvidence": "聖遺物『守護の心』・武器『西風剣』『終焉を嘆く詩』",
+      "evidenceLinks": [
+        { "title": "守護の心", "storyId": "defenders_will" }
+      ],
+      "storyIds": ["crimson_witch", "elegy"]
+    }
   },
   "stories": [
     {

@@ -1,0 +1,462 @@
+.entityDetailView {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.topControlBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1rem 0 1rem;
+}
+
+.breadcrumbRow {
+  margin-bottom: 1.25rem;
+}
+
+.backLink {
+  background: var(--pill-bg);
+  border: 1px solid var(--border-gold);
+  border-radius: 999px;
+  color: var(--accent-gold-bright);
+  font-size: 0.84375rem;
+  font-family: inherit;
+  text-decoration: none;
+  padding: 0.38rem 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.backLink:hover,
+.backLink:focus-visible {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold-bright);
+  outline: none;
+}
+
+.backLink:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.entityHeaderCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-gold);
+  outline: 1px solid var(--card-inner-outline);
+  outline-offset: -6px;
+  border-radius: 0.75rem;
+  padding: 1.85rem 2rem;
+  margin-bottom: 1.75rem;
+  box-shadow: var(--shadow-card);
+}
+
+.entityKicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.85rem;
+}
+
+.entityMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.entityTitle {
+  font-family: "Shippori Mincho", serif;
+  font-size: clamp(1.5rem, 3.4vw, 2.05rem);
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  line-height: 1.4;
+  margin: 0 0 0.65rem;
+  letter-spacing: 0.04em;
+  text-wrap: balance;
+}
+
+.entityIdentity {
+  font-size: 0.96875rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin: 0 0 0.75rem;
+  line-height: 1.55;
+}
+
+.entityDesc {
+  font-size: 0.9375rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+.evidenceBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  background: var(--evidence-bg);
+  border-left: 2px solid var(--accent-gold);
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.3rem;
+  margin: 0 0 1.25rem;
+}
+
+.evidenceLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  margin-inline-end: 0.2rem;
+}
+
+.evidenceLink {
+  color: var(--accent-gold-bright);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.2em;
+  font-weight: 600;
+}
+
+.evidenceLink:hover,
+.evidenceLink:focus-visible {
+  text-decoration-style: solid;
+  color: var(--accent-gold);
+}
+
+.progressAndCta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.progressBlock {
+  flex: 1 1 15rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.progressLabel {
+  color: var(--accent-gold-bright);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.completedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--accent-gold);
+}
+
+.progressTrack {
+  width: 100%;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-bright));
+  transition: width 0.25s ease;
+}
+
+.primaryCtaLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.68rem 1.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--accent-gold);
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+  font-family: inherit;
+  font-size: 0.90625rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.primaryCtaLink:hover,
+.primaryCtaLink:focus-visible {
+  background: var(--accent-gold);
+  color: var(--bg-deep);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.primaryCtaLink:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.sectionBlock {
+  margin-bottom: 2.25rem;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sectionHeading {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent-gold-bright);
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sectionHeaderRow .sectionHeading {
+  margin-bottom: 0;
+}
+
+.storiesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.storyItemCard {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.65rem;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.storyItemCard[data-next-unread="true"] {
+  border-color: var(--accent-gold);
+  box-shadow: var(--shadow-card);
+}
+
+.storyItemCard:has(.storyTitleLink:hover),
+.storyItemCard:has(.storyTitleLink:focus-visible) {
+  border-color: var(--accent-gold);
+  transform: translateX(3px);
+}
+
+.storyTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+}
+
+.storyMetaLeft {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.78125rem;
+  color: var(--text-muted);
+}
+
+.storyStatusGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.storyNextBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.52rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--bg-deep);
+  background: var(--accent-gold);
+}
+
+.storyReadBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.52rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--accent-gold);
+}
+
+.storyTitle {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0.1rem 0 0;
+  line-height: 1.45;
+}
+
+.storyTitleLink {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.25rem;
+}
+
+.storyTitleLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.storyTitleLink:hover {
+  color: var(--accent-gold-bright);
+}
+
+.storyTitleLink:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 3px;
+}
+
+.storyHook {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.shareSection {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem 0 2rem;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 2rem;
+}
+
+.coursesGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .coursesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.relatedEntitiesGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.relatedEntityChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.84375rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.relatedEntityChip:hover,
+.relatedEntityChip:focus-visible {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-bright);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.relatedEntityChip:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.relatedEntityName {
+  font-weight: 600;
+}
+
+.relatedEntityMeta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 599px) {
+  .entityHeaderCard {
+    padding: 1.35rem 1.15rem;
+  }
+  .primaryCtaLink {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storyItemCard,
+  .primaryCtaLink,
+  .progressFill,
+  .relatedEntityChip {
+    transition: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .backLink,
+  .primaryCtaLink,
+  .relatedEntityChip {
+    min-block-size: 44px;
+  }
+}

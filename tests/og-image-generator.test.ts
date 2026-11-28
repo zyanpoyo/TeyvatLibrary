@@ -12,22 +12,26 @@ import {
 import { loadDistStoriesIndex } from "../src/server/dist-data.server.mjs";
 
 describe("static OGP image generator", () => {
-  it("renders valid 1200x630 PNGs for site, about, courses, all courses, and all stories with zero missing glyphs and reuses cache", async () => {
+  it("renders valid 1200x630 PNGs for site, about, courses, entities, and detail pages with zero missing glyphs and reuses cache", async () => {
     const realIndex = loadDistStoriesIndex();
     const { firstRun, secondRun, sampleChecks } = await runOgImageGeneratorSmokeCheck({
       indexData: realIndex,
       siteUrl: "https://teyvat-bunko.com",
     });
 
-    const expectedTotal = realIndex.stories.length + (realIndex.courses?.length ?? 0) + 3;
+    const entityCount = Object.keys(realIndex.entitiesIndex ?? {}).length;
+    const expectedTotal =
+      realIndex.stories.length + (realIndex.courses?.length ?? 0) + entityCount + 4;
     expect(firstRun.missingChars).toEqual([]);
     expect(firstRun.totalGenerated).toBe(expectedTotal);
     expect(firstRun.renderedCount).toBe(expectedTotal);
     expect(firstRun.cacheHits).toBe(0);
 
-    expect(sampleChecks.length).toBeGreaterThanOrEqual(7);
+    expect(sampleChecks.length).toBeGreaterThanOrEqual(10);
     expect(sampleChecks.some((c) => c.relPath === "og/courses.png")).toBe(true);
     expect(sampleChecks.some((c) => c.relPath.startsWith("og/course/"))).toBe(true);
+    expect(sampleChecks.some((c) => c.relPath === "og/entities.png")).toBe(true);
+    expect(sampleChecks.some((c) => c.relPath.startsWith("og/entity/"))).toBe(true);
     for (const check of sampleChecks) {
       expect(check.exists).toBe(true);
       expect(check.validSignature).toBe(true);
@@ -53,17 +57,26 @@ describe("static OGP image generator", () => {
         indexData: realIndex,
         siteUrl: "https://teyvat-bunko.com",
         cacheDir,
-        only: ["site", "crimson_witch", "courses", "course/must_read_essentials"],
+        only: [
+          "site",
+          "crimson_witch",
+          "courses",
+          "course/must_read_essentials",
+          "entities",
+          "entity/rosalyne",
+        ],
       });
 
-      expect(targeted.totalGenerated).toBe(4);
-      expect(targeted.renderedCount).toBe(4);
+      expect(targeted.totalGenerated).toBe(6);
+      expect(targeted.renderedCount).toBe(6);
       expect(targeted.cacheHits).toBe(0);
       expect(fs.existsSync(path.join(clientDir, "og", "site.png"))).toBe(true);
       expect(fs.existsSync(path.join(clientDir, "og", "courses.png"))).toBe(true);
       expect(
         fs.existsSync(path.join(clientDir, "og", "course", "must_read_essentials.png"))
       ).toBe(true);
+      expect(fs.existsSync(path.join(clientDir, "og", "entities.png"))).toBe(true);
+      expect(fs.existsSync(path.join(clientDir, "og", "entity", "rosalyne.png"))).toBe(true);
       expect(fs.existsSync(path.join(clientDir, "og", "story", "crimson_witch.png"))).toBe(true);
       expect(fs.existsSync(path.join(clientDir, "og", "about.png"))).toBe(false);
 

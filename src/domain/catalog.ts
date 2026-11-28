@@ -54,6 +54,50 @@ export function resolveReadingStateReader(
   return createReadingStateReader(input as ReadingStateSnapshot);
 }
 
+export interface StoryIdsReadingSummary {
+  readCount: number;
+  totalCount: number;
+  progressPercent: number;
+  isCompleted: boolean;
+  firstUnreadIndex: number;
+  firstUnreadStoryId: string | null;
+}
+
+/**
+ * 任意の物語ID列に対する読了数・達成率・最初の未読作品を集計する共通ヘルパー。
+ */
+export function summarizeStoryIdsProgress(
+  storyIds: ReadonlyArray<string>,
+  readingState: ReadingStateInput = null
+): StoryIdsReadingSummary {
+  const reader = resolveReadingStateReader(readingState);
+  const totalCount = storyIds.length;
+
+  let readCount = 0;
+  let firstUnreadIndex = -1;
+  for (let i = 0; i < totalCount; i += 1) {
+    if (reader?.isRead(storyIds[i])) {
+      readCount += 1;
+    } else if (firstUnreadIndex === -1) {
+      firstUnreadIndex = i;
+    }
+  }
+
+  const progressPercent = totalCount > 0 ? Math.round((readCount / totalCount) * 100) : 0;
+  const isCompleted = totalCount > 0 && readCount >= totalCount;
+  const firstUnreadStoryId =
+    firstUnreadIndex >= 0 ? (storyIds[firstUnreadIndex] ?? null) : null;
+
+  return {
+    readCount,
+    totalCount,
+    progressPercent,
+    isCompleted,
+    firstUnreadIndex,
+    firstUnreadStoryId,
+  };
+}
+
 export interface ShelfCategoryTab {
   id: ShelfCategoryId;
   label: string;

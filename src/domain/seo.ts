@@ -6,11 +6,13 @@ import {
 } from "../config/site-url";
 import type {
   CourseIndexItem,
+  EntityIndexEntry,
   EntityKind,
   StoriesIndexData,
   StoryCategoryId,
   StoryDetail,
   StoryEntitySummary,
+  StoryIndexItem,
 } from "../types/story";
 import {
   formatGenderPlaceholders,
@@ -24,10 +26,12 @@ export const OG_IMAGE_HEIGHT = 630;
 export const SHELF_DOCUMENT_TITLE =
   "テイワット文庫｜原神の聖遺物・武器・書籍ストーリー全文＆用語解説リーダー";
 export const COURSES_DOCUMENT_TITLE = "読書コース・フェア棚一覧｜テイワット文庫";
+export const ENTITIES_DOCUMENT_TITLE = "人物・用語名鑑｜テイワット文庫";
 export const ABOUT_DOCUMENT_TITLE = "このサイトについて｜テイワット文庫";
 export const NOT_FOUND_PAGE_TITLE = "ページが見つかりません｜テイワット文庫";
 export const NOT_FOUND_STORY_TITLE = "作品が見つかりません｜テイワット文庫";
 export const NOT_FOUND_COURSE_TITLE = "読書コースが見つかりません｜テイワット文庫";
+export const NOT_FOUND_ENTITY_TITLE = "人物・用語が見つかりません｜テイワット文庫";
 
 const MAX_SEO_TITLE_CHARS = 58;
 const MAX_SEO_DESCRIPTION_CHARS = 140;
@@ -79,9 +83,12 @@ function shouldIncludeFocusTag(storyTitle: string, primaryTag: string): boolean 
   return true;
 }
 
-export function buildNotFoundDocumentTitle(kind: "page" | "story" | "course" = "page"): string {
+export function buildNotFoundDocumentTitle(
+  kind: "page" | "story" | "course" | "entity" = "page"
+): string {
   if (kind === "story") return NOT_FOUND_STORY_TITLE;
   if (kind === "course") return NOT_FOUND_COURSE_TITLE;
+  if (kind === "entity") return NOT_FOUND_ENTITY_TITLE;
   return NOT_FOUND_PAGE_TITLE;
 }
 
@@ -120,6 +127,58 @@ export function buildAboutDescription(): string {
 export function buildCoursesDescription(courses?: ReadonlyArray<CourseIndexItem>): string {
   const countText = courses && courses.length > 0 ? `（全${courses.length}コース）` : "";
   return `原神の聖遺物・武器・書籍・風の翼・育成素材を、入門・キャラクター別・地域・歴史別の切り口で順番に通読できる読書コース一覧${countText}。何から読めばいいか迷う旅人に最適な順路を案内します。`;
+}
+
+export function buildEntitiesDescription(entityCount?: number): string {
+  const countText =
+    typeof entityCount === "number" && entityCount > 0 ? `（全${entityCount}項目）` : "";
+  return `原神の聖遺物・武器・書籍に登場する人物・魔神・組織・重要用語をまとめた人物・用語名鑑${countText}。正体・背景解説・公式出典から該当物語へ直接辿れます。`;
+}
+
+export function buildEntityDocumentTitle(
+  entity: Pick<EntityIndexEntry, "name" | "storyIds">
+): string {
+  const count = entity.storyIds.length;
+  const full = `【原神】${entity.name}の正体・解説・登場物語（全${count}篇）｜${SITE_NAME}`;
+  if (Array.from(full).length <= MAX_SEO_TITLE_CHARS) {
+    return full;
+  }
+  const compact = `【原神】${entity.name}の正体・解説｜${SITE_NAME}`;
+  if (Array.from(compact).length <= MAX_SEO_TITLE_CHARS) {
+    return compact;
+  }
+  return `${entity.name}｜人物・用語名鑑｜${SITE_NAME}`;
+}
+
+export function buildEntityDescription(
+  entity: Pick<EntityIndexEntry, "name" | "defaultIdentity" | "defaultDesc" | "storyIds">,
+  stories: ReadonlyArray<Pick<StoryIndexItem, "id" | "title">> = []
+): string {
+  const identity = toSeoPlainText(entity.defaultIdentity);
+  const desc = toSeoPlainText(entity.defaultDesc);
+  const storyMap = new Map(stories.map((s) => [s.id, s.title]));
+  const sampleTitles = entity.storyIds
+    .map((id) => storyMap.get(id))
+    .filter((t): t is string => Boolean(t))
+    .slice(0, 2);
+  const worksText =
+    sampleTitles.length > 0
+      ? `登場：${sampleTitles.map((t) => `『${t}』`).join("")}${entity.storyIds.length > 2 ? "ほか" : ""}。`
+      : "";
+
+  const parts = [
+    identity ? `${identity}。` : "",
+    desc,
+    worksText,
+  ].filter(Boolean);
+  const combined =
+    parts.join("") ||
+    `原神の物語に登場する「${entity.name}」の背景解説・公式出典・登場作品一覧。`;
+
+  if (Array.from(combined).length <= MAX_SEO_DESCRIPTION_CHARS) {
+    return combined;
+  }
+  return truncateCodepoints(combined, MAX_SEO_DESCRIPTION_CHARS);
 }
 
 export function buildCourseDocumentTitle(
@@ -200,13 +259,15 @@ export function buildStoryDescription(
 }
 
 export function buildOgImagePath(
-  kind: "site" | "about" | "story" | "courses" | "course",
+  kind: "site" | "about" | "story" | "courses" | "course" | "entities" | "entity",
   id?: string
 ): string {
   if (kind === "site") return "/og/site.png";
   if (kind === "about") return "/og/about.png";
   if (kind === "courses") return "/og/courses.png";
   if (kind === "course") return `/og/course/${encodeURIComponent(id || "")}.png`;
+  if (kind === "entities") return "/og/entities.png";
+  if (kind === "entity") return `/og/entity/${encodeURIComponent(id || "")}.png`;
   return `/og/story/${encodeURIComponent(id || "")}.png`;
 }
 
@@ -579,70 +640,82 @@ export function buildStoryMeta({
   ];
 }
 
-export function buildCoursesMeta({
-  indexData,
-  siteUrl = getConfiguredSiteUrl(),
-}: {
-  indexData?: StoriesIndexData | null;
-  siteUrl?: string | null;
-} = {}): MetaDescriptor[] {
-  const courses = indexData?.courses ?? [];
-  const title = COURSES_DOCUMENT_TITLE;
-  const description = buildCoursesDescription(courses);
-  const homeUrl = buildAbsoluteUrl("/", siteUrl);
-  const canonicalUrl = buildAbsoluteUrl("/courses", siteUrl);
-  const ogImageUrl = buildAbsoluteUrl(buildOgImagePath("courses"), siteUrl);
+function buildBreadcrumbListNode(
+  items: ReadonlyArray<{ name: string; url?: string | null }>
+): Record<string, unknown> {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((entry, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: entry.name,
+      ...(entry.url ? { item: entry.url } : {}),
+    })),
+  };
+}
 
-  const itemListElements = courses.map((course, idx) => {
-    const courseUrl = buildAbsoluteUrl(`/courses/${encodeURIComponent(course.id)}`, siteUrl);
+function buildWebSitePartOfNode(homeUrl: string | null): Record<string, unknown> | undefined {
+  if (!homeUrl) return undefined;
+  return {
+    "@type": "WebSite",
+    "@id": `${homeUrl}#website`,
+    name: SITE_NAME,
+    url: homeUrl,
+  };
+}
+
+function buildCollectionIndexMeta({
+  pathname,
+  breadcrumbLabel,
+  title,
+  description,
+  ogKind,
+  imageAlt,
+  items,
+  siteUrl,
+}: {
+  pathname: string;
+  breadcrumbLabel: string;
+  title: string;
+  description: string;
+  ogKind: "courses" | "entities";
+  imageAlt: string;
+  items: ReadonlyArray<{ name: string; path: string }>;
+  siteUrl: string | null;
+}): MetaDescriptor[] {
+  const homeUrl = buildAbsoluteUrl("/", siteUrl);
+  const canonicalUrl = buildAbsoluteUrl(pathname, siteUrl);
+  const ogImageUrl = buildAbsoluteUrl(buildOgImagePath(ogKind), siteUrl);
+  const websitePartOf = buildWebSitePartOfNode(homeUrl);
+
+  const itemListElements = items.map((item, idx) => {
+    const itemUrl = buildAbsoluteUrl(item.path, siteUrl);
     return {
       "@type": "ListItem",
       position: idx + 1,
-      name: course.title,
-      ...(courseUrl ? { url: courseUrl } : {}),
+      name: item.name,
+      ...(itemUrl ? { url: itemUrl } : {}),
     };
   });
 
   const graph: Array<Record<string, unknown>> = [
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: SITE_NAME,
-          ...(homeUrl ? { item: homeUrl } : {}),
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "読書コース一覧",
-          ...(canonicalUrl ? { item: canonicalUrl } : {}),
-        },
-      ],
-    },
+    buildBreadcrumbListNode([
+      { name: SITE_NAME, url: homeUrl },
+      { name: breadcrumbLabel, url: canonicalUrl },
+    ]),
     {
       "@type": "CollectionPage",
       name: title,
       description,
       ...(canonicalUrl ? { url: canonicalUrl } : {}),
       inLanguage: "ja",
-      numberOfItems: courses.length,
-      ...(homeUrl
-        ? {
-            isPartOf: {
-              "@type": "WebSite",
-              "@id": `${homeUrl}#website`,
-              name: SITE_NAME,
-              url: homeUrl,
-            },
-          }
-        : {}),
+      numberOfItems: items.length,
+      ...(websitePartOf ? { isPartOf: websitePartOf } : {}),
       ...(itemListElements.length > 0
         ? {
             mainEntity: {
               "@type": "ItemList",
-              numberOfItems: courses.length,
+              numberOfItems: items.length,
               itemListElement: itemListElements,
             },
           }
@@ -653,14 +726,14 @@ export function buildCoursesMeta({
   return [
     { title },
     { name: "description", content: description },
-    ...buildCanonicalMetaTag("/courses", siteUrl),
+    ...buildCanonicalMetaTag(pathname, siteUrl),
     ...buildSocialMetaTags({
       type: "website",
       title,
       description,
       canonicalUrl,
       imageUrl: ogImageUrl,
-      imageAlt: "読書コース・フェア棚一覧｜テイワット文庫",
+      imageAlt,
     }),
     {
       "script:ld+json": {
@@ -669,6 +742,29 @@ export function buildCoursesMeta({
       },
     },
   ];
+}
+
+export function buildCoursesMeta({
+  indexData,
+  siteUrl = getConfiguredSiteUrl(),
+}: {
+  indexData?: StoriesIndexData | null;
+  siteUrl?: string | null;
+} = {}): MetaDescriptor[] {
+  const courses = indexData?.courses ?? [];
+  return buildCollectionIndexMeta({
+    pathname: "/courses",
+    breadcrumbLabel: "読書コース一覧",
+    title: COURSES_DOCUMENT_TITLE,
+    description: buildCoursesDescription(courses),
+    ogKind: "courses",
+    imageAlt: "読書コース・フェア棚一覧｜テイワット文庫",
+    items: courses.map((course) => ({
+      name: course.title,
+      path: `/courses/${encodeURIComponent(course.id)}`,
+    })),
+    siteUrl,
+  });
 }
 
 export function buildCourseDetailMeta({
@@ -691,6 +787,7 @@ export function buildCourseDetailMeta({
   const coursesUrl = buildAbsoluteUrl("/courses", siteUrl);
   const canonicalUrl = buildAbsoluteUrl(pathname, siteUrl);
   const ogImageUrl = buildAbsoluteUrl(buildOgImagePath("course", course.id), siteUrl);
+  const websitePartOf = buildWebSitePartOfNode(homeUrl);
   const storyMap = new Map((indexData?.stories ?? []).map((s) => [s.id, s]));
 
   const itemListElements = course.steps.map((step, idx) => {
@@ -705,29 +802,11 @@ export function buildCourseDetailMeta({
   });
 
   const graph: Array<Record<string, unknown>> = [
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: SITE_NAME,
-          ...(homeUrl ? { item: homeUrl } : {}),
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "読書コース一覧",
-          ...(coursesUrl ? { item: coursesUrl } : {}),
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          name: course.title,
-          ...(canonicalUrl ? { item: canonicalUrl } : {}),
-        },
-      ],
-    },
+    buildBreadcrumbListNode([
+      { name: SITE_NAME, url: homeUrl },
+      { name: "読書コース一覧", url: coursesUrl },
+      { name: course.title, url: canonicalUrl },
+    ]),
     {
       "@type": "CollectionPage",
       name: course.title,
@@ -737,16 +816,7 @@ export function buildCourseDetailMeta({
       ...(canonicalUrl ? { url: canonicalUrl } : {}),
       inLanguage: "ja",
       numberOfItems: course.storyCount,
-      ...(homeUrl
-        ? {
-            isPartOf: {
-              "@type": "WebSite",
-              "@id": `${homeUrl}#website`,
-              name: SITE_NAME,
-              url: homeUrl,
-            },
-          }
-        : {}),
+      ...(websitePartOf ? { isPartOf: websitePartOf } : {}),
       ...(itemListElements.length > 0
         ? {
             mainEntity: {
@@ -781,7 +851,123 @@ export function buildCourseDetailMeta({
   ];
 }
 
-export function buildNotFoundMeta(kind: "page" | "story" | "course" = "page"): MetaDescriptor[] {
+export function buildEntitiesMeta({
+  indexData,
+  siteUrl = getConfiguredSiteUrl(),
+}: {
+  indexData?: StoriesIndexData | null;
+  siteUrl?: string | null;
+} = {}): MetaDescriptor[] {
+  const entries = Object.entries(indexData?.entitiesIndex ?? {});
+  return buildCollectionIndexMeta({
+    pathname: "/entities",
+    breadcrumbLabel: "人物・用語名鑑",
+    title: ENTITIES_DOCUMENT_TITLE,
+    description: buildEntitiesDescription(entries.length),
+    ogKind: "entities",
+    imageAlt: ENTITIES_DOCUMENT_TITLE,
+    items: entries.map(([entityId, entry]) => ({
+      name: entry.name,
+      path: `/entities/${encodeURIComponent(entityId)}`,
+    })),
+    siteUrl,
+  });
+}
+
+export function buildEntityDetailMeta({
+  entityId,
+  entity,
+  indexData,
+  siteUrl = getConfiguredSiteUrl(),
+}: {
+  entityId: string;
+  entity: EntityIndexEntry | null | undefined;
+  indexData?: StoriesIndexData | null;
+  siteUrl?: string | null;
+}): MetaDescriptor[] {
+  if (!entity || !entityId) {
+    return buildNotFoundMeta("entity");
+  }
+
+  const pathname = `/entities/${encodeURIComponent(entityId)}`;
+  const title = buildEntityDocumentTitle(entity);
+  const stories = indexData?.stories ?? [];
+  const description = buildEntityDescription(entity, stories);
+  const homeUrl = buildAbsoluteUrl("/", siteUrl);
+  const entitiesUrl = buildAbsoluteUrl("/entities", siteUrl);
+  const canonicalUrl = buildAbsoluteUrl(pathname, siteUrl);
+  const ogImageUrl = buildAbsoluteUrl(buildOgImagePath("entity", entityId), siteUrl);
+  const websitePartOf = buildWebSitePartOfNode(homeUrl);
+  const storyMap = new Map(stories.map((s) => [s.id, s]));
+
+  const mainEntityNode = {
+    ...buildEntityJsonLdNode({
+      id: entityId,
+      name: entity.name,
+      kind: entity.kind,
+      identity: entity.defaultIdentity ?? "",
+      desc: entity.defaultDesc ?? "",
+    }),
+    ...(canonicalUrl ? { url: canonicalUrl } : {}),
+  };
+
+  const mentionItems = entity.storyIds.map((sid) => {
+    const story = storyMap.get(sid);
+    const storyUrl = buildAbsoluteUrl(`/story/${encodeURIComponent(sid)}`, siteUrl);
+    return {
+      "@type": "Article",
+      name: story?.title || sid,
+      ...(storyUrl ? { url: storyUrl } : {}),
+    };
+  });
+
+  const pageType =
+    entity.kind === "character" || entity.kind === "god" ? "ProfilePage" : "WebPage";
+
+  const graph: Array<Record<string, unknown>> = [
+    buildBreadcrumbListNode([
+      { name: SITE_NAME, url: homeUrl },
+      { name: "人物・用語名鑑", url: entitiesUrl },
+      { name: entity.name, url: canonicalUrl },
+    ]),
+    {
+      "@type": pageType,
+      name: entity.name,
+      headline: title,
+      description,
+      ...(ogImageUrl ? { image: ogImageUrl } : {}),
+      ...(canonicalUrl ? { url: canonicalUrl } : {}),
+      inLanguage: "ja",
+      mainEntity: mainEntityNode,
+      ...(mentionItems.length > 0 ? { mentions: mentionItems } : {}),
+      ...(websitePartOf ? { isPartOf: websitePartOf } : {}),
+    },
+  ];
+
+  return [
+    { title },
+    { name: "description", content: description },
+    ...buildCanonicalMetaTag(pathname, siteUrl),
+    ...buildSocialMetaTags({
+      type: "article",
+      title,
+      description,
+      canonicalUrl,
+      imageUrl: ogImageUrl,
+      imageAlt: `${entity.name} — 人物・用語名鑑`,
+    }),
+    {
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@graph": graph,
+      },
+    },
+  ];
+}
+
+export function buildNotFoundMeta(
+  kind: "page" | "story" | "course" | "entity" = "page"
+): MetaDescriptor[] {
   return [
     { title: buildNotFoundDocumentTitle(kind) },
     { name: "robots", content: "noindex, nofollow" },

@@ -367,6 +367,24 @@ export function ReaderArticle({
                 markClassName={styles.searchMark}
               />
             </p>
+            {story.entities && story.entities.length > 0 ? (
+              <div className={`${styles.loreEntitiesBlock} lore-entities-block`}>
+                <p className={styles.loreEntitiesLabel}>この物語に登場する人物・用語</p>
+                <ul className={styles.loreEntitiesList}>
+                  {story.entities.map((entity) => (
+                    <li key={entity.id}>
+                      <Link
+                        to={`/entities/${encodeURIComponent(entity.id)}`}
+                        className={`${commonStyles.goldPillLink} lore-entity-chip`}
+                        data-entity-id={entity.id}
+                      >
+                        {entity.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         </details>
 

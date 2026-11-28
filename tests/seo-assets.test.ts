@@ -25,7 +25,18 @@ const MOCK_INDEX: StoriesIndexData = {
     attire: 0,
     chronicle: 0,
   },
-  entitiesIndex: {},
+  entitiesIndex: {
+    rosalyne: {
+      name: "ロザリン（淑女）",
+      kind: "character",
+      storyIds: ["crimson_witch"],
+    },
+    orobashi: {
+      name: "オロバシ",
+      kind: "god",
+      storyIds: ["byakuyakoku"],
+    },
+  },
   stories: [
     {
       id: "crimson_witch",
@@ -156,6 +167,9 @@ describe("post-build SEO asset generators", () => {
     expect(xml).toContain("<lastmod>2026-11-22</lastmod>");
     expect(xml).toContain("<loc>https://bunko.example.jp/courses</loc>");
     expect(xml).toContain("<loc>https://bunko.example.jp/courses/must_read_essentials</loc>");
+    expect(xml).toContain("<loc>https://bunko.example.jp/entities</loc>");
+    expect(xml).toContain("<loc>https://bunko.example.jp/entities/rosalyne</loc>");
+    expect(xml).toContain("<loc>https://bunko.example.jp/entities/orobashi</loc>");
     expect(xml).toContain("<loc>https://bunko.example.jp/about</loc>");
     expect(xml).toContain("<loc>https://bunko.example.jp/story/crimson_witch</loc>");
     expect(xml).toContain("<lastmod>2026-11-15</lastmod>");

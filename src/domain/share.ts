@@ -1,5 +1,5 @@
 import { buildAbsoluteUrl, getConfiguredSiteUrl } from "../config/site-url";
-import type { CourseIndexItem, StoryDetail } from "../types/story";
+import type { CourseIndexItem, EntityIndexEntry, StoryDetail } from "../types/story";
 import { resolveStoryCategorySeoLabel, SITE_NAME } from "./seo";
 
 const DEFAULT_SHARE_HASHTAGS = "原神,原神考察,テイワット文庫";
@@ -77,4 +77,34 @@ export function buildCourseXShareIntentUrl(
   siteUrl: string | null = getConfiguredSiteUrl()
 ): string {
   return buildXIntentUrl(buildCourseShareText(course), buildCourseShareUrl(course.id, siteUrl));
+}
+
+/**
+ * 人物・用語名鑑の正規シェア URL（https://teyvat-bunko.com/entities/<id>）を生成する。
+ */
+export function buildEntityShareUrl(
+  entityId: string,
+  siteUrl: string | null = getConfiguredSiteUrl()
+): string {
+  const pathname = `/entities/${encodeURIComponent(entityId)}`;
+  return buildAbsoluteUrl(pathname, siteUrl) ?? pathname;
+}
+
+/**
+ * 人物・用語名鑑用の X シェア文面を生成する。
+ */
+export function buildEntityShareText(
+  entity: Pick<EntityIndexEntry, "name" | "storyIds">
+): string {
+  return `人物・用語名鑑『${entity.name}』（登場物語 全${entity.storyIds.length}篇）｜${SITE_NAME}`;
+}
+
+/**
+ * 人物・用語単位の X シェア Intent URL を生成する。
+ */
+export function buildEntityXShareIntentUrl(
+  entity: { id: string } & Pick<EntityIndexEntry, "name" | "storyIds">,
+  siteUrl: string | null = getConfiguredSiteUrl()
+): string {
+  return buildXIntentUrl(buildEntityShareText(entity), buildEntityShareUrl(entity.id, siteUrl));
 }

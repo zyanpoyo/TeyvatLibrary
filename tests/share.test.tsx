@@ -6,6 +6,9 @@ import {
   buildCourseShareText,
   buildCourseShareUrl,
   buildCourseXShareIntentUrl,
+  buildEntityShareText,
+  buildEntityShareUrl,
+  buildEntityXShareIntentUrl,
   buildStoryShareText,
   buildStoryShareUrl,
   buildXShareIntentUrl,
@@ -54,6 +57,22 @@ describe("story share helpers and StoryShareBar", () => {
     const courseIntent = new URL(buildCourseXShareIntentUrl(sampleCourse));
     expect(courseIntent.searchParams.get("url")).toBe(
       "https://teyvat-bunko.com/courses/rosalyne_chronicle"
+    );
+
+    const sampleEntity = {
+      id: "rosalyne",
+      name: "ロザリン（淑女）",
+      storyIds: ["crimson_witch", "elegy", "signora_chronicle"],
+    };
+    expect(buildEntityShareUrl(sampleEntity.id)).toBe(
+      "https://teyvat-bunko.com/entities/rosalyne"
+    );
+    expect(buildEntityShareText(sampleEntity)).toBe(
+      "人物・用語名鑑『ロザリン（淑女）』（登場物語 全3篇）｜テイワット文庫"
+    );
+    const entityIntent = new URL(buildEntityXShareIntentUrl(sampleEntity));
+    expect(entityIntent.searchParams.get("url")).toBe(
+      "https://teyvat-bunko.com/entities/rosalyne"
     );
   });
 

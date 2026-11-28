@@ -652,18 +652,24 @@ const COURSE_KIND_OG_LABELS = {
   arc: "地域・歴史別",
 };
 
-function buildCoursesIndexOgNode({
-  courseCount,
-  totalStoryCount,
+const ENTITY_KIND_OG_LABELS = {
+  character: "人物",
+  god: "魔神・執政",
+  organization: "組織",
+  concept: "歴史・重要用語",
+  place: "地域・地名",
+};
+
+function buildCollectionIndexOgNode({
+  badgeLabel,
+  headline,
+  summaryLine,
+  leadText,
+  footerChips,
   displayHost,
   fontFamily500,
   fontFamily700,
 }) {
-  const summaryLine =
-    typeof courseCount === "number" && courseCount > 0
-      ? `全${courseCount}コース ・ 収録${totalStoryCount || 0}篇を推奨順で連続通読`
-      : "入門・キャラクター別・地域・歴史別の切り口で推奨順に通読";
-
   return wrapOgCardShell({
     displayHost,
     fontFamily500,
@@ -684,7 +690,7 @@ function buildCoursesIndexOgNode({
           fontFamily: fontFamily700,
         },
       },
-      "読書コース・フェア棚一覧"
+      badgeLabel
     ),
     body: el(
       "div",
@@ -706,7 +712,7 @@ function buildCoursesIndexOgNode({
             lineHeight: 1.3,
           },
         },
-        "何から読むか迷う旅人のための読書コース"
+        headline
       ),
       el(
         "div",
@@ -732,7 +738,7 @@ function buildCoursesIndexOgNode({
             lineHeight: 1.5,
           },
         },
-        "ネタバレなしの1行順路ガイドと読了進捗つきで物語の背景を体系的に辿る"
+        leadText
       )
     ),
     footerLeft: el(
@@ -743,7 +749,7 @@ function buildCoursesIndexOgNode({
           gap: "10px",
         },
       },
-      ...["入門・必読", "キャラクター別", "地域・歴史別"].map((label) =>
+      ...footerChips.map((label) =>
         el(
           "div",
           {
@@ -763,6 +769,19 @@ function buildCoursesIndexOgNode({
       )
     ),
   });
+}
+
+function getCoursesIndexOgContent({ courseCount, totalStoryCount }) {
+  return {
+    badgeLabel: "読書コース・フェア棚一覧",
+    headline: "何から読むか迷う旅人のための読書コース",
+    summaryLine:
+      typeof courseCount === "number" && courseCount > 0
+        ? `全${courseCount}コース ・ 収録${totalStoryCount || 0}篇を推奨順で連続通読`
+        : "入門・キャラクター別・地域・歴史別の切り口で推奨順に通読",
+    leadText: "ネタバレなしの1行順路ガイドと読了進捗つきで物語の背景を体系的に辿る",
+    footerChips: ["入門・必読", "キャラクター別", "地域・歴史別"],
+  };
 }
 
 function buildCourseOgNode(course, { displayHost, fontFamily500, fontFamily700 }) {
@@ -922,68 +941,315 @@ function buildCourseOgNode(course, { displayHost, fontFamily500, fontFamily700 }
   });
 }
 
-function collectTextsForSpec(spec, displayHost) {
-  if (spec.kind === "site") {
-    return [
-      SITE_BRAND_TITLE,
-      "非公式 原神物語アーカイブ",
-      `原神 聖遺物・武器・書籍・風の翼・育成素材 ストーリー全${spec.totalCount || ""}篇`,
-      "原神 聖遺物・武器・書籍・風の翼・育成素材 ストーリーリーダー",
-      "原文改変なし・時系列再構成・インライン用語ガイド・作品間リンクで小説感覚に通読",
-      "書籍聖遺物武器風の翼突破・育成素材",
-      displayHost,
-    ];
-  }
-  if (spec.kind === "about") {
-    return [
-      SITE_BRAND_TITLE,
-      "About / サイト案内",
-      "このサイトについて",
-      "運営方針・著作権と引用の取り扱い・GA4 アクセス解析オプトアウト・ブラウザ保存データ・免責事項・お問い合わせ窓口のご案内",
-      "非公式ファンアーカイブ・完全静的配信",
-      displayHost,
-    ];
-  }
-  if (spec.kind === "courses") {
-    return [
-      SITE_BRAND_TITLE,
-      "読書コース・フェア棚一覧",
-      "何から読むか迷う旅人のための読書コース",
-      `全${spec.courseCount || 0}コース ・ 収録${spec.totalStoryCount || 0}篇を推奨順で連続通読`,
-      "入門・キャラクター別・地域・歴史別の切り口で推奨順に通読",
-      "ネタバレなしの1行順路ガイドと読了進捗つきで物語の背景を体系的に辿る",
-      "入門・必読",
-      "キャラクター別",
-      "地域・歴史別",
-      displayHost,
-    ];
-  }
-  if (spec.kind === "course") {
-    const c = spec.course;
-    return [
-      SITE_BRAND_TITLE,
-      c.badge,
-      `全${c.storyCount ?? c.storyIds?.length ?? 0}篇 ・ ${c.totalReadingTime || ""}`,
-      truncateText(c.title, 44),
-      truncateText(c.subtitle, 54),
-      truncateText(c.hook, 84),
-      COURSE_KIND_OG_LABELS[c.kind] || "読書コース",
-      "ネタバレなし順路ガイド付き",
-      "…",
-      displayHost,
-    ];
-  }
-  const s = spec.story;
-  return [
-    SITE_BRAND_TITLE,
-    truncateText(s.title, 44),
-    truncateText(s.hook, 92),
-    s.categoryLabel,
-    Array.isArray(s.region) ? s.region.slice(0, 2).join(" / ") : "",
-    ...(s.tags || []).slice(0, 3).map((t) => truncateText(t, 20)),
-    "…",
+function getEntitiesIndexOgContent({ entityCount, totalStoryCount }) {
+  return {
+    badgeLabel: "人物・用語名鑑",
+    headline: "人物・用語名鑑",
+    summaryLine:
+      typeof entityCount === "number" && entityCount > 0
+        ? `全${entityCount}項目の正体・背景解説・公式出典を収録${totalStoryCount || 0}篇から逆引き`
+        : "登場人物・魔神・組織・重要用語の正体・背景解説・出典を横断検索",
+    leadText: "聖遺物・武器・書籍に散らばる登場人物や用語の背景をひとつの辞書から辿る",
+    footerChips: ["人物", "魔神・執政", "組織・用語"],
+  };
+}
+
+function buildEntityOgNode(entity, { displayHost, fontFamily500, fontFamily700 }) {
+  const titleText = truncateText(entity.name, 40);
+  const titleLen = Array.from(titleText).length;
+  const titleSize = titleLen <= 14 ? 50 : titleLen <= 22 ? 43 : 36;
+  const identityText = truncateText(entity.defaultIdentity || "", 54);
+  const descText = truncateText(entity.defaultDesc || "", 90);
+  const kindLabel = ENTITY_KIND_OG_LABELS[entity.kind] || "人物・用語";
+  const countMeta = `登場物語 全${entity.storyIds?.length ?? 0}篇`;
+
+  return wrapOgCardShell({
     displayHost,
-  ];
+    fontFamily500,
+    fontFamily700,
+    topLeft: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+        },
+      },
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 18px",
+            borderRadius: "999px",
+            border: "1px solid rgba(216, 184, 120, 0.55)",
+            backgroundColor: "rgba(216, 184, 120, 0.14)",
+            color: "#f4e4bf",
+            fontSize: "20px",
+            fontWeight: 700,
+            fontFamily: fontFamily700,
+          },
+        },
+        kindLabel
+      ),
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 16px",
+            borderRadius: "999px",
+            border: "1px solid rgba(142, 166, 200, 0.34)",
+            backgroundColor: "rgba(142, 166, 200, 0.1)",
+            color: "#c6d2e8",
+            fontSize: "19px",
+            fontWeight: 500,
+            fontFamily: fontFamily500,
+          },
+        },
+        countMeta
+      )
+    ),
+    body: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
+          marginTop: "6px",
+          marginBottom: "6px",
+        },
+      },
+      el(
+        "div",
+        {
+          style: {
+            fontSize: `${titleSize}px`,
+            lineHeight: 1.3,
+            fontWeight: 700,
+            fontFamily: fontFamily700,
+            color: "#f4e4bf",
+          },
+        },
+        titleText
+      ),
+      identityText
+        ? el(
+            "div",
+            {
+              style: {
+                fontSize: "22px",
+                lineHeight: 1.45,
+                fontWeight: 700,
+                fontFamily: fontFamily700,
+                color: "#d8b878",
+              },
+            },
+            identityText
+          )
+        : null,
+      descText
+        ? el(
+            "div",
+            {
+              style: {
+                fontSize: "22px",
+                lineHeight: 1.55,
+                fontWeight: 500,
+                fontFamily: fontFamily500,
+                color: "#e6e2d8",
+              },
+            },
+            descText
+          )
+        : null
+    ),
+    footerLeft: el(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        },
+      },
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            padding: "6px 14px",
+            borderRadius: "8px",
+            border: "1px solid rgba(216, 184, 120, 0.3)",
+            backgroundColor: "rgba(216, 184, 120, 0.08)",
+            color: "#f4e4bf",
+            fontSize: "18px",
+            fontFamily: fontFamily500,
+          },
+        },
+        "人物・用語名鑑"
+      ),
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            padding: "6px 14px",
+            borderRadius: "8px",
+            border: "1px solid rgba(167, 177, 199, 0.26)",
+            backgroundColor: "rgba(18, 25, 44, 0.85)",
+            color: "#a7b1c7",
+            fontSize: "18px",
+            fontFamily: fontFamily500,
+          },
+        },
+        "背景解説・公式出典付き"
+      )
+    ),
+  });
+}
+
+const OG_SPEC_HANDLERS = {
+  site: {
+    collectTexts(spec, displayHost) {
+      return [
+        SITE_BRAND_TITLE,
+        "非公式 原神物語アーカイブ",
+        `原神 聖遺物・武器・書籍・風の翼・育成素材 ストーリー全${spec.totalCount || ""}篇`,
+        "原神 聖遺物・武器・書籍・風の翼・育成素材 ストーリーリーダー",
+        "原文改変なし・時系列再構成・インライン用語ガイド・作品間リンクで小説感覚に通読",
+        "書籍聖遺物武器風の翼突破・育成素材",
+        displayHost,
+      ];
+    },
+    buildNode(spec, { displayHost, fontFamily500, fontFamily700 }) {
+      return buildSiteOgNode({
+        totalCount: spec.totalCount,
+        displayHost,
+        fontFamily500,
+        fontFamily700,
+      });
+    },
+  },
+  about: {
+    collectTexts(_spec, displayHost) {
+      return [
+        SITE_BRAND_TITLE,
+        "About / サイト案内",
+        "このサイトについて",
+        "運営方針・著作権と引用の取り扱い・GA4 アクセス解析オプトアウト・ブラウザ保存データ・免責事項・お問い合わせ窓口のご案内",
+        "非公式ファンアーカイブ・完全静的配信",
+        displayHost,
+      ];
+    },
+    buildNode(_spec, ctx) {
+      return buildAboutOgNode(ctx);
+    },
+  },
+  courses: {
+    collectTexts(spec, displayHost) {
+      const content = getCoursesIndexOgContent(spec);
+      return [
+        SITE_BRAND_TITLE,
+        content.badgeLabel,
+        content.headline,
+        content.summaryLine,
+        content.leadText,
+        ...content.footerChips,
+        displayHost,
+      ];
+    },
+    buildNode(spec, ctx) {
+      return buildCollectionIndexOgNode({ ...getCoursesIndexOgContent(spec), ...ctx });
+    },
+  },
+  course: {
+    collectTexts(spec, displayHost) {
+      const c = spec.course;
+      return [
+        SITE_BRAND_TITLE,
+        c.badge,
+        `全${c.storyCount ?? c.storyIds?.length ?? 0}篇 ・ ${c.totalReadingTime || ""}`,
+        truncateText(c.title, 44),
+        truncateText(c.subtitle, 54),
+        truncateText(c.hook, 84),
+        COURSE_KIND_OG_LABELS[c.kind] || "読書コース",
+        "ネタバレなし順路ガイド付き",
+        "…",
+        displayHost,
+      ];
+    },
+    buildNode(spec, ctx) {
+      return buildCourseOgNode(spec.course, ctx);
+    },
+  },
+  entities: {
+    collectTexts(spec, displayHost) {
+      const content = getEntitiesIndexOgContent(spec);
+      return [
+        SITE_BRAND_TITLE,
+        content.badgeLabel,
+        content.headline,
+        content.summaryLine,
+        content.leadText,
+        ...content.footerChips,
+        displayHost,
+      ];
+    },
+    buildNode(spec, ctx) {
+      return buildCollectionIndexOgNode({ ...getEntitiesIndexOgContent(spec), ...ctx });
+    },
+  },
+  entity: {
+    collectTexts(spec, displayHost) {
+      const e = spec.entity;
+      return [
+        SITE_BRAND_TITLE,
+        ENTITY_KIND_OG_LABELS[e.kind] || "人物・用語",
+        `登場物語 全${e.storyIds?.length ?? 0}篇`,
+        truncateText(e.name, 40),
+        truncateText(e.defaultIdentity || "", 54),
+        truncateText(e.defaultDesc || "", 90),
+        "人物・用語名鑑",
+        "背景解説・公式出典付き",
+        "…",
+        displayHost,
+      ];
+    },
+    buildNode(spec, ctx) {
+      return buildEntityOgNode(spec.entity, ctx);
+    },
+  },
+  story: {
+    collectTexts(spec, displayHost) {
+      const s = spec.story;
+      return [
+        SITE_BRAND_TITLE,
+        truncateText(s.title, 44),
+        truncateText(s.hook, 92),
+        s.categoryLabel,
+        Array.isArray(s.region) ? s.region.slice(0, 2).join(" / ") : "",
+        ...(s.tags || []).slice(0, 3).map((t) => truncateText(t, 20)),
+        "…",
+        displayHost,
+      ];
+    },
+    buildNode(spec, ctx) {
+      return buildStoryOgNode(spec.story, ctx);
+    },
+  },
+};
+
+function collectTextsForSpec(spec, displayHost) {
+  const handler = OG_SPEC_HANDLERS[spec.kind];
+  if (!handler) {
+    throw new Error(`未知の OGP spec.kind です: ${spec.kind}`);
+  }
+  return handler.collectTexts(spec, displayHost);
 }
 
 function computeCacheHash(payload) {
@@ -1005,26 +1271,33 @@ function normalizeOnlyTargets(only) {
     .filter(Boolean)
     .map((token) => {
       const stripped = token.replace(/^\/?og\//, "").replace(/\.png$/i, "");
-      if (stripped === "site" || stripped === "about" || stripped === "courses") {
+      if (
+        stripped === "site" ||
+        stripped === "about" ||
+        stripped === "courses" ||
+        stripped === "entities"
+      ) {
         return stripped;
       }
       if (stripped.startsWith("story/")) return stripped.slice("story/".length);
       if (stripped.startsWith("story-")) return stripped.slice("story-".length);
       if (stripped.startsWith("course/")) return stripped;
       if (stripped.startsWith("course-")) return `course/${stripped.slice("course-".length)}`;
+      if (stripped.startsWith("entity/")) return stripped;
+      if (stripped.startsWith("entity-")) return `entity/${stripped.slice("entity-".length)}`;
       return stripped;
     });
 
   if (normalized.length === 0) {
     throw new Error(
-      "OGP 生成対象 (--only) が空です。site, about, courses, course/<id>, または物語IDを指定してください。"
+      "OGP 生成対象 (--only) が空です。site, about, courses, course/<id>, entities, entity/<id>, または物語IDを指定してください。"
     );
   }
   return Array.from(new Set(normalized));
 }
 
 /**
- * 書架・About・読書コース・全物語の静的 OGP 画像（1200x630 PNG）をビルド出力先へ生成する。
+ * 書架・About・読書コース・人物用語名鑑・全物語の静的 OGP 画像（1200x630 PNG）をビルド出力先へ生成する。
  */
 export async function generateAllOgImages({
   clientDir,
@@ -1038,13 +1311,16 @@ export async function generateAllOgImages({
   const ogRootDir = path.join(clientDir, "og");
   const ogStoryDir = path.join(ogRootDir, "story");
   const ogCourseDir = path.join(ogRootDir, "course");
+  const ogEntityDir = path.join(ogRootDir, "entity");
   fs.mkdirSync(ogStoryDir, { recursive: true });
   fs.mkdirSync(ogCourseDir, { recursive: true });
+  fs.mkdirSync(ogEntityDir, { recursive: true });
   fs.mkdirSync(cacheDir, { recursive: true });
 
   const displayHost = resolveDisplayHost(siteUrl);
   const stories = indexData?.stories ?? [];
   const courses = indexData?.courses ?? [];
+  const entitiesEntries = Object.entries(indexData?.entitiesIndex ?? {});
   const totalCount = indexData?.totalCount ?? stories.length;
 
   const specs = [
@@ -1072,6 +1348,20 @@ export async function generateAllOgImages({
       totalStoryCount: totalCount,
       hashPayload: { kind: "courses", courseCount: courses.length, totalStoryCount: totalCount, displayHost },
     },
+    {
+      targetKey: "entities",
+      cacheId: "entities",
+      outPath: path.join(ogRootDir, "entities.png"),
+      kind: "entities",
+      entityCount: entitiesEntries.length,
+      totalStoryCount: totalCount,
+      hashPayload: {
+        kind: "entities",
+        entityCount: entitiesEntries.length,
+        totalStoryCount: totalCount,
+        displayHost,
+      },
+    },
     ...courses
       .filter((course) => course?.id)
       .map((course) => ({
@@ -1090,6 +1380,25 @@ export async function generateAllOgImages({
           hook: course.hook,
           storyCount: course.storyCount,
           totalReadingTime: course.totalReadingTime,
+          displayHost,
+        },
+      })),
+    ...entitiesEntries
+      .filter(([entityId, entity]) => Boolean(entityId && entity))
+      .map(([entityId, entity]) => ({
+        targetKey: `entity/${entityId}`,
+        cacheId: `entity-${entityId}`,
+        outPath: path.join(ogEntityDir, `${entityId}.png`),
+        kind: "entity",
+        entity: { id: entityId, ...entity },
+        hashPayload: {
+          kind: "entity",
+          id: entityId,
+          name: entity.name,
+          entityKind: entity.kind,
+          defaultIdentity: entity.defaultIdentity || "",
+          defaultDesc: entity.defaultDesc || "",
+          storyCount: entity.storyIds?.length ?? 0,
           displayHost,
         },
       })),
@@ -1125,6 +1434,8 @@ export async function generateAllOgImages({
         resolvedKeys.add(target);
       } else if (specByTarget.has(`course/${target}`)) {
         resolvedKeys.add(`course/${target}`);
+      } else if (specByTarget.has(`entity/${target}`)) {
+        resolvedKeys.add(`entity/${target}`);
       } else {
         unknownTargets.push(target);
       }
@@ -1163,39 +1474,15 @@ export async function generateAllOgImages({
     }
 
     for (const spec of pendingSpecs) {
-      const node =
-        spec.kind === "site"
-          ? buildSiteOgNode({
-              totalCount: spec.totalCount,
-              displayHost,
-              fontFamily500: fontRes.fontFamily500,
-              fontFamily700: fontRes.fontFamily700,
-            })
-          : spec.kind === "about"
-            ? buildAboutOgNode({
-                displayHost,
-                fontFamily500: fontRes.fontFamily500,
-                fontFamily700: fontRes.fontFamily700,
-              })
-            : spec.kind === "courses"
-              ? buildCoursesIndexOgNode({
-                  courseCount: spec.courseCount,
-                  totalStoryCount: spec.totalStoryCount,
-                  displayHost,
-                  fontFamily500: fontRes.fontFamily500,
-                  fontFamily700: fontRes.fontFamily700,
-                })
-              : spec.kind === "course"
-                ? buildCourseOgNode(spec.course, {
-                    displayHost,
-                    fontFamily500: fontRes.fontFamily500,
-                    fontFamily700: fontRes.fontFamily700,
-                  })
-                : buildStoryOgNode(spec.story, {
-                    displayHost,
-                    fontFamily500: fontRes.fontFamily500,
-                    fontFamily700: fontRes.fontFamily700,
-                  });
+      const handler = OG_SPEC_HANDLERS[spec.kind];
+      if (!handler) {
+        throw new Error(`未知の OGP spec.kind です: ${spec.kind}`);
+      }
+      const node = handler.buildNode(spec, {
+        displayHost,
+        fontFamily500: fontRes.fontFamily500,
+        fontFamily700: fontRes.fontFamily700,
+      });
 
       const svg = await satori(node, {
         width: OG_IMAGE_WIDTH,
@@ -1250,7 +1537,11 @@ export async function runOgImageGeneratorSmokeCheck({ indexData, siteUrl } = {})
       "og/site.png",
       "og/about.png",
       "og/courses.png",
+      "og/entities.png",
       ...(indexData?.courses ?? []).slice(0, 2).map((c) => `og/course/${c.id}.png`),
+      ...Object.keys(indexData?.entitiesIndex ?? {})
+        .slice(0, 2)
+        .map((id) => `og/entity/${id}.png`),
       ...(indexData?.stories ?? []).slice(0, 3).map((s) => `og/story/${s.id}.png`),
       ...((indexData?.stories ?? []).some((s) => s.id === "moonlit_bamboo_forest")
         ? ["og/story/moonlit_bamboo_forest.png"]

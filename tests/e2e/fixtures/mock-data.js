@@ -108,16 +108,34 @@ export function createMockDataset(now = new Date()) {
       rosalyne: {
         name: "ロザリン（淑女）",
         kind: "character",
+        defaultIdentity: "正体：ファデュイ執行官第八位『淑女』",
+        defaultDesc: "500年前のモンド出身の魔女。恋人を失い、身体を液体の炎へと変えた。",
+        defaultEvidence: "聖遺物『燃え盛る炎の魔女（テスト版）』・武器『終焉を嘆く詩（テスト版）』",
+        evidenceLinks: [
+          { title: "燃え盛る炎の魔女（テスト版）", storyId: "mock_witch" },
+          { title: "終焉を嘆く詩（テスト版）", storyId: "mock_elegy" },
+        ],
         storyIds: ["mock_witch", "mock_elegy"],
       },
       rostam: {
         name: "ルースタン",
         kind: "character",
+        defaultIdentity: "正体：西風騎士団副団長「幼い狼」",
+        defaultDesc: "500年前のモンドを守って散った西風騎士団の騎士であり、ロザリンの恋人。",
+        defaultEvidence: "武器『終焉を嘆く詩（テスト版）』・聖遺物『燃え盛る炎の魔女（テスト版）』",
+        evidenceLinks: [
+          { title: "終焉を嘆く詩（テスト版）", storyId: "mock_elegy" },
+          { title: "燃え盛る炎の魔女（テスト版）", storyId: "mock_witch" },
+        ],
         storyIds: ["mock_witch", "mock_elegy"],
       },
       orobashi: {
         name: "オロバシ",
         kind: "god",
+        defaultIdentity: "正体：白蛇の魔神「オロバシノミコト」",
+        defaultDesc: "淵下宮の民を導き、海祇島へと連れ帰った魔神。",
+        defaultEvidence: "書籍『白夜国館蔵（テスト版）』",
+        evidenceLinks: [{ title: "白夜国館蔵（テスト版）", storyId: "mock_byakuyakoku" }],
         storyIds: ["mock_byakuyakoku"],
       },
     },
@@ -254,6 +272,22 @@ export function createMockDataset(now = new Date()) {
       hook: "愛する人を失った少女は、涙が枯れた日に自らの身体を「液体の炎」へと変えた——",
       tags: ["ロザリン（淑女）", "500年前の災厄", "時系列順"],
       entityIds: ["rosalyne", "rostam"],
+      entities: [
+        {
+          id: "rosalyne",
+          name: "ロザリン（淑女）",
+          kind: "character",
+          identity: "正体：ファデュイ執行官第八位『淑女』",
+          desc: "500年前のモンド出身の魔女。",
+        },
+        {
+          id: "rostam",
+          name: "ルースタン",
+          kind: "character",
+          identity: "正体：西風騎士団副団長「幼い狼」",
+          desc: "500年前のモンドを守った騎士。",
+        },
+      ],
       preGuide: [
         "舞台：今から約500年前、漆黒の災厄の時代。",
         "主人公：スメールの教令院へ留学していた少女。",
@@ -318,6 +352,22 @@ export function createMockDataset(now = new Date()) {
       hook: "帰らぬ恋人を想いながら、モンドを守り抜いて散った一人の騎士の最期——",
       tags: ["ルースタン", "西風騎士団", "短編"],
       entityIds: ["rosalyne", "rostam"],
+      entities: [
+        {
+          id: "rosalyne",
+          name: "ロザリン（淑女）",
+          kind: "character",
+          identity: "正体：ファデュイ執行官第八位『淑女』",
+          desc: "500年前のモンド出身の魔女。",
+        },
+        {
+          id: "rostam",
+          name: "ルースタン",
+          kind: "character",
+          identity: "正体：西風騎士団副団長「幼い狼」",
+          desc: "500年前のモンドを守った騎士。",
+        },
+      ],
       preGuide: [
         "舞台：500年前のモンド。",
         "主人公：少女を想い続けた西風騎士団の騎士。",
@@ -373,6 +423,15 @@ export function createMockDataset(now = new Date()) {
       hook: "太陽が沈んだ深海の国で、古代の書記官たちが遺した禁断の年代記——",
       tags: ["淵下宮", "大蛇オロバシ", "全2章"],
       entityIds: ["orobashi"],
+      entities: [
+        {
+          id: "orobashi",
+          name: "オロバシ",
+          kind: "god",
+          identity: "正体：白蛇の魔神「オロバシノミコト」",
+          desc: "淵下宮の民を導いた魔神。",
+        },
+      ],
       preGuide: [
         "舞台：太陽の届かぬ深海・白夜国。",
         "読みどころ：淵下宮の創世記が記されている。",

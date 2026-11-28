@@ -1,6 +1,8 @@
 .siteNavBar {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
+  max-width: 100%;
   gap: 0.25rem;
   padding: 0.25rem;
   border-radius: 999px;
@@ -43,6 +45,16 @@
   border-color: var(--accent-gold);
   color: var(--accent-gold-bright);
   font-weight: 700;
+}
+
+@media (max-width: 479px) {
+  .siteNavBar {
+    border-radius: 0.85rem;
+  }
+  .navLink {
+    padding: 0.28rem 0.62rem;
+    font-size: 0.75rem;
+  }
 }
 
 @media (pointer: coarse) {

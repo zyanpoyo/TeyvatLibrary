@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildProjectStories,
@@ -56,5 +59,33 @@ describe("build-stories smoke checks", () => {
     expect(existing.verifyResult).not.toBeNull();
     expect(existing.verifyResult?.ok).toBe(true);
     expect(existing.verifyResult?.errors).toEqual([]);
+  });
+
+  it("detects missing entity archive fields and broken evidenceLinks in verifyDistOutput", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "teyvat-entity-verify-"));
+    try {
+      const built = buildProjectStories({ distDir: tempDir, validateOnly: false });
+      expect(built.ok).toBe(true);
+
+      const indexPath = path.join(tempDir, "stories-index.json");
+      const indexJson = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+      const firstEntityKey = Object.keys(indexJson.entitiesIndex)[0];
+      indexJson.entitiesIndex[firstEntityKey].defaultDesc = " ";
+      indexJson.entitiesIndex[firstEntityKey].evidenceLinks = [
+        { title: "   ", storyId: "crimson_witch" },
+        { title: "存在しない作品", storyId: "missing_story_id" },
+      ];
+      fs.writeFileSync(indexPath, JSON.stringify(indexJson), "utf8");
+
+      const verifyRes = verifyDistOutput(tempDir);
+      expect(verifyRes.ok).toBe(false);
+      expect(verifyRes.errors.some((e) => e.includes(".defaultDesc が空です"))).toBe(true);
+      expect(verifyRes.errors.some((e) => e.includes("evidenceLinks[0] の形式が不正です"))).toBe(
+        true
+      );
+      expect(verifyRes.errors.some((e) => e.includes("missing_story_id"))).toBe(true);
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });

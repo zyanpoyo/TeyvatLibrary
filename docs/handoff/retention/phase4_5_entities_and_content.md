@@ -4,23 +4,24 @@
 
 ---
 
-## Phase 4: 「人物・用語名鑑（Entities Archive）」ビューの独立
+## Phase 4: 「人物・用語名鑑（Entities Archive）」ビューの独立（実装済み）
 
-### 4.1 インデックス出力の拡張（`scripts/build-stories.mjs`）
-- 現在 `public/data/stories-index.json` の `entitiesIndex` には `{ name, kind, storyIds }` のみが出力されている。
-- ここに [`data/shared/entities.json`](../../../data/shared/entities.json) の `defaultIdentity`・`defaultDesc`・`defaultEvidence`・`evidenceLinks`（ビルド時自動解決）を含めて出力する。
+### 4.1 インデックス出力と検証の拡張（`scripts/lib/story-compiler.mjs` / `scripts/build-stories.mjs`）
+- `public/data/stories-index.json` の `entitiesIndex` に、従来の `{ name, kind, storyIds }` に加えて [`data/shared/entities.json`](../../../data/shared/entities.json) 由来の `defaultIdentity`・`defaultDesc`・`defaultEvidence`・解決済み `evidenceLinks` を出力し、`verifyEntitiesIndex` で必須項目とリンク先実在性を検証する。
 
-### 4.2 人物・用語名鑑ビューUIの実装（`src/router/routes.tsx`, `src/components/entities/` 等を新設して統合）
-- 書架上部のナビゲーションまたはタブから切り替えられる「人物・用語名鑑」ビュー（またはドロワー／モーダル）を追加する。
-- 種別（`character`: 人物 / `god`: 魔神・執政 / `organization`: 組織 / `concept`: 歴史・重要用語 / `place`: 地域・地名）でグルーピングまたは絞り込み表示する。
-- 各エンティティカードには以下を表示する:
-  - 名称（`name`）と正体（`defaultIdentity`）
-  - 背景解説（`defaultDesc`）と出典リンク（`defaultEvidence`）
-  - **登場する物語リスト（`storyIds`）**: 作品タイトル・カテゴリー・読了バッジ（`✦ 読了`）を表示し、クリックで該当作品のリーダー画面へ直接遷移する。
+### 4.2 人物・用語名鑑ビューUI・SSG・SEO・クロスリンクの実装（`src/domain/entities.ts`, `src/components/entities/`, `src/routes/entities*.tsx`）
+- **2階層ルート構成（[ADR-0006](../../adr/0006-ssg-framework-and-url-architecture.md) 準拠）**: 一覧ページ（`/entities`）および個別詳細ページ（`/entities/:entityId`）を SSG プリレンダリング＋`sitemap.xml`＋JSON-LD＋静的 OGP PNG（`/og/entities.png`・`/og/entity/<id>.png`）＋GA4 計測付きで構築。
+- **一覧ページ（`/entities`）**:
+  - 冒頭に「物語の核心・正体に関する記述を含みます」の注記を表示。
+  - 種別フィルタ（`character` / `god` / `organization` / `concept` / `place` のうち収録 1 件以上ある種別のみ自動表示）、日本語正規化キーワード絞り込み、並び替え（登場作品数順／五十音順）、種別ごとのグループ一覧を実装。
+- **個別詳細ページ（`/entities/:entityId`）**:
+  - 名称・種別・正体（`defaultIdentity`）・背景解説全文（`defaultDesc`）・出典＆自動解決出典リンク（[`EvidenceText.tsx`](../../../src/components/common/EvidenceText.tsx)）を表示。
+  - 登場物語リスト（カテゴリー・読了バッジ `✦ 読了`・`次に読む` バッジ）・読了進捗バー＆未読 CTA・関連する読書コース・同じ物語に登場する共起エンティティ・SNS シェアバー（`ShareBar`）を実装。
+- **他画面からの4クロスリンク導線**: 常設ナビ（[`SiteNavBar.tsx`](../../../src/components/layout/SiteNavBar.tsx)＋フッター）、リーダー用語ガイド（[`GlossaryDialog.tsx`](../../../src/components/reader/GlossaryDialog.tsx)）、リーダー真相メモ内チップ（[`ReaderArticle.tsx`](../../../src/components/reader/ReaderArticle.tsx)）、書架の人物絞り込み中リンク（[`ShelfToolbar.tsx`](../../../src/components/shelf/ShelfToolbar.tsx)）を接続。
 
 ### 4.3 Phase 4 完了条件（Completion Criteria）
-- [ ] `entities.json` に登録された全エンティティの解説と出典リンク、および関連作品リストが人物・用語名鑑ビューから閲覧できること。
-- [ ] 人物・用語名鑑内の関連作品リンクおよび出典リンク（`evidenceLinks`）をクリックすると、該当作品のリーダー画面へ遷移すること。
+- [x] `entities.json` に登録された全エンティティの解説と出典リンク、および関連作品リストが人物・用語名鑑ビュー（`/entities`・`/entities/:entityId`）から閲覧できること。
+- [x] 人物・用語名鑑内の関連作品リンクおよび出典リンク（`evidenceLinks`）をクリックすると、該当作品のリーダー画面へ遷移すること。
 
 ---
 

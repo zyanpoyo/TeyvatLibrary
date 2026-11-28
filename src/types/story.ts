@@ -6,6 +6,7 @@ export type ArtifactPieceId = "flower" | "plume" | "sands" | "goblet" | "circlet
 export type SourceFieldId = "story" | "description" | "text";
 export type IdentityPrefix = "正体：" | "解説：" | "有力説：";
 export type EntityKind = "character" | "god" | "organization" | "concept" | "place";
+export type EntitySortMode = "stories" | "name";
 export type ReadingStatusFilter = "all" | "unread" | "read" | "bookmarked";
 export type SortMode = "recommended" | "newest" | "shortest";
 export type CourseKind = "beginner" | "character" | "arc";
@@ -88,6 +89,10 @@ export interface EntityIndexEntry {
   name: string;
   kind: EntityKind;
   storyIds: string[];
+  defaultIdentity?: string;
+  defaultDesc?: string;
+  defaultEvidence?: string;
+  evidenceLinks?: EvidenceLink[];
 }
 
 export interface StoriesIndexData {

@@ -1,4 +1,4 @@
-import type { CourseKind, ShelfCategoryId, StoryCategoryId } from "../types/story";
+import type { CourseKind, EntityKind, ShelfCategoryId, StoryCategoryId } from "../types/story";
 
 declare global {
   interface Window {
@@ -21,7 +21,9 @@ export type StoryOpenSource =
   | "course_detail"
   | "course_next"
   | "course_prev"
-  | "story_course_card";
+  | "story_course_card"
+  | "entity_detail"
+  | "entity_evidence";
 
 export type StoryCompleteMethod = "auto_scroll" | "auto_lore" | "manual";
 
@@ -59,6 +61,7 @@ export interface PageViewParams {
   storyId?: string;
   storyCategory?: StoryCategoryId;
   courseId?: string;
+  entityId?: string;
 }
 
 export interface StoryOpenParams {
@@ -111,6 +114,12 @@ export interface CourseShareParams {
   method: StoryShareMethod;
 }
 
+export interface EntityShareParams {
+  entityId: string;
+  entityKind: EntityKind;
+  method: StoryShareMethod;
+}
+
 export interface AnalyticsClient {
   getStatus(): AnalyticsRuntimeStatus;
   isOptedOut(): boolean;
@@ -126,6 +135,7 @@ export interface AnalyticsClient {
   trackShelfFilterChange(params: ShelfFilterChangeParams): void;
   trackStoryShare(params: StoryShareParams): void;
   trackCourseShare(params: CourseShareParams): void;
+  trackEntityShare(params: EntityShareParams): void;
 }
 
 const MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/i;
@@ -369,7 +379,7 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
     setOptOut,
     getMeasurementId: () => (isValidMeasurementId(config.measurementId) ? config.measurementId : null),
 
-    trackPageView({ pagePath, pageTitle, storyId, storyCategory, courseId }) {
+    trackPageView({ pagePath, pageTitle, storyId, storyCategory, courseId, entityId }) {
       const origin =
         win?.location?.origin && win.location.origin !== "null" ? win.location.origin : "";
       const normalizedPath = pagePath.startsWith("/") ? pagePath : `/${pagePath}`;
@@ -382,6 +392,7 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
         story_id: storyId,
         story_category: storyCategory,
         course_id: courseId,
+        entity_id: entityId,
       });
     },
 
@@ -452,6 +463,14 @@ export function createAnalyticsClient(deps: AnalyticsClientDeps = {}): Analytics
       sendEvent("course_share", {
         course_id: courseId,
         course_kind: courseKind,
+        method,
+      });
+    },
+
+    trackEntityShare({ entityId, entityKind, method }) {
+      sendEvent("entity_share", {
+        entity_id: entityId,
+        entity_kind: entityKind,
         method,
       });
     },

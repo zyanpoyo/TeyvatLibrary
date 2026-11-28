@@ -5,12 +5,15 @@ import {
   buildAboutMeta,
   buildCourseDetailMeta,
   buildCoursesMeta,
+  buildEntitiesMeta,
+  buildEntityDetailMeta,
   buildNotFoundMeta,
   buildShelfMeta,
   buildStoryDescription,
   buildStoryDocumentTitle,
   buildStoryMeta,
   COURSES_DOCUMENT_TITLE,
+  ENTITIES_DOCUMENT_TITLE,
   SHELF_DOCUMENT_TITLE,
 } from "../src/domain/seo";
 import type { CourseIndexItem, StoriesIndexData, StoryDetail } from "../src/types/story";
@@ -402,5 +405,106 @@ describe("SEO meta & JSON-LD builders", () => {
     const missingCourseMeta = buildCourseDetailMeta({ course: null, indexData });
     expect(findTitle(missingCourseMeta)).toBe("読書コースが見つかりません｜テイワット文庫");
     expect(findMetaContent(missingCourseMeta, "name", "robots")).toBe("noindex, nofollow");
+  });
+
+  it("builds entities index and entity detail metadata with ProfilePage/WebPage JSON-LD, OGP, and entity 404 fallback", () => {
+    const indexData: StoriesIndexData = {
+      generatedAt: "2026-11-28T00:00:00.000Z",
+      totalCount: 2,
+      categoryCounts: { book: 0, artifact: 1, weapon: 1, attire: 0, chronicle: 0 },
+      entitiesIndex: {
+        rosalyne: {
+          name: "ロザリン（淑女）",
+          kind: "character",
+          defaultIdentity: "正体：ファデュイ執行官第八位『淑女』",
+          defaultDesc: "500年前のモンド出身の魔女。",
+          defaultEvidence: "聖遺物『燃え盛る炎の魔女』",
+          storyIds: ["elegy", "crimson_witch"],
+        },
+        fatui: {
+          name: "ファデュイ",
+          kind: "organization",
+          defaultIdentity: "解説：氷の女皇直属の外交組織",
+          defaultDesc: "スネージナヤの組織。",
+          defaultEvidence: "聖遺物『燃え盛る炎の魔女』",
+          storyIds: ["crimson_witch"],
+        },
+      },
+      stories: [
+        {
+          id: "elegy",
+          title: "終焉を嘆く詩",
+          shelfCategory: "weapon",
+          categoryLabel: "武器",
+          region: ["モンド"],
+          era: "500年前",
+          readingTime: "約1分",
+          charCount: 600,
+          hook: "h",
+          tags: [],
+        },
+        {
+          id: "crimson_witch",
+          title: "燃え盛る炎の魔女",
+          shelfCategory: "artifact",
+          categoryLabel: "聖遺物",
+          region: ["モンド"],
+          era: "500年前",
+          readingTime: "約2分",
+          charCount: 1059,
+          hook: "h2",
+          tags: [],
+        },
+      ],
+    };
+
+    const entitiesMeta = buildEntitiesMeta({ indexData });
+    expect(findTitle(entitiesMeta)).toBe(ENTITIES_DOCUMENT_TITLE);
+    expect(findCanonical(entitiesMeta)).toBe("https://teyvat-bunko.com/entities");
+    expect(findMetaContent(entitiesMeta, "property", "og:image")).toBe(
+      "https://teyvat-bunko.com/og/entities.png"
+    );
+    const entitiesLd = findLdJson(entitiesMeta) as { "@graph": Array<Record<string, unknown>> };
+    expect(entitiesLd["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "CollectionPage"]);
+
+    const detailMeta = buildEntityDetailMeta({
+      entityId: "rosalyne",
+      entity: indexData.entitiesIndex.rosalyne,
+      indexData,
+    });
+    expect(findTitle(detailMeta)).toBe(
+      "【原神】ロザリン（淑女）の正体・解説・登場物語（全2篇）｜テイワット文庫"
+    );
+    expect(findCanonical(detailMeta)).toBe("https://teyvat-bunko.com/entities/rosalyne");
+    expect(findMetaContent(detailMeta, "property", "og:image")).toBe(
+      "https://teyvat-bunko.com/og/entity/rosalyne.png"
+    );
+    const detailLd = findLdJson(detailMeta) as { "@graph": Array<Record<string, unknown>> };
+    expect(detailLd["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "ProfilePage"]);
+    expect(detailLd["@graph"][1].mainEntity).toMatchObject({
+      "@type": "Person",
+      name: "ロザリン",
+      alternateName: ["淑女"],
+    });
+
+    const orgMeta = buildEntityDetailMeta({
+      entityId: "fatui",
+      entity: indexData.entitiesIndex.fatui,
+      indexData,
+    });
+    const orgLd = findLdJson(orgMeta) as { "@graph": Array<Record<string, unknown>> };
+    expect(orgLd["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "WebPage"]);
+    expect(orgLd["@graph"][1].mainEntity).toMatchObject({
+      "@type": "Organization",
+      name: "ファデュイ",
+    });
+
+    const missingEntityMeta = buildEntityDetailMeta({
+      entityId: "missing",
+      entity: null,
+      indexData,
+    });
+    expect(findTitle(missingEntityMeta)).toBe("人物・用語が見つかりません｜テイワット文庫");
+    expect(findMetaContent(missingEntityMeta, "name", "robots")).toBe("noindex, nofollow");
   });
 });

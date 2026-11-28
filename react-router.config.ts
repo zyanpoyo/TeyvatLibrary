@@ -4,6 +4,7 @@ import { generateAllOgImages } from "./scripts/lib/og-image-generator.mjs";
 import { writePostBuildSeoAssets } from "./scripts/lib/post-build-seo.mjs";
 import {
   listPrerenderCoursePaths,
+  listPrerenderEntityPaths,
   listPrerenderStoryPaths,
   loadDistStoriesIndex,
 } from "./src/server/dist-data.server.mjs";
@@ -14,8 +15,9 @@ export default {
   ssr: false,
   async prerender() {
     const coursePaths = listPrerenderCoursePaths();
+    const entityPaths = listPrerenderEntityPaths();
     const storyPaths = listPrerenderStoryPaths();
-    return ["/", "/courses", "/about", "/404", ...coursePaths, ...storyPaths];
+    return ["/", "/courses", "/entities", "/about", "/404", ...coursePaths, ...entityPaths, ...storyPaths];
   },
   async buildEnd({ reactRouterConfig }) {
     const clientDir = path.join(reactRouterConfig.buildDirectory, "client");

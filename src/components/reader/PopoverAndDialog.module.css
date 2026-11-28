@@ -171,6 +171,12 @@
   color: var(--accent-gold);
 }
 
+.popoverFooter {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 600px) {
   .termDialog {
     top: auto;

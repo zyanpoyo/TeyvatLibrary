@@ -1,8 +1,9 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Link } from "react-router";
-import { parseEvidenceTokens } from "../../domain/text-parser";
+import commonStyles from "../../styles/common.module.css";
 import type { GlossaryEntry } from "../../types/story";
 import { AppIcon } from "../common/AppIcon";
+import { EvidenceText } from "../common/EvidenceText";
 import styles from "./PopoverAndDialog.module.css";
 
 export interface GlossaryDialogProps {
@@ -23,9 +24,6 @@ export function GlossaryDialog({
   const isOpen = Boolean(termId && entry);
   const popoverId = termId ? `pop-${storyId}-${termId}` : undefined;
   const titleId = popoverId ? `${popoverId}-title` : undefined;
-  const evidenceTokens = entry?.evidence
-    ? parseEvidenceTokens(entry.evidence, entry.evidenceLinks)
-    : [];
 
   return (
     <Dialog.Root
@@ -58,29 +56,33 @@ export function GlossaryDialog({
               </div>
               <p className={styles.popoverIdentity}>{entry.identity}</p>
               <p className={styles.popoverDesc}>{entry.desc}</p>
-              {evidenceTokens.length > 0 ? (
+              {entry.evidence ? (
                 <p className={styles.popoverEvidence}>
                   <AppIcon name="books" className={styles.evidenceIcon} />
                   出典・根拠：
-                  {evidenceTokens.map((token, idx) =>
-                    token.type === "link" ? (
-                      <Link
-                        key={`${token.storyId}-${idx}`}
-                        className={`${styles.evidenceLink} evidence-link`}
-                        to={`/story/${encodeURIComponent(token.storyId)}`}
-                        data-target-id={token.storyId}
-                        onClick={() => {
-                          onSelectEvidenceLink?.(token.storyId);
-                          onClose();
-                        }}
-                      >
-                        『{token.title}』
-                      </Link>
-                    ) : (
-                      <span key={`txt-${idx}`}>{token.value}</span>
-                    )
-                  )}
+                  <EvidenceText
+                    evidence={entry.evidence}
+                    evidenceLinks={entry.evidenceLinks}
+                    linkClassName={styles.evidenceLink}
+                    onSelectEvidenceLink={(targetStoryId) => {
+                      onSelectEvidenceLink?.(targetStoryId);
+                      onClose();
+                    }}
+                  />
                 </p>
+              ) : null}
+              {entry.entityId ? (
+                <div className={styles.popoverFooter}>
+                  <Link
+                    to={`/entities/${encodeURIComponent(entry.entityId)}`}
+                    className={`${commonStyles.goldPillLink} glossary-entity-link`}
+                    data-entity-id={entry.entityId}
+                    onClick={onClose}
+                  >
+                    <span>人物・用語名鑑で詳しく見る</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
               ) : null}
             </>
           ) : null}

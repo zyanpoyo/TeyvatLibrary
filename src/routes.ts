@@ -4,6 +4,8 @@ export default [
   index("routes/shelf.tsx"),
   route("courses", "routes/courses.tsx"),
   route("courses/:courseId", "routes/course-detail.tsx"),
+  route("entities", "routes/entities.tsx"),
+  route("entities/:entityId", "routes/entity-detail.tsx"),
   route("story/:storyId", "routes/story.tsx"),
   route("about", "routes/about.tsx"),
   route("404", "routes/not-found.tsx"),

@@ -1,4 +1,8 @@
-import { resolveReadingStateReader, type ReadingStateInput } from "./catalog";
+import {
+  resolveReadingStateReader,
+  summarizeStoryIdsProgress,
+  type ReadingStateInput,
+} from "./catalog";
 import type {
   CourseIndexItem,
   CourseKind,
@@ -73,7 +77,7 @@ export interface ReaderCourseContext {
   memberships: ResolvedReaderCourse[];
 }
 
-function getCourseStoryIds(course: Pick<CourseIndexItem, "storyIds" | "steps">): string[] {
+export function getCourseStoryIds(course: Pick<CourseIndexItem, "storyIds" | "steps">): string[] {
   if (Array.isArray(course.storyIds) && course.storyIds.length > 0) {
     return course.storyIds;
   }
@@ -87,37 +91,24 @@ export function deriveCourseProgress(
   course: Pick<CourseIndexItem, "storyIds" | "steps">,
   readingState: ReadingStateInput = null
 ): CourseProgress {
-  const reader = resolveReadingStateReader(readingState);
   const storyIds = getCourseStoryIds(course);
-  const totalCount = storyIds.length;
-
-  let readCount = 0;
-  let firstUnreadIdx = -1;
-  for (let i = 0; i < totalCount; i += 1) {
-    if (reader?.isRead(storyIds[i])) {
-      readCount += 1;
-    } else if (firstUnreadIdx === -1) {
-      firstUnreadIdx = i;
-    }
-  }
-
-  const progressPercent = totalCount > 0 ? Math.round((readCount / totalCount) * 100) : 0;
-  const isCompleted = totalCount > 0 && readCount >= totalCount;
-  const nextUnreadStepIndex = firstUnreadIdx >= 0 ? firstUnreadIdx : 0;
-  const nextUnreadStoryId = totalCount > 0 ? (storyIds[nextUnreadStepIndex] ?? null) : null;
+  const summary = summarizeStoryIdsProgress(storyIds, readingState);
+  const nextUnreadStepIndex = summary.firstUnreadIndex >= 0 ? summary.firstUnreadIndex : 0;
+  const nextUnreadStoryId =
+    summary.totalCount > 0 ? (storyIds[nextUnreadStepIndex] ?? null) : null;
 
   let ctaLabel = "第1話から読む";
-  if (isCompleted) {
+  if (summary.isCompleted) {
     ctaLabel = "第1話から読み直す";
-  } else if (readCount > 0) {
+  } else if (summary.readCount > 0) {
     ctaLabel = `続き（第${nextUnreadStepIndex + 1}話）から読む`;
   }
 
   return {
-    readCount,
-    totalCount,
-    progressPercent,
-    isCompleted,
+    readCount: summary.readCount,
+    totalCount: summary.totalCount,
+    progressPercent: summary.progressPercent,
+    isCompleted: summary.isCompleted,
     nextUnreadStepIndex,
     nextUnreadStoryId,
     ctaLabel,

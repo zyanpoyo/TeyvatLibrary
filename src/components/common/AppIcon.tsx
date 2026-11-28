@@ -10,6 +10,7 @@ export type AppIconName =
   | "lantern"
   | "link-rings"
   | "books"
+  | "archive"
   | "share"
   | "copy-link"
   | "check";
@@ -214,6 +215,20 @@ const ICON_RENDERERS: Record<AppIconName, () => ReactNode> = {
         <rect x="13.1" y="6.0" width="4.2" height="13.5" rx="0.9" fill="currentColor" fillOpacity="0.12" />
         <path d="M13.1 9.0 H17.3 M13.1 16.4 H17.3" strokeWidth="1.1" />
       </g>
+    </g>
+  ),
+  archive: () => (
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="4.5" y="4.0" width="15" height="16" rx="2.0" fill="currentColor" fillOpacity="0.12" />
+      <circle cx="9.2" cy="9.5" r="1.8" fill="currentColor" fillOpacity="0.24" />
+      <path d="M6.4 14.5 C6.7 12.8 7.8 12.1 9.2 12.1 C10.6 12.1 11.7 12.8 12.0 14.5" />
+      <path d="M13.8 9.0 H16.8 M13.8 12.0 H16.8 M7.2 17.0 H16.8" strokeWidth="1.15" />
     </g>
   ),
   share: () => (

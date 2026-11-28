@@ -1,4 +1,4 @@
-import type { CourseIndexItem, StoriesIndexData, StoryDetail } from "../types/story";
+import type { CourseIndexItem, EntityIndexEntry, StoriesIndexData, StoryDetail } from "../types/story";
 
 export function loadDistStoriesIndex(rootDir?: string): StoriesIndexData;
 
@@ -15,3 +15,10 @@ export function loadDistCourseDetail(
   courseId: string | undefined,
   rootDir?: string
 ): { course: CourseIndexItem; indexData: StoriesIndexData } | null;
+
+export function listPrerenderEntityPaths(rootDir?: string): string[];
+
+export function loadDistEntityDetail(
+  entityId: string | undefined,
+  rootDir?: string
+): { entityId: string; entity: EntityIndexEntry; indexData: StoriesIndexData } | null;

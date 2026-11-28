@@ -59,6 +59,16 @@
   - Google リッチリザルトテスト・Schema Markup Validator・X / Discord 等の OGP カード実機表示検証を行う。
   - Google Search Console 登録・サイトマップ送信および検索クエリに基づく継続改善を行う。
 
+### 1.7 人物・用語名鑑（`/entities`・`/entities/:entityId`）機能（Phase 4）
+[`data/shared/entities.json`](../../data/shared/entities.json) の共通人物・用語マスタを設定確認辞書＋回遊ハブとして独立させる機能（詳細：[`phase4_5_entities_and_content.md`](../handoff/retention/phase4_5_entities_and_content.md)）。
+
+- [x] **人物・用語名鑑 UI・ビルド出力・クロスリンク・静的 OGP の実装**
+  - `stories-index.json` の `entitiesIndex` へ `defaultIdentity`・`defaultDesc`・`defaultEvidence`・解決済み `evidenceLinks` を出力し、`verifyEntitiesIndex` 検証を追加。
+  - `/entities`（種別フィルタ・日本語正規化キーワード検索・並び替え・ネタバレ注記・種別グループ一覧）および `/entities/:entityId`（正体・背景解説・出典リンク・読了進捗＆未読 CTA・登場作品・関連コース・共起エンティティ・シェアバー）を静的プリレンダリング＋`sitemap.xml`＋JSON-LD＋静的 OGP（`/og/entities.png`, `/og/entity/<id>.png`）＋GA4 計測付きで公開。
+  - 常設ナビ（`SiteNavBar`＋フッター）、リーダー用語ガイド（`GlossaryDialog`）、リーダー真相メモ内チップ、書架の人物絞り込み中リンクの 4 クロスリンク導線を接続。
+- [ ] **組織・概念・場所（`organization` / `concept` / `place`）のマスタデータ拡充**
+  - 現状 58 件（`character` / `god`）に加え、主要組織・概念・地名を別 PR にて段階的に登録・紐付けする（UI・5 種別グルーピングは 0 件種別自動非表示で対応済み）。
+
 ---
 
 ## 2. 優先収録作品ロードマップ

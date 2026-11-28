@@ -1,25 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet, useMatch } from "react-router";
+import { Link, Outlet } from "react-router";
+import { useCurrentAppView } from "../../router/route-view";
 import styles from "./AppShell.module.css";
 import { PrivacyDialog } from "./PrivacyDialog";
 
 export function AppShell() {
-  const isReaderRoute = Boolean(useMatch("/story/:storyId"));
-  const isAboutRoute = Boolean(useMatch("/about"));
-  const coursesIndexMatch = useMatch("/courses");
-  const courseDetailMatch = useMatch("/courses/:courseId");
-  const isCoursesRoute = Boolean(coursesIndexMatch || courseDetailMatch);
+  const currentView = useCurrentAppView();
+  const isAboutRoute = currentView === "about";
+  const isCoursesRoute = currentView === "courses";
+  const isEntitiesRoute = currentView === "entities";
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   useEffect(() => {
-    document.body.dataset.view = isReaderRoute
-      ? "reader"
-      : isAboutRoute
-        ? "about"
-        : isCoursesRoute
-          ? "courses"
-          : "shelf";
-  }, [isReaderRoute, isAboutRoute, isCoursesRoute]);
+    document.body.dataset.view = currentView;
+  }, [currentView]);
 
   return (
     <>
@@ -77,6 +71,14 @@ export function AppShell() {
             aria-current={isCoursesRoute ? "page" : undefined}
           >
             読書コース
+          </Link>
+          <Link
+            to="/entities"
+            id="entities-page-link"
+            className={styles.footerLinkBtn}
+            aria-current={isEntitiesRoute ? "page" : undefined}
+          >
+            人物・用語名鑑
           </Link>
           <Link
             to="/about"

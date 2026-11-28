@@ -145,6 +145,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+.selectedEntityGuide {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
 @media (max-width: 599px) {
   .shelfToolbar {
     padding: 0.65rem 0.75rem;
