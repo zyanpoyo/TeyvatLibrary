@@ -614,7 +614,7 @@ function buildCoursesPayloadAndAssignMemberships(rawCourses, compiledMap) {
   return compiledCourses;
 }
 
-function buildIndexPayload(compiledMap, entities, compiledCourses, includeCourses) {
+function buildIndexPayload(compiledMap, entities, compiledCourses, includeCourses, titleLookup) {
   const categoryCounts = Object.fromEntries(VALID_SHELF_CATEGORIES.map((c) => [c, 0]));
   const entitiesIndex = {};
   const indexStories = [];
@@ -624,9 +624,19 @@ function buildIndexPayload(compiledMap, entities, compiledCourses, includeCourse
 
     for (const eid of compiled.entityIds) {
       if (!entitiesIndex[eid]) {
+        const entity = entities[eid];
+        const defaultEvidence = entity?.defaultEvidence || "";
+        const evidenceLinks =
+          defaultEvidence && titleLookup
+            ? extractEvidenceLinks(defaultEvidence, titleLookup, null)
+            : [];
         entitiesIndex[eid] = {
-          name: entities[eid]?.name || eid,
-          kind: entities[eid]?.kind || "character",
+          name: entity?.name || eid,
+          kind: entity?.kind || "character",
+          defaultIdentity: entity?.defaultIdentity || "",
+          defaultDesc: entity?.defaultDesc || "",
+          defaultEvidence,
+          ...(evidenceLinks.length > 0 ? { evidenceLinks } : {}),
           storyIds: [],
         };
       }
@@ -838,7 +848,7 @@ export function compileStories({
   const compiledCourses = hasExplicitCourses
     ? buildCoursesPayloadAndAssignMemberships(rawCourses, compiledMap)
     : [];
-  const index = buildIndexPayload(compiledMap, entities, compiledCourses, hasExplicitCourses);
+  const index = buildIndexPayload(compiledMap, entities, compiledCourses, hasExplicitCourses, titleLookup);
   const searchIndex = buildSearchIndexPayload(compiledMap, entities, index.generatedAt);
   const storiesById = Object.fromEntries(compiledMap);
 

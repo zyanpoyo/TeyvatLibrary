@@ -39,6 +39,17 @@ export function buildRobotsTxt({ siteUrl } = {}) {
   return `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`;
 }
 
+function resolveLatestStoryDate(storyIds, storyLastmodById, fallbackDate) {
+  let latestDate = null;
+  for (const sid of storyIds ?? []) {
+    const dateStr = storyLastmodById.get(sid);
+    if (dateStr && (!latestDate || dateStr > latestDate)) {
+      latestDate = dateStr;
+    }
+  }
+  return latestDate || fallbackDate;
+}
+
 export function buildSitemapXml({ indexData, siteUrl } = {}) {
   const origin = resolveSitemapOrigin(siteUrl);
   const indexLastmod = extractIsoDate(indexData?.generatedAt);
@@ -46,6 +57,7 @@ export function buildSitemapXml({ indexData, siteUrl } = {}) {
   const entries = [
     { loc: `${origin}/`, lastmod: indexLastmod },
     { loc: `${origin}/courses`, lastmod: indexLastmod },
+    { loc: `${origin}/entities`, lastmod: indexLastmod },
     { loc: `${origin}/about`, lastmod: null },
   ];
 
@@ -64,16 +76,17 @@ export function buildSitemapXml({ indexData, siteUrl } = {}) {
 
   for (const course of indexData?.courses ?? []) {
     if (!course?.id) continue;
-    let latestCourseDate = null;
-    for (const sid of course.storyIds ?? []) {
-      const dateStr = storyLastmodById.get(sid);
-      if (dateStr && (!latestCourseDate || dateStr > latestCourseDate)) {
-        latestCourseDate = dateStr;
-      }
-    }
     entries.push({
       loc: `${origin}/courses/${encodeURIComponent(course.id)}`,
-      lastmod: latestCourseDate || indexLastmod,
+      lastmod: resolveLatestStoryDate(course.storyIds, storyLastmodById, indexLastmod),
+    });
+  }
+
+  for (const [entityId, entity] of Object.entries(indexData?.entitiesIndex ?? {})) {
+    if (!entityId || !entity) continue;
+    entries.push({
+      loc: `${origin}/entities/${encodeURIComponent(entityId)}`,
+      lastmod: resolveLatestStoryDate(entity.storyIds, storyLastmodById, indexLastmod),
     });
   }
 

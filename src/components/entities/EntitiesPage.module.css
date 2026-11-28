@@ -1,0 +1,307 @@
+.entitiesView:focus {
+  outline: none;
+}
+
+.entitiesHero {
+  position: relative;
+  padding: clamp(3.35rem, 6.2vw, 4.35rem) 1rem 1.5rem;
+  margin-bottom: 1.35rem;
+  text-align: center;
+  border-bottom: 1px solid var(--hero-border);
+  overflow: hidden;
+}
+
+.entitiesChartBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: var(--chart-opacity);
+}
+
+.heroTopBar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (min-width: 820px) {
+  .heroTopBar {
+    position: absolute;
+    top: 1rem;
+    left: 0.25rem;
+    right: 0.25rem;
+  }
+}
+
+@media (max-width: 819px) {
+  .entitiesHero {
+    padding-top: 1.15rem;
+  }
+  .heroTopBar {
+    margin: 0 0 1.15rem;
+  }
+}
+
+.entitiesHeroInner {
+  position: relative;
+  z-index: 1;
+}
+
+.entitiesEyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  color: var(--accent-gold);
+  margin: 0 0 0.55rem;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.entitiesTitle {
+  font-family: "Shippori Mincho", serif;
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  letter-spacing: 0.12em;
+  margin: 0;
+  line-height: 1.35;
+  text-shadow: var(--hero-title-shadow);
+}
+
+.entitiesLead {
+  margin: 0.55rem auto 0.75rem;
+  max-width: 40rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.spoilerNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 auto 1.25rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: var(--note-bg);
+  border: 1px solid var(--note-border);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.kindFilterRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.kindFilterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--pill-bg);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.kindFilterPill:hover,
+.kindFilterPill:focus-visible {
+  border-color: var(--accent-gold);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.kindFilterPill:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.kindFilterPill[aria-pressed="true"] {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold-bright);
+  font-weight: 700;
+}
+
+.kindCount {
+  font-size: 0.72rem;
+  padding: 0.04rem 0.42rem;
+  border-radius: 999px;
+  background: var(--tab-count-bg);
+  border: 1px solid var(--tab-count-border);
+  font-variant-numeric: tabular-nums;
+}
+
+.archiveToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--toolbar-bg);
+  border: 1px solid var(--toolbar-border);
+  border-radius: 0.65rem;
+  backdrop-filter: blur(8px);
+}
+
+.toolbarControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1 1 24rem;
+}
+
+.filterControl {
+  background: var(--control-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.45rem;
+  padding: 0.42rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  min-block-size: 2.35rem;
+  transition: border-color 0.15s ease;
+}
+
+.filterControl:hover,
+.filterControl:focus-visible {
+  border-color: var(--accent-gold);
+  outline: none;
+}
+
+.filterSearch {
+  flex: 1 1 15rem;
+  min-width: 12rem;
+}
+
+.filterSearch::placeholder {
+  color: var(--text-muted);
+}
+
+.toolbarMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
+}
+
+.filterSummary {
+  margin: 0;
+  font-size: 0.78125rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.resetFilterBtn {
+  background: var(--pill-bg);
+  color: var(--accent-gold-bright);
+  border: 1px solid var(--border-gold);
+  border-radius: 999px;
+  padding: 0.32rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.78125rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.resetFilterBtn:hover,
+.resetFilterBtn:focus-visible {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  outline: none;
+}
+
+.resetFilterBtn:focus-visible {
+  outline: 2px solid var(--accent-gold-bright);
+  outline-offset: 2px;
+}
+
+.entityGroups {
+  display: grid;
+  gap: 2.25rem;
+}
+
+.entityGroupHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.95rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.entityGroupHeading {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent-gold-bright);
+  margin: 0;
+}
+
+.entityGroupCount {
+  font-size: 0.78125rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.entityGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 720px) {
+  .entityGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.35rem;
+  }
+}
+
+@media (min-width: 1020px) {
+  .entityGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .archiveToolbar {
+    padding: 0.65rem 0.75rem;
+  }
+  .filterControl {
+    width: 100%;
+  }
+  .toolbarMeta {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (pointer: coarse) {
+  .kindFilterPill,
+  .filterControl,
+  .resetFilterBtn {
+    min-block-size: 44px;
+  }
+}

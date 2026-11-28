@@ -342,6 +342,54 @@ describe("analytics / ga4 core", () => {
           page_location: "https://teyvat-library.pages.dev/about",
         },
       ]);
+
+      client.trackPageView({
+        pagePath: "/entities/rosalyne",
+        pageTitle: "ロザリン（淑女）｜テイワット文庫",
+        entityId: "rosalyne",
+      });
+      client.trackStoryOpen({
+        storyId: "crimson_witch",
+        storyCategory: "artifact",
+        source: "entity_evidence",
+      });
+      client.trackEntityShare({
+        entityId: "rosalyne",
+        entityKind: "character",
+        method: "x",
+      });
+
+      const updatedCalls = (fakeWin.dataLayer || []).map((entry) =>
+        Array.from(entry as ArrayLike<unknown>)
+      );
+      expect(updatedCalls[4]).toEqual([
+        "event",
+        "page_view",
+        {
+          page_path: "/entities/rosalyne",
+          page_title: "ロザリン（淑女）｜テイワット文庫",
+          page_location: "https://teyvat-library.pages.dev/entities/rosalyne",
+          entity_id: "rosalyne",
+        },
+      ]);
+      expect(updatedCalls[5]).toEqual([
+        "event",
+        "story_open",
+        {
+          story_id: "crimson_witch",
+          story_category: "artifact",
+          source: "entity_evidence",
+        },
+      ]);
+      expect(updatedCalls[6]).toEqual([
+        "event",
+        "entity_share",
+        {
+          entity_id: "rosalyne",
+          entity_kind: "character",
+          method: "x",
+        },
+      ]);
     });
 
     it("never injects gtag.js when opted out initially and stops tracking + expires cookies on runtime opt-out", () => {

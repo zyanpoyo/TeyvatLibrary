@@ -18,34 +18,37 @@
 
 - **エントリ・ルーティング (`src/`)**
   - [`src/root.tsx`](../../src/root.tsx): ルート HTML シェル（テーマ初期化・`theme-color`・favicon・`HydrateFallback`・`ErrorBoundary`）
-  - [`src/routes.ts`](../../src/routes.ts): フラット型パス URL 定義（`/`・`/courses`・`/courses/:courseId`・`/story/:storyId`・`/about`・`/404`・`*`）
-  - [`src/routes/shelf.tsx`](../../src/routes/shelf.tsx) / [`src/routes/courses.tsx`](../../src/routes/courses.tsx) / [`src/routes/course-detail.tsx`](../../src/routes/course-detail.tsx) / [`src/routes/story.tsx`](../../src/routes/story.tsx) / [`src/routes/about.tsx`](../../src/routes/about.tsx) / [`src/routes/not-found.tsx`](../../src/routes/not-found.tsx): 各ルートの `loader` / `clientLoader` / `meta`（JSON-LD 含む）
-  - [`src/server/dist-data.server.mjs`](../../src/server/dist-data.server.mjs): ビルド・プリレンダリング専用の `public/data/*.json` ローダー（物語・読書コース一覧／詳細プリレンダリング対象列挙含む）
+  - [`src/routes.ts`](../../src/routes.ts): フラット型パス URL 定義（`/`・`/courses`・`/courses/:courseId`・`/entities`・`/entities/:entityId`・`/story/:storyId`・`/about`・`/404`・`*`）
+  - [`src/routes/shelf.tsx`](../../src/routes/shelf.tsx) / [`src/routes/courses.tsx`](../../src/routes/courses.tsx) / [`src/routes/course-detail.tsx`](../../src/routes/course-detail.tsx) / [`src/routes/entities.tsx`](../../src/routes/entities.tsx) / [`src/routes/entity-detail.tsx`](../../src/routes/entity-detail.tsx) / [`src/routes/story.tsx`](../../src/routes/story.tsx) / [`src/routes/about.tsx`](../../src/routes/about.tsx) / [`src/routes/not-found.tsx`](../../src/routes/not-found.tsx): 各ルートの `loader` / `clientLoader` / `meta`（JSON-LD 含む）
+  - [`src/server/dist-data.server.mjs`](../../src/server/dist-data.server.mjs): ビルド・プリレンダリング専用の `public/data/*.json` ローダー（物語・読書コース・人物用語名鑑の一覧／詳細プリレンダリング対象列挙含む）
   - [`src/router/search-params.ts`](../../src/router/search-params.ts): 検索クエリ・ジャンプ先パラメータ・コース文脈（`?course=`）同期およびパス構築
+  - [`src/router/route-view.ts`](../../src/router/route-view.ts): 現在のルート判定（`useCurrentAppView`）の共通フック
 - **設定・アクセス解析**
   - [`src/config/site-url.ts`](../../src/config/site-url.ts): 正規基準 URL（既定 `https://teyvat-bunko.com`、`VITE_SITE_URL` 上書き可）および `canonical` / 絶対 URL 構築
   - [`src/config/site-contact.ts`](../../src/config/site-contact.ts): About ページ向けお問い合わせ窓口設定
-  - [`src/analytics/ga4.ts`](../../src/analytics/ga4.ts): GA4 計測（`course_id` 対応 `page_view`・検索・読書・`story_open` コース導線・`story_share`・`course_share`、開発/テスト時の送信ガード、PII サニタイズ）
+  - [`src/analytics/ga4.ts`](../../src/analytics/ga4.ts): GA4 計測（`course_id` / `entity_id` 対応 `page_view`・検索・読書・`story_open`（`course_*` / `entity_detail` / `entity_evidence` 含む）・`story_share`・`course_share`・`entity_share`、開発/テスト時の送信ガード、PII サニタイズ）
 - **ドメインロジック (`src/domain/`)**
   - [`src/domain/catalog.ts`](../../src/domain/catalog.ts): 5 分類書架フィルタ、並び替え（おすすめ順 / 新着順 / 短い順等）、`NEW` バッジ（追加 14 日以内かつ未読）、日替わり「今日の物語ピックアップ」、おまかせ読書
   - [`src/domain/courses.ts`](../../src/domain/courses.ts): 代表フェアコース抽出、種別グルーピング、読了進捗／動的 CTA 導出、コース詳細ビュー・リーダー文脈（`?course=`・所属コース・未読次話）導出
+  - [`src/domain/entities.ts`](../../src/domain/entities.ts): 人物・用語名鑑の 5 種別グルーピング（収録 0 件種別の自動非表示）、日本語正規化キーワード検索、登場作品数／五十音順ソート、詳細ビュー（読了進捗・動的 CTA・関連読書コース逆引き・共起エンティティ抽出）
   - [`src/domain/search.ts`](../../src/domain/search.ts): `search-index.json` 遅延取得による横断全文検索（日本語正規化・クロスフィールド AND・スニペット抽出・真相メモ検索トグル）
   - [`src/domain/text-parser.ts`](../../src/domain/text-parser.ts): インライン用語タグ・原文プレースホルダ構文パーサ・ISO 日付実在チェック
-  - [`src/domain/seo.ts`](../../src/domain/seo.ts): 5 分類＆読書コース一覧・詳細テンプレート、任意 `seo` 上書き反映、OGP / Twitter Card、JSON-LD（`WebSite` + `SearchAction`, `CollectionPage`, `ItemList`, `BreadcrumbList`, `Article`, `DefinedTerm`, `AboutPage`）、`/404`・存在しない作品/コース用 `noindex, nofollow`
-  - [`src/domain/share.ts`](../../src/domain/share.ts): 作品単位およびコース単位の正規シェア URL・X（旧 Twitter）インテント生成
+  - [`src/domain/seo.ts`](../../src/domain/seo.ts): 5 分類・読書コース・人物・用語名鑑一覧・詳細テンプレート、任意 `seo` 上書き反映、OGP / Twitter Card、JSON-LD（`WebSite` + `SearchAction`, `CollectionPage`, `ItemList`, `BreadcrumbList`, `Article`, `ProfilePage`, `WebPage`, `Person`, `Organization`, `Place`, `DefinedTerm`, `AboutPage`）、`/404`・存在しない作品/コース/人物用 `noindex, nofollow`
+  - [`src/domain/share.ts`](../../src/domain/share.ts): 作品単位・コース単位・人物/用語名鑑単位の正規シェア URL・X（旧 Twitter）インテント生成
 - **状態管理・フック (`src/state/`, `src/hooks/`)**
   - [`src/state/persisted-store.ts`](../../src/state/persisted-store.ts) / [`reading-state.ts`](../../src/state/reading-state.ts) / [`prefs.ts`](../../src/state/prefs.ts) / [`analytics-prefs.ts`](../../src/state/analytics-prefs.ts) / [`AppProviders.tsx`](../../src/state/AppProviders.tsx): `localStorage` 永続化・別タブ同期・設定管理
   - [`src/hooks/useReaderSession.ts`](../../src/hooks/useReaderSession.ts) / [`useSearchIndex.ts`](../../src/hooks/useSearchIndex.ts) / [`useSearchHighlight.ts`](../../src/hooks/useSearchHighlight.ts): 読書進捗・途中しおり・90%自動読了・検索着地ハイライト
 - **UI コンポーネント (`src/components/`, `src/styles/`)**
-  - `shelf/`: [`ShelfPage.tsx`](../../src/components/shelf/ShelfPage.tsx), [`ObservatoryHeader.tsx`](../../src/components/shelf/ObservatoryHeader.tsx), [`FairShelf.tsx`](../../src/components/shelf/FairShelf.tsx), [`SearchSnippets.tsx`](../../src/components/shelf/SearchSnippets.tsx)
+  - `shelf/`: [`ShelfPage.tsx`](../../src/components/shelf/ShelfPage.tsx), [`ObservatoryHeader.tsx`](../../src/components/shelf/ObservatoryHeader.tsx), [`ShelfToolbar.tsx`](../../src/components/shelf/ShelfToolbar.tsx)（人物絞り込み中の名鑑リンク含む）, [`FairShelf.tsx`](../../src/components/shelf/FairShelf.tsx), [`SearchSnippets.tsx`](../../src/components/shelf/SearchSnippets.tsx)
   - `courses/`: [`CoursesPage.tsx`](../../src/components/courses/CoursesPage.tsx), [`CourseDetailPage.tsx`](../../src/components/courses/CourseDetailPage.tsx), [`CourseCard.tsx`](../../src/components/courses/CourseCard.tsx)
-  - `reader/`: [`ReaderPage.tsx`](../../src/components/reader/ReaderPage.tsx), [`ReaderCourseNav.tsx`](../../src/components/reader/ReaderCourseNav.tsx)（上部コース文脈バー・章末連続通読＆所属コース案内）, [`StoryShareBar.tsx`](../../src/components/reader/StoryShareBar.tsx)
-  - `common/`: [`ShareBar.tsx`](../../src/components/common/ShareBar.tsx)（作品／コース共用 X シェア・URL コピーバー）, [`AppIcon.tsx`](../../src/components/common/AppIcon.tsx)
+  - `entities/`: [`EntitiesPage.tsx`](../../src/components/entities/EntitiesPage.tsx), [`EntityDetailPage.tsx`](../../src/components/entities/EntityDetailPage.tsx), [`EntityCard.tsx`](../../src/components/entities/EntityCard.tsx)
+  - `reader/`: [`ReaderPage.tsx`](../../src/components/reader/ReaderPage.tsx), [`ReaderArticle.tsx`](../../src/components/reader/ReaderArticle.tsx)（真相メモ内の登場人物・用語チップ含む）, [`GlossaryDialog.tsx`](../../src/components/reader/GlossaryDialog.tsx)（名鑑詳細リンク含む）, [`ReaderCourseNav.tsx`](../../src/components/reader/ReaderCourseNav.tsx)（上部コース文脈バー・章末連続通読＆所属コース案内）, [`StoryShareBar.tsx`](../../src/components/reader/StoryShareBar.tsx)
+  - `common/`: [`ShareBar.tsx`](../../src/components/common/ShareBar.tsx)（作品／コース／名鑑共用 X シェア・URL コピーバー）, [`EvidenceText.tsx`](../../src/components/common/EvidenceText.tsx)（出典テキスト内収録作品リンクの共通描画部品）, [`AppIcon.tsx`](../../src/components/common/AppIcon.tsx)
   - `about/`: [`AboutPage.tsx`](../../src/components/about/AboutPage.tsx)（非公式表記・著作権・GA4 オプトアウト・`localStorage` 説明・免責・連絡先）
-  - `layout/` & `styles/`: [`SiteNavBar.tsx`](../../src/components/layout/SiteNavBar.tsx)（常設ナビ：`書架` / `読書コース`）, [`ThemeSwitcher.tsx`](../../src/components/layout/ThemeSwitcher.tsx), [`AnalyticsOptOutControl.tsx`](../../src/components/layout/AnalyticsOptOutControl.tsx), [`PrivacyDialog.tsx`](../../src/components/layout/PrivacyDialog.tsx), [`tokens.css`](../../src/styles/tokens.css)
+  - `layout/` & `styles/`: [`SiteNavBar.tsx`](../../src/components/layout/SiteNavBar.tsx)（常設ナビ：`書架` / `読書コース` / `人物・用語名鑑`）, [`ThemeSwitcher.tsx`](../../src/components/layout/ThemeSwitcher.tsx), [`AnalyticsOptOutControl.tsx`](../../src/components/layout/AnalyticsOptOutControl.tsx), [`PrivacyDialog.tsx`](../../src/components/layout/PrivacyDialog.tsx), [`tokens.css`](../../src/styles/tokens.css)
 - **ビルド後処理・静的検証スクリプト (`scripts/`)**
-  - [`scripts/lib/post-build-seo.mjs`](../../scripts/lib/post-build-seo.mjs): `robots.txt`・`sitemap.xml`（`/`・`/courses`・全 `/courses/<id>`・全 `/story/<id>`（`addedAt` 連動 `<lastmod>`）・`/about`）・リダイレクト調整
-  - [`scripts/lib/og-image-generator.mjs`](../../scripts/lib/og-image-generator.mjs) / [`scripts/generate-og-images.mjs`](../../scripts/generate-og-images.mjs): `satori` + `@resvg/resvg-js` + `@fontsource/shippori-mincho` による書架・About・読書コース一覧（`/og/courses.png`）・全コース（`/og/course/<id>.png`）・全作品の `1200×630` OGP PNG 生成（`.cache/og/` キャッシュ、`--only <target[,target...]>` / `--force` で部分強制再生成可）
+  - [`scripts/lib/post-build-seo.mjs`](../../scripts/lib/post-build-seo.mjs): `robots.txt`・`sitemap.xml`（`/`・`/courses`・全 `/courses/<id>`・`/entities`・全 `/entities/<id>`・全 `/story/<id>`（`addedAt` 連動 `<lastmod>`）・`/about`）・リダイレクト調整
+  - [`scripts/lib/og-image-generator.mjs`](../../scripts/lib/og-image-generator.mjs) / [`scripts/generate-og-images.mjs`](../../scripts/generate-og-images.mjs): `satori` + `@resvg/resvg-js` + `@fontsource/shippori-mincho` による書架・About・読書コース一覧（`/og/courses.png`）・全コース（`/og/course/<id>.png`）・人物用語名鑑一覧（`/og/entities.png`）・全人物/用語（`/og/entity/<id>.png`）・全作品の `1200×630` OGP PNG 生成（`.cache/og/` キャッシュ、`--only <target[,target...]>` / `--force` で部分強制再生成可）
   - [`scripts/preview-static.mjs`](../../scripts/preview-static.mjs): `build/client/` 向け静的プレビューサーバー（`404.html` 解決対応）
 
 ---

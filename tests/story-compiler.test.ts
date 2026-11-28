@@ -203,7 +203,22 @@ describe("StoryCompiler (compileStories)", () => {
       chronicle: 0,
     });
     expect(result.dist.index.entitiesIndex.rosalyne.storyIds).toEqual(["crimson_witch"]);
+    expect(result.dist.index.entitiesIndex.rosalyne.defaultIdentity).toBe(
+      "正体：炎の魔女「ロザリン」"
+    );
+    expect(result.dist.index.entitiesIndex.rosalyne.defaultDesc).toBe(
+      "愛する人を失い炎となった魔女。"
+    );
+    expect(result.dist.index.entitiesIndex.rosalyne.defaultEvidence).toBe(
+      "聖遺物『炎の魔女』"
+    );
+    expect(result.dist.index.entitiesIndex.rosalyne.evidenceLinks).toEqual([
+      { title: "炎の魔女", storyId: "crimson_witch" },
+    ]);
     expect(result.dist.index.entitiesIndex.rustan.storyIds).toEqual(["elegy"]);
+    expect(result.dist.index.entitiesIndex.rustan.evidenceLinks).toEqual([
+      { title: "終焉の詩", storyId: "elegy" },
+    ]);
 
     // Entity継承＋Override＋出典自動リンク解決（自作品除外＋括弧付きベースタイトル解決）
     const crimsonDist = result.dist.storiesById.crimson_witch;

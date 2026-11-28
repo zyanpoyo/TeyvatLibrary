@@ -117,6 +117,39 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
       "CollectionPage",
     ]);
 
+    // 人物・用語名鑑一覧および詳細の静的 HTML・JSON-LD 検証
+    const entitiesRes = await request.get("/entities");
+    expect(entitiesRes.status()).toBe(200);
+    const entitiesHtml = await entitiesRes.text();
+    expect(entitiesHtml).toContain("<title>人物・用語名鑑｜テイワット文庫</title>");
+    expect(entitiesHtml).toContain('data-view="entities"');
+    expect(entitiesHtml).toContain('<link rel="canonical" href="https://teyvat-bunko.com/entities"');
+    expect(entitiesHtml).toContain(
+      '<meta property="og:image" content="https://teyvat-bunko.com/og/entities.png"'
+    );
+    const entitiesLd = extractJsonLdGraph(entitiesHtml);
+    expect(entitiesLd["@graph"].map((n) => n["@type"])).toEqual([
+      "BreadcrumbList",
+      "CollectionPage",
+    ]);
+
+    const entityDetailRes = await request.get("/entities/rosalyne");
+    expect(entityDetailRes.status()).toBe(200);
+    const entityDetailHtml = await entityDetailRes.text();
+    expect(entityDetailHtml).toContain("ロザリン（淑女）");
+    expect(entityDetailHtml).toContain('data-view="entities"');
+    expect(entityDetailHtml).toContain(
+      '<link rel="canonical" href="https://teyvat-bunko.com/entities/rosalyne"'
+    );
+    expect(entityDetailHtml).toContain(
+      '<meta property="og:image" content="https://teyvat-bunko.com/og/entity/rosalyne.png"'
+    );
+    const entityDetailLd = extractJsonLdGraph(entityDetailHtml);
+    expect(entityDetailLd["@graph"].map((n) => n["@type"])).toEqual([
+      "BreadcrumbList",
+      "ProfilePage",
+    ]);
+
     const notFoundRes = await request.get("/nonexistent-ssg-check");
     expect(notFoundRes.status()).toBe(404);
     const notFoundHtml = await notFoundRes.text();
@@ -130,6 +163,8 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
       "/og/about.png",
       "/og/courses.png",
       "/og/course/must_read_essentials.png",
+      "/og/entities.png",
+      "/og/entity/rosalyne.png",
       "/og/story/crimson_witch.png",
     ]) {
       const ogRes = await request.get(ogPath);
@@ -150,6 +185,8 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     const sitemapXml = await sitemapRes.text();
     expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/courses</loc>");
     expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/courses/must_read_essentials</loc>");
+    expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/entities</loc>");
+    expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/entities/rosalyne</loc>");
     expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/story/crimson_witch</loc>");
     expect(sitemapXml).toContain("<lastmod>2026-11-01</lastmod>");
     expect(sitemapXml).toContain("<loc>https://teyvat-bunko.com/about</loc>");
@@ -247,6 +284,15 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     await expect(page.locator("#course-detail-progress")).toContainText(
       `1 / ${rosalyneCourse.storyCount} 篇 読了`
     );
+
+    await page.locator("#course-detail-site-nav [data-nav-target='entities']").click();
+    await expect(page).toHaveURL(/\/entities$/);
+    await expect(page.locator("body")).toHaveAttribute("data-view", "entities");
+    await expect(page.locator("#entities-view h1")).toHaveText("人物・用語名鑑");
+
+    await page.locator(".entity-card[data-entity-id='rosalyne'] .entity-primary-link").click();
+    await expect(page).toHaveURL(/\/entities\/rosalyne$/);
+    await expect(page.locator("#entity-detail-progress")).toContainText("1 篇 読了");
 
     await page.locator("#about-page-link").click();
     await expect(page.locator("body")).toHaveAttribute("data-view", "about");

@@ -1,7 +1,8 @@
 import { useEffect, type ReactNode } from "react";
-import { isRouteErrorResponse, Link, Links, Meta, Scripts, useMatch } from "react-router";
+import { isRouteErrorResponse, Link, Links, Meta, Scripts } from "react-router";
 import type { Route } from "./+types/root";
 import { AppShell } from "./components/layout/AppShell";
+import { useCurrentAppView } from "./router/route-view";
 import { AppProviders } from "./state/AppProviders";
 import commonStyles from "./styles/common.module.css";
 import "./styles/tokens.css";
@@ -49,18 +50,7 @@ const THEME_INIT_SCRIPT = `(function () {
 })();`;
 
 export function Layout({ children }: { children: ReactNode }) {
-  const isReaderRoute = Boolean(useMatch("/story/:storyId"));
-  const isAboutRoute = Boolean(useMatch("/about"));
-  const coursesIndexMatch = useMatch("/courses");
-  const courseDetailMatch = useMatch("/courses/:courseId");
-  const isCoursesRoute = Boolean(coursesIndexMatch || courseDetailMatch);
-  const initialView = isReaderRoute
-    ? "reader"
-    : isAboutRoute
-      ? "about"
-      : isCoursesRoute
-        ? "courses"
-        : "shelf";
+  const initialView = useCurrentAppView();
 
   return (
     <html lang="ja" suppressHydrationWarning>

@@ -1,5 +1,7 @@
+import { Link } from "react-router";
 import type { ShelfFilterTrackType } from "../../analytics/ga4";
 import type { ShelfEntityOption } from "../../domain/catalog";
+import commonStyles from "../../styles/common.module.css";
 import type { ReadingStatusFilter, ShelfFilters, SortMode } from "../../types/story";
 import { AppIcon } from "../common/AppIcon";
 import styles from "./ShelfToolbar.module.css";
@@ -49,6 +51,9 @@ export function ShelfToolbar({
   const randomAriaLabel = allRead
     ? "全作品からおまかせで1篇開く"
     : "未読作品からランダムに1篇開く";
+  const selectedEntity = filters.entityId
+    ? entities.find((entity) => entity.id === filters.entityId) ?? null
+    : null;
 
   return (
     <div className={styles.shelfToolbar} aria-label="人物・用語・地域・キーワード検索">
@@ -195,6 +200,20 @@ export function ShelfToolbar({
           <span id="random-story-btn-label">{randomLabel}</span>
         </button>
       </div>
+
+      {selectedEntity ? (
+        <div className={styles.selectedEntityGuide}>
+          <Link
+            to={`/entities/${encodeURIComponent(selectedEntity.id)}`}
+            id="shelf-entity-archive-link"
+            className={commonStyles.goldPillLink}
+            data-entity-id={selectedEntity.id}
+          >
+            <AppIcon name="archive" />
+            <span>「{selectedEntity.name}」を人物・用語名鑑で見る →</span>
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

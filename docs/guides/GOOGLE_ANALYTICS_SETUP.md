@@ -38,7 +38,7 @@ VITE_GA_MEASUREMENT_ID=G-3Y6JZZ21ZM
 ## 2. GA4 管理画面の必須設定
 
 ### 2.1 拡張計測機能の「ページ変更に基づくイベント」を OFF にする
-本アプリはパス URL（`/`・`/courses`・`/courses/<id>`・`/story/<id>`・`/about`）遷移と検索クエリ `?q=...`・コース文脈 `?course=...` の更新を利用しており、[`src/analytics/ga4.ts`](../../src/analytics/ga4.ts) から正規化済み仮想パスで `page_view` を手動送信しています（`send_page_view: false`）。
+本アプリはパス URL（`/`・`/courses`・`/courses/<id>`・`/entities`・`/entities/<id>`・`/story/<id>`・`/about`）遷移と検索クエリ `?q=...`・コース文脈 `?course=...` の更新を利用しており、[`src/analytics/ga4.ts`](../../src/analytics/ga4.ts) から正規化済み仮想パスで `page_view` を手動送信しています（`send_page_view: false`）。
 
 GA4 標準の「ブラウザ履歴イベントに基づくページ変更」が ON のままだと、検索入力による URL 書き換えのたびに二重・過剰計測されるため、必ず OFF にしてください。
 
@@ -63,8 +63,10 @@ GA4 管理画面 → **「管理」** → **「データの表示」→「カス
 | 書架カテゴリー | `story_category` | `page_view`, `story_open`, `story_complete`, `story_share` | `book`, `artifact`, `weapon`, `attire`, `chronicle` |
 | コースID | `course_id` | `page_view`, `course_share` | `must_read_essentials`, `rosalyne_chronicle` |
 | コース種別 | `course_kind` | `course_share` | `beginner`, `character`, `arc` |
-| 開封導線 | `source` | `story_open` | `card`, `featured`, `random`, `resume`, `search_snippet`, `connected`, `evidence`, `course_detail`, `course_next`, `course_prev`, `story_course_card` |
-| 読了方法・シェア手段 | `method` | `story_complete`, `story_share`, `course_share` | `auto_scroll`, `auto_lore`, `manual` / `x`, `copy` |
+| 人物・用語ID | `entity_id` | `page_view`, `entity_share` | `rosalyne`, `orobashi` |
+| 人物・用語種別 | `entity_kind` | `entity_share` | `character`, `god`, `organization`, `concept`, `place` |
+| 開封導線 | `source` | `story_open` | `card`, `featured`, `random`, `resume`, `search_snippet`, `connected`, `evidence`, `course_detail`, `course_next`, `course_prev`, `story_course_card`, `entity_detail`, `entity_evidence` |
+| 読了方法・シェア手段 | `method` | `story_complete`, `story_share`, `course_share`, `entity_share` | `auto_scroll`, `auto_lore`, `manual` / `x`, `copy` |
 | 用語ID | `term_id` | `glossary_open` | `cw_lover`, `by_snake` |
 | ブックマーク操作 | `action` | `bookmark_toggle` | `add`, `remove` |
 | 操作画面 | `surface` | `bookmark_toggle` | `shelf`, `reader` |
@@ -85,8 +87,8 @@ GA4 管理画面 → **「管理」** → **「データの表示」→「カス
 
 | イベント名 | 発火タイミング | 重複・PII 対策 |
 | :--- | :--- | :--- |
-| `page_view` | 書架（`/`）・読書コース一覧（`/courses`）・コース詳細（`/courses/<id>`）・About（`/about`）到達時、およびリーダー作品データ取得＆タイトル確定後 | 検索クエリ `?q=` やコース文脈 `?course=` を含む遷移でも正規化パスで計測し、同一位置での再発火を抑止 |
-| `story_open` | 書架カード・今日のピックアップ・おまかせ読書・途中再開・検索スニペット・関連作品・出典リンク・読書コース詳細・リーダー内コース導線から作品を開いた時 | 別タブ開きの修飾キークリックも捕捉 |
+| `page_view` | 書架（`/`）・読書コース一覧（`/courses`）・コース詳細（`/courses/<id>`）・人物・用語名鑑一覧（`/entities`）・名鑑詳細（`/entities/<id>`）・About（`/about`）到達時、およびリーダー作品データ取得＆タイトル確定後 | 検索クエリ `?q=` やコース文脈 `?course=` を含む遷移でも正規化パスで計測し、同一位置での再発火を抑止 |
+| `story_open` | 書架カード・今日のピックアップ・おまかせ読書・途中再開・検索スニペット・関連作品・出典リンク・読書コース詳細・リーダー内コース導線・人物用語名鑑から作品を開いた時 | 別タブ開きの修飾キークリックも捕捉 |
 | `search` | 検索入力停止後 800ms デバウンス経過時（インデックス読み込み完了後） | 書架↔リーダー往復の同一検索語重複を抑止。メール／電話様数値マスク＋100 文字制限 |
 | `story_complete` | 未読作品が「読了」になった時（90% スクロール到達 / 真相メモ展開 / 手動読了） | 既読作品の再訪や同セッション内の戻し往復では再発火しない |
 | `glossary_open` | 本文中のインライン用語ガイドを開いた時 | — |
@@ -95,6 +97,7 @@ GA4 管理画面 → **「管理」** → **「データの表示」→「カス
 | `shelf_filter_change` | カテゴリータブ・状態・登場人物/用語・地域・並び替え・真相メモ検索・条件リセット操作時 | 同一カテゴリータブの再クリックはスキップ |
 | `story_share` | リーダー末尾の「X でシェア」または「URL をコピー」を実行した時 | クリップボード書き込み失敗時は送信しない（オプトアウト尊重） |
 | `course_share` | 読書コース詳細末尾の「X でシェア」または「URL をコピー」を実行した時 | クリップボード書き込み失敗時は送信しない（オプトアウト尊重） |
+| `entity_share` | 人物・用語名鑑詳細の「X でシェア」または「URL をコピー」を実行した時 | クリップボード書き込み失敗時は送信しない（オプトアウト尊重） |
 
 ---
 
@@ -106,6 +109,7 @@ GA4 管理画面 → **「管理」** → **「データの表示」→「カス
    - [ ] 書架初期表示で `page_view`（`page_path: "/"`）が 1 件だけ届く
    - [ ] 作品カードクリックで `story_open`（`source: "card"` / `"featured"`）と `page_view`（`page_path: "/story/<id>"`）が届く
    - [ ] 読書コース一覧・詳細で `page_view`（`page_path: "/courses"` / `"/courses/<id>"`, `course_id`）が届き、コース内導線・シェアで `story_open`（`course_detail` / `course_next` / `course_prev` / `story_course_card`）と `course_share`（`course_id`, `course_kind`, `method`）が届く
+   - [ ] 人物・用語名鑑一覧・詳細で `page_view`（`page_path: "/entities"` / `"/entities/<id>"`, `entity_id`）が届き、登場作品・出典リンク・シェアで `story_open`（`entity_detail` / `entity_evidence`）と `entity_share`（`entity_id`, `entity_kind`, `method`）が届く
    - [ ] 検索語句入力後 800ms で `search`（`search_term`, `result_count`, `has_results`）が届く
    - [ ] 用語ガイド・真相メモ手動展開・読了・あとで読む・絞り込みの各イベントが届く
    - [ ] フッター「アクセス解析について」からスイッチを OFF にした直後、以降の操作で送信が止まり、ページリロード後も `gtag/js` が読み込まれない

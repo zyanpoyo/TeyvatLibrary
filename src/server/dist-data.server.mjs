@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const VALID_STORY_ID_PATTERN = /^[a-z0-9_-]+$/i;
+const VALID_RESOURCE_ID_PATTERN = /^[a-z0-9_-]+$/i;
 
 /**
  * 配信済みの書架インデックス JSON（public/data/stories-index.json）を読み込む。
@@ -20,7 +20,7 @@ export function loadDistStoriesIndex(rootDir = process.cwd()) {
  * 指定された storyId に対応する配信済み作品詳細 JSON を読み込む。存在しない場合は null を返す。
  */
 export function loadDistStoryDetail(storyId, rootDir = process.cwd()) {
-  if (typeof storyId !== "string" || !VALID_STORY_ID_PATTERN.test(storyId)) {
+  if (typeof storyId !== "string" || !VALID_RESOURCE_ID_PATTERN.test(storyId)) {
     return null;
   }
   const detailPath = path.join(rootDir, "public", "data", "stories", `${storyId}.json`);
@@ -50,7 +50,7 @@ export function listPrerenderCoursePaths(rootDir = process.cwd()) {
  * 指定された courseId に対応する読書コースとインデックス一式を返す。存在しない場合は null を返す。
  */
 export function loadDistCourseDetail(courseId, rootDir = process.cwd()) {
-  if (typeof courseId !== "string" || !VALID_STORY_ID_PATTERN.test(courseId)) {
+  if (typeof courseId !== "string" || !VALID_RESOURCE_ID_PATTERN.test(courseId)) {
     return null;
   }
   const indexData = loadDistStoriesIndex(rootDir);
@@ -59,4 +59,31 @@ export function loadDistCourseDetail(courseId, rootDir = process.cwd()) {
     return null;
   }
   return { course, indexData };
+}
+
+/**
+ * 静的プリレンダリング対象となる全人物・用語名鑑のパス一覧（/entities/<id>）を返す。
+ */
+export function listPrerenderEntityPaths(rootDir = process.cwd()) {
+  const indexData = loadDistStoriesIndex(rootDir);
+  return Object.keys(indexData.entitiesIndex ?? {})
+    .sort()
+    .map((entityId) => `/entities/${entityId}`);
+}
+
+/**
+ * 指定された entityId に対応する人物・用語エントリとインデックス一式を返す。存在しない場合は null を返す。
+ */
+export function loadDistEntityDetail(entityId, rootDir = process.cwd()) {
+  if (typeof entityId !== "string" || !VALID_RESOURCE_ID_PATTERN.test(entityId)) {
+    return null;
+  }
+  const indexData = loadDistStoriesIndex(rootDir);
+  const entitiesIndex = indexData.entitiesIndex;
+  const entity =
+    entitiesIndex && Object.hasOwn(entitiesIndex, entityId) ? entitiesIndex[entityId] : null;
+  if (!entity) {
+    return null;
+  }
+  return { entityId, entity, indexData };
 }

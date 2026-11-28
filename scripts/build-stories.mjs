@@ -190,7 +190,40 @@ function verifyEntitiesIndex(index, expectedIds, errors, stats) {
   const entries = Object.entries(index.entitiesIndex);
   stats.entityCount = entries.length;
   for (const [entityId, entry] of entries) {
-    if (!entry || !Array.isArray(entry.storyIds)) {
+    if (!entry || typeof entry !== "object") {
+      errors.push(`entitiesIndex["${entityId}"] がオブジェクトではありません`);
+      continue;
+    }
+    if (typeof entry.name !== "string" || entry.name.trim().length === 0) {
+      errors.push(`entitiesIndex["${entityId}"].name が空です`);
+    }
+    for (const field of ["defaultIdentity", "defaultDesc", "defaultEvidence"]) {
+      if (typeof entry[field] !== "string" || entry[field].trim().length === 0) {
+        errors.push(`entitiesIndex["${entityId}"].${field} が空です`);
+      }
+    }
+    if (entry.evidenceLinks !== undefined) {
+      if (!Array.isArray(entry.evidenceLinks)) {
+        errors.push(`entitiesIndex["${entityId}"].evidenceLinks が配列ではありません`);
+      } else {
+        entry.evidenceLinks.forEach((link, idx) => {
+          if (
+            !link ||
+            typeof link.title !== "string" ||
+            link.title.trim().length === 0 ||
+            typeof link.storyId !== "string" ||
+            link.storyId.trim().length === 0
+          ) {
+            errors.push(`entitiesIndex["${entityId}"].evidenceLinks[${idx}] の形式が不正です`);
+          } else if (!expectedIds.has(link.storyId)) {
+            errors.push(
+              `entitiesIndex["${entityId}"].evidenceLinks[${idx}] が存在しない作品 ID "${link.storyId}" を参照しています`
+            );
+          }
+        });
+      }
+    }
+    if (!Array.isArray(entry.storyIds)) {
       errors.push(`entitiesIndex["${entityId}"].storyIds が配列ではありません`);
       continue;
     }

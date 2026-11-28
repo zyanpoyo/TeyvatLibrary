@@ -1,4 +1,5 @@
-import { Link, useMatch } from "react-router";
+import { Link } from "react-router";
+import { useCurrentAppView } from "../../router/route-view";
 import { AppIcon } from "../common/AppIcon";
 import styles from "./SiteNavBar.module.css";
 
@@ -8,13 +9,13 @@ export interface SiteNavBarProps {
 }
 
 /**
- * 書架と読書コース（および将来の名鑑ビュー）を横断移動できる常設ナビゲーション。
+ * 書架と読書コース・人物・用語名鑑を横断移動できる常設ナビゲーション。
  */
 export function SiteNavBar({ id = "site-nav-bar", className }: SiteNavBarProps) {
-  const isShelf = Boolean(useMatch("/"));
-  const coursesIndexMatch = useMatch("/courses");
-  const courseDetailMatch = useMatch("/courses/:courseId");
-  const isCourses = Boolean(coursesIndexMatch || courseDetailMatch);
+  const currentView = useCurrentAppView();
+  const isShelf = currentView === "shelf";
+  const isCourses = currentView === "courses";
+  const isEntities = currentView === "entities";
   const rootClass = className ? `${styles.siteNavBar} ${className}` : styles.siteNavBar;
 
   return (
@@ -36,6 +37,15 @@ export function SiteNavBar({ id = "site-nav-bar", className }: SiteNavBarProps) 
       >
         <AppIcon name="books" active={isCourses} />
         <span>読書コース</span>
+      </Link>
+      <Link
+        to="/entities"
+        className={styles.navLink}
+        data-nav-target="entities"
+        aria-current={isEntities ? "page" : undefined}
+      >
+        <AppIcon name="archive" active={isEntities} />
+        <span>人物・用語名鑑</span>
       </Link>
     </nav>
   );

@@ -11,6 +11,7 @@ const ALL_ICONS: readonly AppIconName[] = [
   "lantern",
   "link-rings",
   "books",
+  "archive",
   "share",
   "copy-link",
   "check",
@@ -23,7 +24,7 @@ const RAW_SOURCE_FILES = import.meta.glob<string>("../src/**/*.{ts,tsx}", {
 });
 
 describe("AppIcon", () => {
-  it("renders all 11 icon variants as decorative SVGs with data-icon", () => {
+  it("renders all 12 icon variants as decorative SVGs with data-icon", () => {
     for (const name of ALL_ICONS) {
       const { container } = render(<AppIcon name={name} />);
       const svg = container.querySelector("svg");

@@ -9,26 +9,29 @@
 ### 主な機能
 
 - **書架（一覧・検索）＆フェア棚**
-  - **常設サイトナビゲーション＆フェア棚**: 書架上部・ヘッダーに `SiteNavBar`（`書架` / `読書コース`）を配置し、書架には代表 3 コースを展示する特設フェア棚（`#fair-shelf`、絞り込み・検索時は自動で非表示）と一覧ページへの導線を表示
+  - **常設サイトナビゲーション＆フェア棚**: 書架上部・ヘッダーに `SiteNavBar`（`書架` / `読書コース` / `人物・用語名鑑`）を配置し、書架には代表 3 コースを展示する特設フェア棚（`#fair-shelf`、絞り込み・検索時は自動で非表示）と一覧ページへの導線を表示
   - **5分類タブ**: `すべて` / `書籍` / `聖遺物` / `武器` / `風の翼` / `突破・育成素材`
   - **今日の物語ピックアップ**: フィルタ未適用かつ「おすすめ順」の時、未読作品（全件読了時は全作品）から日替わりで1篇を先頭に繰り上げて表示
   - **おまかせ読書**: 「未読から1篇読む」（全件読了時は「おまかせで1篇読む」）ボタンで未読短編を優先して即座に開くショートカット
-  - **絞り込み・並び替え・横断全文検索**: 読書状態（`すべて` / `未読のみ` / `読了済み` / `あとで読む`）・登場人物・用語・地域・並び替え（`関連度順` / `おすすめ順` / `新着順` / `短い順`）に加え、タイトル・本文・人物・用語・地名をまたぐ日本語正規化＆スペース区切り AND 横断検索に対応（真相メモのオプトイン検索トグル・一致スニペット表示・検索時カテゴリー件数動的更新・URL クエリ同期付き）
+  - **絞り込み・並び替え・横断全文検索**: 読書状態（`すべて` / `未読のみ` / `読了済み` / `あとで読む`）・登場人物・用語（絞り込み中の人物・用語の名鑑直通リンク付き）・地域・並び替え（`関連度順` / `おすすめ順` / `新着順` / `短い順`）に加え、タイトル・本文・人物・用語・地名をまたぐ日本語正規化＆スペース区切り AND 横断検索に対応（真相メモのオプトイン検索トグル・一致スニペット表示・検索時カテゴリー件数動的更新・URL クエリ同期付き）
   - **読書状態と新着表示**: 前回の続き再開バナー、カード上の `✦ 読了`・`NEW`（追加から14日以内かつ未読）・`あとで読む` バッジ、読破率サマリー表示
 - **読書コース一覧（`/courses`）・コース詳細（`/courses/:courseId`）**
   - **全11コース＆種別フィルタ**: 入門・必読（`beginner`）・キャラクター別（`character`）・地域・歴史別（`arc`）別に整理された全 11 コース（収録 46 作品すべてを網羅）を収録
   - **順路ガイド＆動的 CTA**: コース詳細ページで合計読了目安・読了進捗バー・未読状態に応じた「第1話から読む／続き（第X話）から読む／第1話から読み直す」主要 CTA・ネタバレなし 1 行順路ガイド（`note`）・コースシェア（X シェア／URL コピー）を提供
+- **人物・用語名鑑一覧（`/entities`）・個別詳細（`/entities/:entityId`）**
+  - **設定確認辞書＆絞り込み**: 種別フィルタ（収録済み種別のみ自動表示）・日本語正規化キーワード検索・並び替え（登場作品数順／五十音順）により、登場人物・魔神の正体や背景解説を横断閲覧可能（冒頭ネタバレ注記付き）
+  - **作品・コース・人物間の回遊ハブ**: 個別詳細ページで解説全文・出典リンク・登場作品一覧＆読了進捗 CTA・関連読書コース・共起エンティティ・SNS シェア（X シェア／URL コピー）を提供し、リーダーの用語ガイドや真相メモ内チップからも直接遷移可能
 - **リーダー画面**
   - **コース文脈での連続通読（`?course=`）**: コース経由で開いた場合は上部にコース進行バー（第 X 話 / 全 Y 話）、章末に次話／前話ナビ・全話読破表示・他の収録コースチップを表示し、単品閲覧時は「この物語が収録されている読書コース」案内を表示
   - **時系列・連作構成**: 複数部位や段階に分かれたテキストを章立てして通し読みできる構成
-  - **用語ガイド（Dialog）**: 原文の意味を補うインライン用語解説ダイアログ（`用語ガイド ON/OFF` 切替・出典リンク対応）
+  - **用語ガイド（Dialog）**: 原文の意味を補うインライン用語解説ダイアログ（`用語ガイド ON/OFF` 切替・出典リンク・人物・用語名鑑リンク対応）
   - **検索着地・ハイライト**: 検索スニペットから該当段落・用語・真相メモへ直接スクロールし、一致語を一時ハイライト表示（誤自動読了の抑止付き）
   - **表示設定（Aa）**: 文字サイズ（小 / 標準 / 大）、書体（明朝 / ゴシック）、背景テーマ（夜空 / 生成り紙 / セピア）の切り替え（Popover メニュー）
   - **読書状態の保存（`localStorage`）**: スクロール90%到達または真相メモ展開での自動読了マーク、手動読了／あとで読むトグル、途中位置の自動しおり保存（別タブ同期対応）
-  - **章目次・読了進捗・関連作品リンク・作品シェア**: 読書進捗バーと章末の関連作品カード表示、読了ボタン付近の「X でシェア」「URL をコピー」導線（GA4 `story_share` 連携）
+  - **章目次・読了進捗・真相メモ内人物チップ・関連作品リンク・作品シェア**: 読書進捗バーと真相メモ内からの人物名鑑遷移、章末の関連作品カード表示、読了ボタン付近の「X でシェア」「URL をコピー」導線（GA4 `story_share` 連携）
 - **SEO・SNS OGP・アクセス解析・サイト案内・プライバシー管理**
-  - 本番ドメイン `https://teyvat-bunko.com` 正規化、5 分類および読書コース一覧／詳細対応の `<title>` / `description` / `canonical` / JSON-LD 構造化データ（`WebSite` / `CollectionPage` / `ItemList` / `Article` / `BreadcrumbList` / `DefinedTerm` / `AboutPage`）、および `satori` + `@resvg/resvg-js` によるビルド時全作品・全コース別静的 OGP 画像（`1200×630` PNG）生成
-  - Google Analytics 4（GA4）によるパス単位 `page_view`（`/`・`/courses`・`/courses/<id>`・`/story/<id>`・`/about`）および読書・検索・回遊・作品シェア・コースシェア（`course_share`）イベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
+  - 本番ドメイン `https://teyvat-bunko.com` 正規化、5 分類・読書コース・人物・用語名鑑対応の `<title>` / `description` / `canonical` / JSON-LD 構造化データ（`WebSite` / `CollectionPage` / `ItemList` / `Article` / `ProfilePage` / `Person` / `BreadcrumbList` / `DefinedTerm` / `AboutPage`）、および `satori` + `@resvg/resvg-js` によるビルド時全作品・全コース・全人物/用語別静的 OGP 画像（`1200×630` PNG）生成
+  - Google Analytics 4（GA4）によるパス単位 `page_view`（`/`・`/courses`・`/courses/<id>`・`/entities`・`/entities/<id>`・`/story/<id>`・`/about`）および読書・検索・回遊・シェア（`story_share` / `course_share` / `entity_share`）イベントの計測（環境変数未設定時・ローカル／テスト環境では無効）
   - フッターの「アクセス解析について」ダイアログおよび「このサイトについて」（`/about`）ページからの収集概要確認とサイト内オプトアウト切替（`localStorage` 保存・別タブ同期対応）
   - 「このサイトについて」ページ（`/about`）での非公式ファンサイト表記、著作権・引用方針、`localStorage` 保存データの説明、免責事項、およびお問い合わせ案内（GitHub Issues・専用フォーム・運営者 X アカウント＋任意で連絡用メールアドレス）
 - **データ検証・ビルドパイプライン**
@@ -108,7 +111,7 @@ npm run preview
 | コマンド | 内容 |
 | :--- | :--- |
 | `npm run build:data` | `data/` の原典・編集データ・共通マスタを検証し、フロントエンド配信用 JSON を `public/data/` に生成します |
-| `npm run build:og` | `public/data/stories-index.json` から書架・About・読書コース一覧・全コース・全作品の静的 OGP 画像（`1200×630` PNG）を `build/client/og/` へ生成します（`.cache/og/` キャッシュ利用。`-- --only <target[,target...]> --force` で `courses`, `course/<id>` 等の特定対象のみ強制再生成可） |
+| `npm run build:og` | `public/data/stories-index.json` から書架・About・読書コース・人物・用語名鑑・全作品の静的 OGP 画像（`1200×630` PNG）を `build/client/og/` へ生成します（`.cache/og/` キャッシュ利用。`-- --only <target[,target...]> --force` で `courses`, `course/<id>`, `entities`, `entity/<id>` 等の特定対象のみ強制再生成可） |
 | `npm run validate` | 配信用ファイルは出力せず、データ構造や原文一致などのバリデーションのみを実行します |
 | `npm run lint` | Oxlint（`.oxlintrc.json`）による `src/` の React Hooks ルール検証を実行します |
 | `npm run typecheck` | `react-router typegen` と `tsc --noEmit`（ブラウザ用 `tsconfig.json` およびテスト用 `tests/tsconfig.json`）による静的型チェックを実行します |
@@ -134,14 +137,14 @@ npm run preview
 ├── package.json            # スクリプト・依存関係定義
 ├── src/                    # React + TypeScript フロントエンドソース（appDirectory）
 │   ├── root.tsx            # ルート HTML シェル（テーマ初期化・favicon・HydrateFallback・ErrorBoundary）
-│   ├── routes.ts           # パス URL ルート定義（/, /courses, /courses/:courseId, /story/:storyId, /about, /404, *）
+│   ├── routes.ts           # パス URL ルート定義（/, /courses, /courses/:courseId, /entities, /entities/:entityId, /story/:storyId, /about, /404, *）
 │   ├── routes/             # 各ルートの loader / clientLoader / meta / 画面エントリ
 │   ├── server/             # ビルド・プリレンダリング専用の配信 JSON ローダー（*.server.mjs）
 │   ├── analytics/          # GA4 クライアント（環境ガード・PV・イベント計測・PIIサニタイズ）
 │   ├── api/                # 作品一覧・詳細 JSON フェッチ & キャッシュシード
-│   ├── components/         # layout / shelf / courses / reader / about / common の React コンポーネント & CSS Modules
+│   ├── components/         # layout / shelf / courses / entities / reader / about / common の React コンポーネント & CSS Modules
 │   ├── config/             # 連絡先設定（site-contact.ts）・正規URL/canonical生成（site-url.ts）
-│   ├── domain/             # 書架表示状態・読書コース導出（courses.ts）・横断検索エンジン・構文パーサ・SEOメタ/JSON-LD（seo.ts）・シェアURL（share.ts）
+│   ├── domain/             # 書架表示状態・読書コース導出（courses.ts）・人物用語名鑑導出（entities.ts）・横断検索・構文パーサ・SEO（seo.ts）・シェア（share.ts）
 │   ├── hooks/              # リーダー閲覧セッション統合・検索コーパス遅延取得・検索ハイライト着地・テーマ同期フック
 │   ├── router/             # 検索・ジャンプ・コース文脈 URL クエリパラメータ同期（search-params.ts）
 │   ├── state/              # reading-state / prefs / analytics-prefs ストア＆ Context Provider
