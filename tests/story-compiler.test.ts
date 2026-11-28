@@ -902,4 +902,31 @@ describe("StoryCompiler (compileStories)", () => {
     expect(errRes.errors.some((e) => e.includes("[NG固有名詞検出]"))).toBe(true);
     expect(errRes.errors.some((e) => e.includes("[公式コーパス未登録カタカナ]"))).toBe(true);
   });
+
+  it("emits non-blocking [未使用エンティティ] warnings when entities are unreferenced by any story", () => {
+    const base = createBaseInput();
+    const res = compileStories({
+      ...base,
+      entities: {
+        ...(base.entities as Record<string, unknown>),
+        orphan_place: {
+          name: "古代聖域（霧の都）",
+          kind: "place",
+          defaultIdentity: "解説：霧の彼方に伝えられる古代の聖域",
+          defaultDesc: "どの作品にも未紐付けの場所確認項目。",
+          defaultEvidence: "古い記録",
+        },
+      },
+    });
+
+    expect(res.ok).toBe(true);
+    expect(
+      res.warnings.some(
+        (w) =>
+          w.includes("[未使用エンティティ]") &&
+          w.includes("[地域・地名]") &&
+          w.includes("orphan_place")
+      )
+    ).toBe(true);
+  });
 });

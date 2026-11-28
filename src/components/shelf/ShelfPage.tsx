@@ -269,6 +269,7 @@ export function ShelfPage({ initialIndexData = null }: ShelfPageProps = {}) {
         isLoadingSearchIndex={isLoadingSearchIndex}
         filters={filters}
         entities={shelfView.entities}
+        entityGroups={shelfView.entityGroups}
         regions={shelfView.regions}
         isFiltered={shelfView.isFiltered}
         orderedCount={shelfView.orderedCount}

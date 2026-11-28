@@ -28,9 +28,10 @@
   - [`src/config/site-contact.ts`](../../src/config/site-contact.ts): About ページ向けお問い合わせ窓口設定
   - [`src/analytics/ga4.ts`](../../src/analytics/ga4.ts): GA4 計測（`course_id` / `entity_id` 対応 `page_view`・検索・読書・`story_open`（`course_*` / `entity_detail` / `entity_evidence` 含む）・`story_share`・`course_share`・`entity_share`、開発/テスト時の送信ガード、PII サニタイズ）
 - **ドメインロジック (`src/domain/`)**
-  - [`src/domain/catalog.ts`](../../src/domain/catalog.ts): 5 分類書架フィルタ、並び替え（おすすめ順 / 新着順 / 短い順等）、`NEW` バッジ（追加 14 日以内かつ未読）、日替わり「今日の物語ピックアップ」、おまかせ読書
+  - [`src/domain/entity-kinds.ts`](../../src/domain/entity-kinds.ts): エンティティ 5 種別（人物・神格・執政・組織・勢力・概念・法則・場所・古代文明）の標準順序・日本語表示ラベル・汎用グルーピング基底関数（依存グラフ末端の純粋リーフモジュール）
+  - [`src/domain/catalog.ts`](../../src/domain/catalog.ts): 5 分類書架フィルタ（`entity-kinds.ts` 連携による `#entity-filter` `<optgroup>` 5 種別グルーピング含む）、並び替え（おすすめ順 / 新着順 / 短い順等）、`NEW` バッジ（追加 14 日以内かつ未読）、日替わり「今日の物語ピックアップ」、おまかせ読書
   - [`src/domain/courses.ts`](../../src/domain/courses.ts): 代表フェアコース抽出、種別グルーピング、読了進捗／動的 CTA 導出、コース詳細ビュー・リーダー文脈（`?course=`・所属コース・未読次話）導出
-  - [`src/domain/entities.ts`](../../src/domain/entities.ts): 人物・用語名鑑の 5 種別グルーピング（収録 0 件種別の自動非表示）、日本語正規化キーワード検索、登場作品数／五十音順ソート、詳細ビュー（読了進捗・動的 CTA・関連読書コース逆引き・共起エンティティ抽出）
+  - [`src/domain/entities.ts`](../../src/domain/entities.ts): 人物・用語名鑑の 5 種別グルーピング（収録 0 件種別の自動非表示、`entity-kinds.ts` 再利用）、日本語正規化キーワード検索、登場作品数／五十音順ソート、詳細ビュー（読了進捗・動的 CTA・関連読書コース逆引き・共起エンティティ抽出）
   - [`src/domain/search.ts`](../../src/domain/search.ts): `search-index.json` 遅延取得による横断全文検索（日本語正規化・クロスフィールド AND・スニペット抽出・真相メモ検索トグル）
   - [`src/domain/text-parser.ts`](../../src/domain/text-parser.ts): インライン用語タグ・原文プレースホルダ構文パーサ・ISO 日付実在チェック
   - [`src/domain/seo.ts`](../../src/domain/seo.ts): 5 分類・読書コース・人物・用語名鑑一覧・詳細テンプレート、任意 `seo` 上書き反映、OGP / Twitter Card、JSON-LD（`WebSite` + `SearchAction`, `CollectionPage`, `ItemList`, `BreadcrumbList`, `Article`, `ProfilePage`, `WebPage`, `Person`, `Organization`, `Place`, `DefinedTerm`, `AboutPage`）、`/404`・存在しない作品/コース/人物用 `noindex, nofollow`

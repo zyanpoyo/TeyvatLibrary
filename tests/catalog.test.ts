@@ -381,4 +381,66 @@ describe("catalog domain", () => {
     expect(resolveHydrationSafeNow(null, fallback)).toBe(fallback);
     expect(resolveHydrationSafeNow("invalid-date", fallback)).toBe(fallback);
   });
+
+  it("groups shelf entity options into 5 EntityKind optgroup buckets with deterministic tie-breaking", () => {
+    const multiKindIndex = {
+      ...SAMPLE_INDEX,
+      entitiesIndex: {
+        khaenriah: { name: "カーンルイア", kind: "place" as const, storyIds: ["byakuyakoku"] },
+        enkanomiya: { name: "淵下宮（白夜国）", kind: "place" as const, storyIds: ["byakuyakoku"] },
+        fatui: { name: "ファデュイ", kind: "organization" as const, storyIds: ["crimson_witch"] },
+        abyss: { name: "アビス（深淵）", kind: "concept" as const, storyIds: ["byakuyakoku"] },
+        orobashi: { name: "オロバシノミコト", kind: "god" as const, storyIds: ["byakuyakoku"] },
+        unknown_kind_char: {
+          name: "正体不明の人物",
+          kind: "invalid_kind" as unknown as "character",
+          storyIds: ["elegy"],
+        },
+        rustan: { name: "ルースタン", kind: "character" as const, storyIds: ["crimson_witch", "elegy"] },
+      },
+    };
+
+    const fullView = deriveShelfView({
+      indexData: multiKindIndex,
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState: createStubReadingState(),
+    });
+
+    expect(fullView.entityGroups.map((g) => g.kind)).toEqual([
+      "character",
+      "god",
+      "organization",
+      "concept",
+      "place",
+    ]);
+    expect(fullView.entityGroups.map((g) => g.label)).toEqual([
+      "人物",
+      "魔神・執政",
+      "組織",
+      "歴史・重要用語",
+      "地域・地名",
+    ]);
+    // 登場作品数順 -> 同数時は ja ロケール順、不正 kind は character にフォールバック
+    expect(fullView.entityGroups[0].items.map((e) => e.id)).toEqual([
+      "rustan",
+      "unknown_kind_char",
+    ]);
+    expect(fullView.entityGroups[4].items.map((e) => e.id)).toEqual([
+      "khaenriah",
+      "enkanomiya",
+    ]);
+
+    const partialView = deriveShelfView({
+      indexData: {
+        ...SAMPLE_INDEX,
+        entitiesIndex: {
+          fatui: { name: "ファデュイ", kind: "organization" as const, storyIds: ["crimson_witch"] },
+          hyperborea: { name: "ヒュペルボレイア", kind: "place" as const, storyIds: ["byakuyakoku"] },
+        },
+      },
+      filters: DEFAULT_SHELF_FILTERS,
+      readingState: createStubReadingState(),
+    });
+    expect(partialView.entityGroups.map((g) => g.kind)).toEqual(["organization", "place"]);
+  });
 });

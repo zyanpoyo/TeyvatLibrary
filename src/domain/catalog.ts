@@ -1,4 +1,9 @@
 import { createReadingStateReader } from "../state/reading-state";
+import {
+  groupByEntityKind,
+  isValidEntityKind,
+  type EntityKindGroup,
+} from "./entity-kinds";
 import { evaluateCatalogSearch, type StorySearchMatch } from "./search";
 import { parseIsoDateUtcMs } from "./text-parser";
 import type {
@@ -112,6 +117,8 @@ export interface ShelfEntityOption {
   count: number;
 }
 
+export type ShelfEntityGroup = EntityKindGroup<ShelfEntityOption>;
+
 export interface ShelfCardItem {
   story: StoryIndexItem;
   isFeatured: boolean;
@@ -141,6 +148,7 @@ export interface ShelfViewModel {
   isDefaultState: boolean;
   categories: ShelfCategoryTab[];
   entities: ShelfEntityOption[];
+  entityGroups: ShelfEntityGroup[];
   regions: string[];
   items: ShelfCardItem[];
   featuredId: string | null;
@@ -368,10 +376,14 @@ function deriveEntities(indexData: StoriesIndexData | null): ShelfEntityOption[]
     .map(([id, info]) => ({
       id,
       name: info.name,
-      kind: info.kind,
+      kind: isValidEntityKind(info.kind) ? info.kind : "character",
       count: info.storyIds?.length || 0,
     }))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => {
+      const countDiff = b.count - a.count;
+      if (countDiff !== 0) return countDiff;
+      return a.name.localeCompare(b.name, "ja");
+    });
 }
 
 function deriveRegions(stories: ReadonlyArray<StoryIndexItem>): string[] {
@@ -473,6 +485,8 @@ export function deriveShelfView({
 
   const tabSourceStories = searchResult.hasQuery ? matchedWithoutCategory : stories;
 
+  const entities = deriveEntities(indexData);
+
   return {
     hasIndexData: Boolean(indexData),
     hasSearchQuery: searchResult.hasQuery,
@@ -484,7 +498,8 @@ export function deriveShelfView({
       normalizedFilters.category,
       searchResult.hasQuery
     ),
-    entities: deriveEntities(indexData),
+    entities,
+    entityGroups: groupByEntityKind(entities),
     regions: deriveRegions(stories),
     items,
     featuredId,

@@ -1,3 +1,4 @@
+import { ENTITY_KIND_LABELS } from "../../src/domain/entity-kinds.ts";
 import {
   extractCitedTitles,
   extractInlineTagReferences,
@@ -277,6 +278,47 @@ export function findSubtitleLinkErrors(evidence, contextLabel, titleLookup, self
   return errors;
 }
 
+const HINT_ALIAS_WHITELIST_KINDS = new Set(["organization", "concept", "place"]);
+
+/**
+ * エンティティの検索候補語（主名および条件を満たす括弧内別名）を抽出する。
+ */
+export function extractEntityHintTerms(entity) {
+  const rawName = String(entity?.name || "").trim();
+  if (!rawName) return [];
+
+  const terms = [];
+  const baseName = rawName.replace(/（[^）]+）$/, "").trim();
+  if (baseName.length >= 2) {
+    terms.push(baseName);
+  }
+
+  const aliasMatch = rawName.match(/（([^）]+)）$/);
+  if (aliasMatch) {
+    const alias = aliasMatch[1].trim();
+    const isShortGenericCharacterTitle =
+      alias.length < 3 && !HINT_ALIAS_WHITELIST_KINDS.has(entity?.kind);
+    if (
+      alias.length >= 2 &&
+      !alias.includes("／") &&
+      !isShortGenericCharacterTitle &&
+      !terms.includes(alias)
+    ) {
+      terms.push(alias);
+    }
+  }
+
+  return terms;
+}
+
+/**
+ * エンティティの種別ラベル接頭辞（例: "[組織] "）を生成する。
+ */
+function formatEntityKindPrefix(kind) {
+  const kindLabel = ENTITY_KIND_LABELS[kind]?.label || "";
+  return kindLabel ? `[${kindLabel}] ` : "";
+}
+
 export function findEntityLinkHints(story, entities, usedEntityIds = []) {
   const hints = [];
   const sid = story?.id || "story";
@@ -288,13 +330,39 @@ export function findEntityLinkHints(story, entities, usedEntityIds = []) {
 
   for (const [eid, entity] of Object.entries(entities || {})) {
     if (used.has(eid)) continue;
-    const baseName = String(entity?.name || "").replace(/（[^）]+）$/, "").trim();
-    if (baseName.length < 2) continue;
-    if (searchable.includes(baseName)) {
+    const terms = extractEntityHintTerms(entity);
+    const matchedTerm = terms.find((term) => searchable.includes(term));
+    if (matchedTerm) {
+      const kindPrefix = formatEntityKindPrefix(entity?.kind);
       hints.push(
-        `[エンティティ未連携候補] ${sid}: 「${baseName}」(${eid}) への言及がありますが glossary の entityId に含まれていません。`
+        `[エンティティ未連携候補] ${sid}: ${kindPrefix}「${matchedTerm}」(${eid}) への言及がありますが glossary の entityId に含まれていません。`
       );
     }
+  }
+  return hints;
+}
+
+/**
+ * どの作品の glossary.entityId からも参照されていない孤立エンティティを検出する。
+ */
+export function findUnusedEntityHints(entities, compiledMap) {
+  const usedEntityIds = new Set();
+  const stories =
+    compiledMap instanceof Map ? compiledMap.values() : Object.values(compiledMap || {});
+  for (const story of stories) {
+    for (const eid of story?.entityIds || []) {
+      usedEntityIds.add(eid);
+    }
+  }
+
+  const hints = [];
+  for (const [eid, entity] of Object.entries(entities || {})) {
+    if (usedEntityIds.has(eid)) continue;
+    const kindPrefix = formatEntityKindPrefix(entity?.kind);
+    const displayName = String(entity?.name || eid);
+    hints.push(
+      `[未使用エンティティ] ${kindPrefix}「${displayName}」(${eid}) がどの作品の glossary.entityId からも参照されていません。`
+    );
   }
   return hints;
 }
