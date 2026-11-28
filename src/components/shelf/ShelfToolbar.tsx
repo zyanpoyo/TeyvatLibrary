@@ -1,6 +1,9 @@
 import { Link } from "react-router";
 import type { ShelfFilterTrackType } from "../../analytics/ga4";
-import type { ShelfEntityOption } from "../../domain/catalog";
+import {
+  type ShelfEntityGroup,
+  type ShelfEntityOption,
+} from "../../domain/catalog";
 import commonStyles from "../../styles/common.module.css";
 import type { ReadingStatusFilter, ShelfFilters, SortMode } from "../../types/story";
 import { AppIcon } from "../common/AppIcon";
@@ -12,6 +15,7 @@ export interface ShelfToolbarProps {
   isLoadingSearchIndex?: boolean;
   filters: ShelfFilters;
   entities: ReadonlyArray<ShelfEntityOption>;
+  entityGroups: ReadonlyArray<ShelfEntityGroup>;
   regions: ReadonlyArray<string>;
   isFiltered: boolean;
   orderedCount: number;
@@ -30,6 +34,7 @@ export function ShelfToolbar({
   isLoadingSearchIndex = false,
   filters,
   entities,
+  entityGroups,
   regions,
   isFiltered,
   orderedCount,
@@ -90,10 +95,14 @@ export function ShelfToolbar({
           }}
         >
           <option value="">登場人物・用語：すべて</option>
-          {entities.map((entity) => (
-            <option key={entity.id} value={entity.id}>
-              {entity.name} ({entity.count})
-            </option>
+          {entityGroups.map((group) => (
+            <optgroup key={group.kind} label={group.label}>
+              {group.items.map((entity) => (
+                <option key={entity.id} value={entity.id}>
+                  {entity.name} ({entity.count})
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
 

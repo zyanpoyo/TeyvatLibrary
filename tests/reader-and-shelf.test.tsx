@@ -554,4 +554,50 @@ describe("Shelf & Reader integration (MemoryRouter + Radix UI)", () => {
     expect(volItem0).toHaveAttribute("data-search-focus", "true");
     expect(volItem0?.querySelector("mark")?.textContent).toBe("光の王子");
   });
+
+  it("renders #entity-filter options grouped by 5 EntityKind <optgroup> headers and filters stories on selection", async () => {
+    const multiKindIndex: StoriesIndexData = {
+      ...MOCK_INDEX,
+      stories: MOCK_INDEX.stories.map((story) =>
+        story.id === "mock_witch"
+          ? { ...story, entityIds: [...(story.entityIds ?? []), "fatui"] }
+          : story
+      ),
+      entitiesIndex: {
+        rostam: { name: "ルースタン", kind: "character", storyIds: ["mock_witch", "mock_elegy"] },
+        orobashi: { name: "オロバシノミコト", kind: "god", storyIds: ["mock_elegy"] },
+        fatui: { name: "ファデュイ", kind: "organization", storyIds: ["mock_witch"] },
+        abyss: { name: "アビス（深淵）", kind: "concept", storyIds: ["mock_elegy"] },
+        khaenriah: { name: "カーンルイア", kind: "place", storyIds: ["mock_elegy"] },
+      },
+    };
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AppProviders deferStorageHydration>
+          <Routes>
+            <Route index element={<ShelfPage initialIndexData={multiKindIndex} />} />
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>
+    );
+
+    const select = document.getElementById("entity-filter") as HTMLSelectElement | null;
+    expect(select).not.toBeNull();
+    const optgroups = Array.from(select!.querySelectorAll("optgroup"));
+    expect(optgroups.map((g) => g.getAttribute("label"))).toEqual([
+      "人物",
+      "魔神・執政",
+      "組織",
+      "歴史・重要用語",
+      "地域・地名",
+    ]);
+    expect(optgroups[2].querySelector("option")?.value).toBe("fatui");
+
+    await user.selectOptions(select!, "fatui");
+    expect(select!.value).toBe("fatui");
+    expect(screen.getByText("燃え盛る炎の魔女")).toBeInTheDocument();
+    expect(screen.queryByText("終焉を嘆く詩")).not.toBeInTheDocument();
+  });
 });

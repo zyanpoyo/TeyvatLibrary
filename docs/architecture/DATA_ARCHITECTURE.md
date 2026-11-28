@@ -464,7 +464,8 @@ function resolveActualPlainText(paragraphs) {
 - **確度区分・用語必須チェック (`VALID_IDENTITY_PREFIXES` / `StoryCompiler`)**: `glossary` の `identity` / `identityOverride` および `entities.json` の `defaultIdentity` は、情報の性質・確度を表す 3 種プレフィックス（**`正体：` / `解説：` / `有力説：`**）のいずれかで始まることを強制し、マスタ解決後の `term` / `desc` / `evidence` が空でないこともあわせて検証する。
 - **出典リンク表記チェック (`findSubtitleLinkErrors`)**: `evidence` / `evidenceOverride` / `defaultEvidence` に収録済み他作品のタイトルが含まれるにもかかわらず `『作品名（補足）』` のように括弧を内側へ含めたため `evidenceLinks` が不発になっている記述をエラーとして検出する（部位・巻の補足は必ず `『作品名』（補足）` のように外へ配置する）。
 - **コース実在参照＆コーパス検査**: `courses[].steps[].storyId` が実在する作品 ID であることを検証し、`badge`・`title`・`subtitle`・`hook`・`seo`・`steps[].note` の全テキストに対して公式コーパス／NG 表記チェックを実施する。
-- **未連携エンティティ候補ヒント (`findEntityLinkHints`)**: 本文または `overallTruth` に `entities.json` 登録済み人物・概念名が登場しているにもかかわらず `entityId` 連携に含まれていない場合、非ブロッキングな注意喚起（`⚠️ ヒント`）を出力して見落としを防ぐ。
+- **未連携エンティティ候補ヒント (`extractEntityHintTerms` / `findEntityLinkHints`)**: 本文または `overallTruth` に `entities.json` 登録済み 5 種別エンティティの主名および定着別名（括弧内別称の名寄せ展開）が登場しているにもかかわらず `entityId` 連携に含まれていない場合、種別ラベル付きの非ブロッキング警告（`⚠️ ヒント`）を出力して見落としを防ぐ。
+- **未使用エンティティ検出 (`findUnusedEntityHints`)**: `entities.json` に登録されていながらいずれの収録作品の `glossary.entityId` からも参照されていない孤立エンティティを検知し、非ブロッキング警告（`⚠️ ヒント`）として報告する。
 
 ---
 

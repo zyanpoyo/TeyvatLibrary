@@ -14,6 +14,7 @@ import {
   findEntityLinkHints,
   findFirstDiffContext,
   findSubtitleLinkErrors,
+  findUnusedEntityHints,
   resolveActualPlainText,
   resolveExpectedRawText,
 } from "./validator.mjs";
@@ -829,8 +830,11 @@ export function compileStories({
     });
   }
 
-  if (hasExplicitCourses && rawCourses.length > 0 && errors.length === 0) {
-    collectCourseHints(rawStories, rawCourses, warnings);
+  if (errors.length === 0) {
+    warnings.push(...findUnusedEntityHints(entities, compiledMap));
+    if (hasExplicitCourses && rawCourses.length > 0) {
+      collectCourseHints(rawStories, rawCourses, warnings);
+    }
   }
 
   if (errors.length > 0) {

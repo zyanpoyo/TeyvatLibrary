@@ -6,9 +6,11 @@ import {
   VALID_IDENTITY_PREFIXES,
   buildTitleLookup,
   createCorpusChecker,
+  extractEntityHintTerms,
   extractEvidenceLinks,
   findEntityLinkHints,
   findSubtitleLinkErrors,
+  findUnusedEntityHints,
   resolveActualPlainText,
   resolveExpectedRawText,
   sanitizeRawSourceText,
@@ -226,6 +228,66 @@ describe("validator text, corpus, and link checks", () => {
     expect(hints).toHaveLength(1);
     expect(hints[0]).toContain("オロバシノミコト");
     expect(hints[0]).toContain("orobashi");
+  });
+
+  it("expands 5-kind hint terms including whitelisted aliases, attaches kind tags, and detects unused entities", () => {
+    expect(extractEntityHintTerms({ name: "アビス（深淵）", kind: "concept" })).toEqual([
+      "アビス",
+      "深淵",
+    ]);
+    expect(extractEntityHintTerms({ name: "淵下宮（白夜国）", kind: "place" })).toEqual([
+      "淵下宮",
+      "白夜国",
+    ]);
+    expect(
+      extractEntityHintTerms({
+        name: "マレショーセ・ファントム（ファントムハンター）",
+        kind: "organization",
+      })
+    ).toEqual(["マレショーセ・ファントム", "ファントムハンター"]);
+    expect(extractEntityHintTerms({ name: "ロザリン（淑女）", kind: "character" })).toEqual([
+      "ロザリン",
+    ]);
+    expect(
+      extractEntityHintTerms({ name: "旅人の片割れ（空／蛍）", kind: "character" })
+    ).toEqual(["旅人の片割れ"]);
+
+    const aliasHints = findEntityLinkHints(
+      {
+        id: "sample_story",
+        overallTruth: "白夜国の歴史と深淵の脅威を伝える。",
+        chapters: [{ paragraphs: ["ファントムハンターが捜査に動いた。"] }],
+      },
+      {
+        abyss: { name: "アビス（深淵）", kind: "concept" },
+        enkanomiya: { name: "淵下宮（白夜国）", kind: "place" },
+        phantom: {
+          name: "マレショーセ・ファントム（ファントムハンター）",
+          kind: "organization",
+        },
+        rosalyne: { name: "ロザリン（淑女）", kind: "character" },
+      },
+      []
+    );
+
+    expect(aliasHints).toHaveLength(3);
+    expect(aliasHints.some((h) => h.includes("[歴史・重要用語]") && h.includes("深淵"))).toBe(true);
+    expect(aliasHints.some((h) => h.includes("[地域・地名]") && h.includes("白夜国"))).toBe(true);
+    expect(
+      aliasHints.some((h) => h.includes("[組織]") && h.includes("ファントムハンター"))
+    ).toBe(true);
+
+    const unusedHints = findUnusedEntityHints(
+      {
+        used_org: { name: "ファデュイ", kind: "organization" },
+        orphan_place: { name: "ヒュペルボレイア", kind: "place" },
+      },
+      new Map([["s1", { entityIds: ["used_org"] }]])
+    );
+    expect(unusedHints).toHaveLength(1);
+    expect(unusedHints[0]).toContain("[未使用エンティティ]");
+    expect(unusedHints[0]).toContain("[地域・地名]");
+    expect(unusedHints[0]).toContain("orphan_place");
   });
 
   it("enforces the 3 purified identity prefixes across validator and JSON schemas", () => {

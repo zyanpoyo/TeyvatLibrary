@@ -68,7 +68,7 @@ description: >-
 1. **`preGuide`（ネタバレなし3行導入）**: 「時代・舞台」「主人公の立場」「章構成・読みどころ」のみを記し、正体や結末は書かない。
 2. **`{{term_id|原文そのまま}}` と `glossary`**:
    - `|` の右側は原典の表記・送り仮名を1文字も変更しない。性別分岐記法（`{M#彼女}{F#彼}`）が文中に現れる場合は、原則として分岐記法の外側・直前にある名詞や称号（例：`{{wf_twin|金髪の王}}`）へタグを付与して読みやすさと保守性を保つ（入れ子になっても検証パイプラインと [`text-parser.ts`](../../../src/domain/text-parser.ts) の共有パーサーで一貫して検証・展開可能）。
-   - **`entities.json` 登録基準と既存漏れ点検**: 物語の核となる主要人物・神格・組織・概念は初出時から [`data/shared/entities.json`](../../../data/shared/entities.json) へ登録し、`entityId` で参照する（場面に応じた補足は `identityOverride` / `descOverride` / `evidenceOverride` で上書き）。他作品の主軸にならないゲスト言及は作品ローカルの `glossary` に留め、書架プルダウンの肥大化を防ぐ。あわせて、同じ人物が登場する既存の収録作品に `entityId` の紐付け漏れがないか点検する。
+   - **`entities.json` 登録基準と 5 種別・既存漏れ点検**: 物語の核となる人物・神格・組織・概念・場所（`character` / `god` / `organization` / `concept` / `place`）の分類と昇格判定は [`references/entity-curation-guide.md`](./references/entity-curation-guide.md) に従う。複数作品で横断的に参照される対象は [`data/shared/entities.json`](../../../data/shared/entities.json) へ登録し `entityId` で参照する（場面に応じた補足は `identityOverride` / `descOverride` / `evidenceOverride` で上書き）。他作品の主軸にならないゲスト言及は作品ローカルの `glossary` に留め、書架プルダウンの肥大化を防ぐ。あわせて、同じ人物・組織・概念・場所が登場する既存の収録作品に `entityId` の紐付け漏れがないか点検する。
    - **必須フォーマット**:
      - `identity` は必ず確度区分3種（**`正体：` / `解説：` / `有力説：`**）のいずれかで始める（公式未明言の考察は必ず `有力説：`、鳴神名や真名などの固有呼称は `正体：阿倍良久（アブラクサスの鳴神名）` のように `正体：` 内で表現する）。
      - `evidence` に裏付けとなる公式出典名を必ず記載する。
@@ -120,10 +120,11 @@ npm run validate
 npm run build:data
 ```
 
-コースのステップ・文言を変更した場合は、以下でコース OGP 画像の崩れ・文字欠けがないことも確認する。
+コースのステップ・文言やエンティティの解説・種別を変更した場合は、以下で対象 OGP 画像の崩れ・文字欠けがないことも確認する。
 
 ```bash
 npm run build:og -- --only courses,course/<courseId> --force
+npm run build:og -- --only entities,entity/<entityId> --force
 ```
 
 ### エラー検出時の対処
@@ -133,7 +134,8 @@ npm run build:og -- --only courses,course/<courseId> --force
 - **`[公式コーパス未登録カタカナ]`**: サジェストの公式表記に合わせるか、解説文を和語・漢字へ言い換える。公式テキストに存在しない正当なメディア由来語・必須一般語のみ [`data/shared/official-entities.json`](../../../data/shared/official-entities.json) へ追加する。
 - **`[出典リンク表記エラー]`**: 収録済み他作品名の後に `（...）` を `『』` の中へ含めたためリンク不発になっている箇所（例：`『蒼白の炎（無垢の花）』`）を `『蒼白の炎』（無垢の花）` 形式へ修正する。
 - **`[出典根拠欠落]` / `[確度区分欠落]`**: 該当 `glossary`（または `entities.json`）に `evidence` と確度区分3種プレフィックス（`正体：` / `解説：` / `有力説：`）を補う。
-- **`⚠️ [エンティティ未連携候補]`（非ブロッキング警告）**: 本文や `overallTruth` に登録済み人物名が登場しているものの `glossary` の `entityId` に未反映の作品を通知する。主役級の関係であれば `entityId` 連携を追加する。
+- **`⚠️ [エンティティ未連携候補]`（非ブロッキング警告）**: 本文や `overallTruth` に登録済みの 5 種別エンティティ（主名・定着別名）が登場しているものの `glossary` の `entityId` に未反映の作品を通知する。主要作品との関係が成り立つ場合は [`references/entity-curation-guide.md`](./references/entity-curation-guide.md) に従って `entityId` 連携を追加する。
+- **`⚠️ [未使用エンティティ]`（非ブロッキング警告）**: [`data/shared/entities.json`](../../../data/shared/entities.json) に登録されているがいずれの収録作品の `glossary.entityId` からも参照されていない孤立エントリを通知する。関連作品へ紐付けるか不要エントリを整理する。
 - **`⚠️ [コース未所属作品]` / `⚠️ [フェア棚代表枠]` / `⚠️ [フェア棚代表枠重複]`（非ブロッキング警告）**: どのコースにも未所属の作品、代表 3 枠の増減、代表枠間の作品重複を通知する。Step 5 の基準に沿って編入・調整する。
 
 - **完了条件**: `npm run validate` および `npm run build:data` が終了コード `0` で成功し、[`public/data/stories-index.json`](../../../public/data/stories-index.json) に追加作品の件数・`entityIds`・`evidenceLinks`・`courses` が正しく反映されていること（ロードマップや設計書の進捗に影響する場合は [`doc-sync`](../doc-sync/SKILL.md) スキルに従って更新対象を確認する）。

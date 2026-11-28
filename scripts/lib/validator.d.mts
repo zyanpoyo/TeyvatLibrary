@@ -67,12 +67,21 @@ export function findSubtitleLinkErrors(
   errors?: string[]
 ): string[];
 
+export function extractEntityHintTerms(entity: { name?: string; kind?: string }): string[];
+
 export function findEntityLinkHints(
   story: {
     id?: string;
     overallTruth?: string;
     chapters?: Array<{ paragraphs?: string[] }>;
   },
-  entities: Record<string, { name?: string }>,
+  entities: Record<string, { name?: string; kind?: string }>,
   usedEntityIds?: Set<string> | string[]
+): string[];
+
+export function findUnusedEntityHints(
+  entities: Record<string, { name?: string; kind?: string }>,
+  compiledStories:
+    | Map<string, { entityIds?: string[] }>
+    | Record<string, { entityIds?: string[] }>
 ): string[];

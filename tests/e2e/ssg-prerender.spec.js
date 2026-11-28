@@ -24,6 +24,9 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     );
     expect(shelfHtml).toContain('<link rel="icon" type="image/svg+xml" href="/favicon.svg"');
     expect(shelfHtml).toContain("燃え盛る炎の魔女");
+    for (const label of ["人物", "魔神・執政", "組織", "歴史・重要用語", "地域・地名"]) {
+      expect(shelfHtml).toContain(`label="${label}"`);
+    }
     const shelfLd = extractJsonLdGraph(shelfHtml);
     expect(shelfLd["@graph"].map((n) => n["@type"])).toEqual(["WebSite", "CollectionPage"]);
 
@@ -127,6 +130,9 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
     expect(entitiesHtml).toContain(
       '<meta property="og:image" content="https://teyvat-bunko.com/og/entities.png"'
     );
+    for (const kind of ["character", "god", "organization", "concept", "place"]) {
+      expect(entitiesHtml).toContain(`data-entity-filter="${kind}"`);
+    }
     const entitiesLd = extractJsonLdGraph(entitiesHtml);
     expect(entitiesLd["@graph"].map((n) => n["@type"])).toEqual([
       "BreadcrumbList",
@@ -150,6 +156,27 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
       "ProfilePage",
     ]);
 
+    for (const entityCase of [
+      { id: "fatui", name: "ファデュイ", mainType: "Organization" },
+      { id: "celestial_nail", name: "寒天の釘", mainType: "DefinedTerm" },
+      { id: "hyperborea", name: "ヒュペルボレイア", mainType: "Place" },
+    ]) {
+      const res = await request.get(`/entities/${entityCase.id}`);
+      expect(res.status()).toBe(200);
+      const html = await res.text();
+      expect(html).toContain(entityCase.name);
+      expect(html).toContain('data-view="entities"');
+      expect(html).toContain(
+        `<link rel="canonical" href="https://teyvat-bunko.com/entities/${entityCase.id}"`
+      );
+      expect(html).toContain(
+        `<meta property="og:image" content="https://teyvat-bunko.com/og/entity/${entityCase.id}.png"`
+      );
+      const ld = extractJsonLdGraph(html);
+      expect(ld["@graph"].map((n) => n["@type"])).toEqual(["BreadcrumbList", "WebPage"]);
+      expect(ld["@graph"][1].mainEntity["@type"]).toBe(entityCase.mainType);
+    }
+
     const notFoundRes = await request.get("/nonexistent-ssg-check");
     expect(notFoundRes.status()).toBe(404);
     const notFoundHtml = await notFoundRes.text();
@@ -165,6 +192,9 @@ test.describe("本番 SSG 静的 HTML・SEOメタ・構造化データ・OGP画�
       "/og/course/must_read_essentials.png",
       "/og/entities.png",
       "/og/entity/rosalyne.png",
+      "/og/entity/fatui.png",
+      "/og/entity/celestial_nail.png",
+      "/og/entity/hyperborea.png",
       "/og/story/crimson_witch.png",
     ]) {
       const ogRes = await request.get(ogPath);

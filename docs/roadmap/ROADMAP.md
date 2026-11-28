@@ -66,8 +66,8 @@
   - `stories-index.json` の `entitiesIndex` へ `defaultIdentity`・`defaultDesc`・`defaultEvidence`・解決済み `evidenceLinks` を出力し、`verifyEntitiesIndex` 検証を追加。
   - `/entities`（種別フィルタ・日本語正規化キーワード検索・並び替え・ネタバレ注記・種別グループ一覧）および `/entities/:entityId`（正体・背景解説・出典リンク・読了進捗＆未読 CTA・登場作品・関連コース・共起エンティティ・シェアバー）を静的プリレンダリング＋`sitemap.xml`＋JSON-LD＋静的 OGP（`/og/entities.png`, `/og/entity/<id>.png`）＋GA4 計測付きで公開。
   - 常設ナビ（`SiteNavBar`＋フッター）、リーダー用語ガイド（`GlossaryDialog`）、リーダー真相メモ内チップ、書架の人物絞り込み中リンクの 4 クロスリンク導線を接続。
-- [ ] **組織・概念・場所（`organization` / `concept` / `place`）のマスタデータ拡充**
-  - 現状 58 件（`character` / `god`）に加え、主要組織・概念・地名を別 PR にて段階的に登録・紐付けする（UI・5 種別グルーピングは 0 件種別自動非表示で対応済み）。
+- [x] **組織・概念・場所（`organization` / `concept` / `place`）のマスタデータ拡充**
+  - 当初の 58 件（`character` / `god`）に加え、主要組織 9 件・概念/法則 10 件・場所/古代文明 9 件の計 28 件（全 5 種別・計 86 件）を登録・既存 36 作品へ紐付け完了。書架 `#entity-filter` の 5 種別 `<optgroup>` グループ表示、未使用/別名検出ガード、`entity-curation-guide.md` も整備済み。
 
 ---
 

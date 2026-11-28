@@ -8,6 +8,13 @@ import {
   getCourseStoryIds,
   type CourseProgress,
 } from "./courses";
+import {
+  ENTITY_KIND_LABELS,
+  ENTITY_KIND_ORDER,
+  groupByEntityKind,
+  isValidEntityKind,
+  type EntityKindGroup as BaseEntityKindGroup,
+} from "./entity-kinds";
 import { normalizeSearchText, tokenizeSearchQuery } from "./search";
 import type {
   CourseIndexItem,
@@ -19,21 +26,7 @@ import type {
   StoryIndexItem,
 } from "../types/story";
 
-export const ENTITY_KIND_ORDER: ReadonlyArray<EntityKind> = [
-  "character",
-  "god",
-  "organization",
-  "concept",
-  "place",
-];
-
-export const ENTITY_KIND_LABELS: Record<EntityKind, { label: string; heading: string }> = {
-  character: { label: "人物", heading: "人物" },
-  god: { label: "魔神・執政", heading: "魔神・執政" },
-  organization: { label: "組織", heading: "組織" },
-  concept: { label: "歴史・重要用語", heading: "歴史・重要用語" },
-  place: { label: "地域・地名", heading: "地域・地名" },
-};
+export { ENTITY_KIND_LABELS, ENTITY_KIND_ORDER };
 
 export interface EntityArchiveItem {
   id: string;
@@ -61,12 +54,7 @@ export interface EntityListCardView {
   regions: string[];
 }
 
-export interface EntityKindGroup {
-  kind: EntityKind;
-  label: string;
-  heading: string;
-  items: EntityListCardView[];
-}
+export type EntityKindGroup = BaseEntityKindGroup<EntityListCardView>;
 
 export interface EntitiesArchiveViewModel {
   totalCount: number;
@@ -120,9 +108,7 @@ function uniqueStrings(values: ReadonlyArray<string> | undefined | null): string
   return result;
 }
 
-function isValidEntityKind(kind: unknown): kind is EntityKind {
-  return typeof kind === "string" && (ENTITY_KIND_ORDER as readonly string[]).includes(kind);
-}
+// isValidEntityKind imported from ./entity-kinds
 
 /**
  * 単一の entitiesIndex エントリをフロントエンド表示用の EntityArchiveItem へ正規化する。
@@ -295,30 +281,23 @@ export function deriveEntitiesArchiveView({
   const availableKinds = ENTITY_KIND_ORDER.filter((kind) => kindCounts[kind] > 0);
   const hasActiveFilter = kindFilter !== "all" || tokens.length > 0;
 
-  const groups: EntityKindGroup[] = [];
-  let filteredCount = 0;
-
-  for (const kind of ENTITY_KIND_ORDER) {
-    if (kindFilter !== "all" && kind !== kindFilter) continue;
-    const matched = allEntities.filter(
-      (entity) => entity.kind === kind && matchesEntityQuery(entity, tokens, storyById)
-    );
-    if (matched.length === 0) continue;
-
-    const sorted = sortEntities(matched, sort);
-    filteredCount += sorted.length;
-
-    groups.push({
-      kind,
-      label: ENTITY_KIND_LABELS[kind].label,
-      heading: ENTITY_KIND_LABELS[kind].heading,
-      items: sorted.map((entity) => ({
-        entity,
-        progress: deriveEntityProgress(entity.storyIds, reader),
-        regions: collectEntityRegions(entity.storyIds, storyById),
-      })),
-    });
-  }
+  const matched = sortEntities(
+    allEntities.filter(
+      (entity) =>
+        (kindFilter === "all" || entity.kind === kindFilter) &&
+        matchesEntityQuery(entity, tokens, storyById)
+    ),
+    sort
+  );
+  const filteredCount = matched.length;
+  const groups: EntityKindGroup[] = groupByEntityKind(matched).map((group) => ({
+    ...group,
+    items: group.items.map((entity) => ({
+      entity,
+      progress: deriveEntityProgress(entity.storyIds, reader),
+      regions: collectEntityRegions(entity.storyIds, storyById),
+    })),
+  }));
 
   return {
     totalCount: allEntities.length,

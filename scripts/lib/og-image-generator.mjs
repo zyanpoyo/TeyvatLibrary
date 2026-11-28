@@ -5,6 +5,7 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
+import { ENTITY_KIND_LABELS, ENTITY_KIND_ORDER } from "../../src/domain/entity-kinds.ts";
 import { resolveSitemapOrigin } from "./post-build-seo.mjs";
 
 const require = createRequire(import.meta.url);
@@ -652,14 +653,6 @@ const COURSE_KIND_OG_LABELS = {
   arc: "地域・歴史別",
 };
 
-const ENTITY_KIND_OG_LABELS = {
-  character: "人物",
-  god: "魔神・執政",
-  organization: "組織",
-  concept: "歴史・重要用語",
-  place: "地域・地名",
-};
-
 function buildCollectionIndexOgNode({
   badgeLabel,
   headline,
@@ -950,7 +943,7 @@ function getEntitiesIndexOgContent({ entityCount, totalStoryCount }) {
         ? `全${entityCount}項目の正体・背景解説・公式出典を収録${totalStoryCount || 0}篇から逆引き`
         : "登場人物・魔神・組織・重要用語の正体・背景解説・出典を横断検索",
     leadText: "聖遺物・武器・書籍に散らばる登場人物や用語の背景をひとつの辞書から辿る",
-    footerChips: ["人物", "魔神・執政", "組織・用語"],
+    footerChips: ENTITY_KIND_ORDER.map((kind) => ENTITY_KIND_LABELS[kind].label),
   };
 }
 
@@ -960,7 +953,7 @@ function buildEntityOgNode(entity, { displayHost, fontFamily500, fontFamily700 }
   const titleSize = titleLen <= 14 ? 50 : titleLen <= 22 ? 43 : 36;
   const identityText = truncateText(entity.defaultIdentity || "", 54);
   const descText = truncateText(entity.defaultDesc || "", 90);
-  const kindLabel = ENTITY_KIND_OG_LABELS[entity.kind] || "人物・用語";
+  const kindLabel = ENTITY_KIND_LABELS[entity.kind]?.label || "人物・用語";
   const countMeta = `登場物語 全${entity.storyIds?.length ?? 0}篇`;
 
   return wrapOgCardShell({
@@ -1209,7 +1202,7 @@ const OG_SPEC_HANDLERS = {
       const e = spec.entity;
       return [
         SITE_BRAND_TITLE,
-        ENTITY_KIND_OG_LABELS[e.kind] || "人物・用語",
+        ENTITY_KIND_LABELS[e.kind]?.label || "人物・用語",
         `登場物語 全${e.storyIds?.length ?? 0}篇`,
         truncateText(e.name, 40),
         truncateText(e.defaultIdentity || "", 54),
